@@ -1,5 +1,5 @@
 import pool from "config/database";
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, NextFunction, Request, Response } from "express";
 
 class UsersController {
   public path = "/users";
@@ -24,9 +24,7 @@ class UsersController {
       const insertUser =
         "INSERT INTO users (username, email) VALUES ($1, $2) RETURNING *";
       const result = await pool.query(insertUser, [username, email]);
-
-      const createdUser = result.rows[0];
-      return response.json(createdUser);
+      response.json({ createdUser: result.rows[0] });
     } catch (err) {
       next(err);
     }
@@ -39,8 +37,7 @@ class UsersController {
   ) => {
     try {
       const result = await pool.query("SELECT id, username, email FROM users");
-      const users = result.rows;
-      return response.json(users);
+      response.json({ users: result.rows });
     } catch (err) {
       next(err);
     }
