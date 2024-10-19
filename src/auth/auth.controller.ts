@@ -3,6 +3,7 @@ import validationMiddleware from "middleware/validation.middleware";
 import { loginSchema, registerSchema } from "./auth.validation";
 import { AuthService } from "./auth.service";
 import { Controller } from "interfaces/controller.interface";
+import authMiddleware from "middleware/auth.middleware";
 
 export class AuthController extends Controller {
   private authService = new AuthService();
@@ -23,6 +24,7 @@ export class AuthController extends Controller {
       validationMiddleware(loginSchema),
       this.login
     );
+    this.router.delete(`${this.path}/logout`, authMiddleware, this.logout);
   }
 
   private register = async (
@@ -40,7 +42,7 @@ export class AuthController extends Controller {
         this.authService.cookieOptions()
       );
 
-      response.json(createdUser);
+      response.status(201).json(createdUser);
     } catch (error) {
       next(error);
     }
@@ -65,5 +67,9 @@ export class AuthController extends Controller {
     } catch (error) {
       next(error);
     }
+  };
+
+  private logout = (_: Request, response: Response) => {
+    response.setHeader("Set-Cookie", ["Authorization=;Max-age=0"]).status(204);
   };
 }
