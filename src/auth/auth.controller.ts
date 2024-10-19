@@ -24,6 +24,7 @@ export class AuthController extends Controller {
       validationMiddleware(loginSchema),
       this.login
     );
+    this.router.get(`${this.path}/me`, authMiddleware, this.isLoggedIn);
     this.router.delete(`${this.path}/logout`, authMiddleware, this.logout);
   }
 
@@ -37,7 +38,7 @@ export class AuthController extends Controller {
       if (!createdUser) return next();
 
       response.cookie(
-        "Authorization",
+        "Authentication",
         this.authService.createToken(createdUser.id),
         this.authService.cookieOptions()
       );
@@ -58,7 +59,7 @@ export class AuthController extends Controller {
       if (!user) return next();
 
       response.cookie(
-        "Authorization",
+        "Authentication",
         this.authService.createToken(user.id),
         this.authService.cookieOptions()
       );
@@ -69,7 +70,25 @@ export class AuthController extends Controller {
     }
   };
 
+  private isLoggedIn = async (
+    request: Request,
+    response: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const loggedUser = await this.authService.isLoggedIn(request.userId);
+      if (!loggedUser) return next();
+
+      response.json(loggedUser);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   private logout = (_: Request, response: Response) => {
-    response.setHeader("Set-Cookie", ["Authorization=;Max-age=0"]).status(204);
+    response
+      .setHeader("Set-Cookie", ["Authentication=;Max-age=0"])
+      .status(204)
+      .end();
   };
 }

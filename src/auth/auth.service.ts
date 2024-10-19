@@ -24,6 +24,9 @@ export class AuthService {
       ...payload,
       password: hashedPassword,
     });
+    if (!user) {
+      throw new BadRequestError("Failed to create user");
+    }
 
     return this.removePassword(user);
   }
@@ -43,6 +46,11 @@ export class AuthService {
     }
 
     return this.removePassword(user);
+  }
+
+  public async isLoggedIn(userId?: number) {
+    if (!userId) return null;
+    return this.authRepository.findUserById(userId);
   }
 
   public createToken(userId: number) {
