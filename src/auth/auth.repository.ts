@@ -17,8 +17,8 @@ export class AuthRepository {
   }
 
   public async findUserByEmail(email: string) {
-    const result = await pool.query<{ id: string }>(
-      "SELECT id FROM users WHERE email = $1",
+    const result = await pool.query<User>(
+      "SELECT id, username, email, password, created_at FROM users WHERE email = $1",
       [email]
     );
     return result.rows[0];
