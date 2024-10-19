@@ -27,20 +27,14 @@ export class AuthController extends Controller {
   ) => {
     try {
       const registeredUser = await this.authService.registerUser(request.body);
-      if (!registeredUser) {
-        return next();
-      }
+      if (!registeredUser) return next();
 
       response.cookie(
         "Authorization",
         this.authService.createToken(registeredUser.id),
-        {
-          maxAge: 5 * 60 * 60 * 1000, // 5 hours
-          httpOnly: true,
-          sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-        }
+        this.authService.cookieOptions()
       );
+
       response.json(registeredUser);
     } catch (error) {
       next(error);
