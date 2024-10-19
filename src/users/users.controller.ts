@@ -1,16 +1,14 @@
 import pool from "config/database";
-import { Router, NextFunction, Request, Response } from "express";
-import Controller from "interfaces/controller.interface";
+import { NextFunction, Request, Response } from "express";
+import { Controller } from "interfaces/controller.interface";
 
-class UsersController implements Controller {
-  public path = "/users";
-  public router = Router();
-
+class UsersController extends Controller {
   constructor() {
+    super("/users");
     this.initializeRoutes();
   }
 
-  public initializeRoutes() {
+  protected initializeRoutes() {
     this.router.get(this.path, this.getUsers);
     this.router.post(this.path, this.createUser);
   }

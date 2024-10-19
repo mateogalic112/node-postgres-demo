@@ -1,7 +1,7 @@
 import express from "express";
 import { env } from "config/env";
-import Controller from "interfaces/controller.interface";
 import errorMiddleware from "middleware/error.middleware";
+import { type Controller } from "interfaces/controller.interface";
 
 class App {
   private app: express.Application;

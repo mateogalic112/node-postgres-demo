@@ -1,8 +1,11 @@
 import { Router } from "express";
 
-interface Controller {
-  path: string;
-  router: Router;
-}
+export abstract class Controller {
+  public router: Router;
 
-export default Controller;
+  constructor(protected path: string) {
+    this.router = Router();
+  }
+
+  protected abstract initializeRoutes(): void;
+}
