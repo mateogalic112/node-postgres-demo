@@ -87,7 +87,7 @@ export class AuthController extends Controller {
 
   private logout = (_: Request, response: Response) => {
     response
-      .setHeader("Set-Cookie", ["Authentication=;Max-age=0"])
+      .setHeader("Set-Cookie", ["Authentication=; Max-Age=0; Path=/; HttpOnly"])
       .status(204)
       .end();
   };
