@@ -1,6 +1,7 @@
 import express from "express";
 import { env } from "config/env";
 import Controller from "interfaces/controller.interface";
+import errorMiddleware from "middleware/error.middleware";
 
 class App {
   private app: express.Application;
@@ -10,6 +11,8 @@ class App {
 
     this.initializeMiddlewares();
     this.initializeControllers(controllers);
+
+    this.app.use(errorMiddleware);
   }
 
   private initializeMiddlewares() {
