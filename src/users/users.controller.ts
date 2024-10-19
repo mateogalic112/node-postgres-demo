@@ -1,7 +1,8 @@
 import pool from "config/database";
 import { Router, NextFunction, Request, Response } from "express";
+import Controller from "interfaces/controller.interface";
 
-class UsersController {
+class UsersController implements Controller {
   public path = "/users";
   public router = Router();
 
