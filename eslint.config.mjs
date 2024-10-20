@@ -15,7 +15,18 @@ export default [
         }
       ],
       "@typescript-eslint/explicit-function-return-type": "off" // Disable explicit return type enforcement
-    }
+    },
+    ignores: [
+      "node_modules/", // Ignore dependencies
+      "dist/", // Ignore build directory
+      "*.js", // Ignore compiled JavaScript files
+      "*.d.ts", // Ignore TypeScript declaration files
+      "logs/", // Ignore log files
+      "*.log", // Ignore any log files
+      "coverage/", // Ignore coverage reports
+      ".env", // Ignore environment variables
+      "public/" // Ignore public static assets
+    ]
   },
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended
