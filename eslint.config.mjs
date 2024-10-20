@@ -14,7 +14,9 @@ export default [
           varsIgnorePattern: "^_" // Ignore unused variables starting with an underscore
         }
       ]
-    },
+    }
+  },
+  {
     ignores: [
       "node_modules/", // Ignore dependencies
       "dist/", // Ignore build directory
