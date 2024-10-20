@@ -5,7 +5,6 @@ function errorMiddleware(
   error: HttpError,
   request: Request,
   response: Response,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction
 ) {
   const status = error.status || 500;
