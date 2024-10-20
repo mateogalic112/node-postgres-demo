@@ -3,8 +3,8 @@ import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 export default [
-  { files: ["**/*.{ts}"] },
-  { languageOptions: { globals: globals.browser } },
+  { files: ["**/*.ts"] },
+  { languageOptions: { globals: globals.node } },
   {
     rules: {
       "@typescript-eslint/no-unused-vars": [
