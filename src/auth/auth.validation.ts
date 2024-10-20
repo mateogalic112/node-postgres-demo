@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const registerSchema = z.object({
   body: z.object({
@@ -8,7 +8,7 @@ export const registerSchema = z.object({
   }),
 });
 
-export type RegisterPayload = z.infer<typeof registerSchema>["body"];
+export type RegisterPayload = z.infer<typeof registerSchema>['body'];
 
 export const loginSchema = z.object({
   body: z.object({
@@ -17,4 +17,4 @@ export const loginSchema = z.object({
   }),
 });
 
-export type LoginPayload = z.infer<typeof loginSchema>["body"];
+export type LoginPayload = z.infer<typeof loginSchema>['body'];

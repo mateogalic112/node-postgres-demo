@@ -1,4 +1,4 @@
-import { RegisterPayload } from "auth/auth.validation";
+import { RegisterPayload } from 'auth/auth.validation';
 
 export interface User extends RegisterPayload {
   id: number;

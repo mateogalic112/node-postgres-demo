@@ -1,10 +1,10 @@
-import pool from "config/database";
-import { NextFunction, Request, Response } from "express";
-import { Controller } from "interfaces/controller.interface";
+import pool from 'config/database';
+import { NextFunction, Request, Response } from 'express';
+import { Controller } from 'interfaces/controller.interface';
 
 class UsersController extends Controller {
   constructor() {
-    super("/users");
+    super('/users');
     this.initializeRoutes();
   }
 
@@ -12,13 +12,9 @@ class UsersController extends Controller {
     this.router.get(this.path, this.getUsers);
   }
 
-  private getUsers = async (
-    _: Request,
-    response: Response,
-    next: NextFunction
-  ) => {
+  private getUsers = async (_: Request, response: Response, next: NextFunction) => {
     try {
-      const result = await pool.query("SELECT id, username, email FROM users");
+      const result = await pool.query('SELECT id, username, email FROM users');
       response.json({ users: result.rows });
     } catch (err) {
       next(err);

@@ -7,7 +7,8 @@
     "prestart": "tsup src/config --onSuccess \"node dist/database.js\"",
     "start": "node dist/server.js",
     "dev": "tsup src/server.ts --watch --onSuccess \"node dist/server.js\"",
-    "build": "tsup"
+    "build": "tsup",
+    "prettier:fix": "npx prettier --write ."
   },
   "keywords": [],
   "author": "",
