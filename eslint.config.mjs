@@ -13,8 +13,7 @@ export default [
           argsIgnorePattern: "^_", // Ignore unused arguments starting with an underscore
           varsIgnorePattern: "^_" // Ignore unused variables starting with an underscore
         }
-      ],
-      "@typescript-eslint/explicit-function-return-type": "off" // Disable explicit return type enforcement
+      ]
     },
     ignores: [
       "node_modules/", // Ignore dependencies
