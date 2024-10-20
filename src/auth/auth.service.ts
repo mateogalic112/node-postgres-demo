@@ -17,12 +17,9 @@ export class AuthService {
       throw new BadRequestError("User with that email already exists");
     }
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(payload.password, 10);
-
     const user = await this.authRepository.createUser({
       ...payload,
-      password: hashedPassword,
+      password: await bcrypt.hash(payload.password, 10), // Hash password
     });
     if (!user) {
       throw new BadRequestError("Failed to create user");
@@ -57,7 +54,7 @@ export class AuthService {
     return jwt.sign({ _id: userId }, env.JWT_SECRET, { expiresIn: 60 * 60 });
   }
 
-  public cookieOptions(): CookieOptions {
+  public createCookieOptions(): CookieOptions {
     return {
       maxAge: 5 * 60 * 60 * 1000, // 5 hours
       httpOnly: true,
