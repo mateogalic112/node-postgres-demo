@@ -6,7 +6,7 @@ export class AuthRepository {
   public async createUser(payload: RegisterPayload) {
     const result = await pool.query<User>(
       "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
-      [payload.username, payload.email, payload.password],
+      [payload.username, payload.email, payload.password]
     );
     return result.rows[0];
   }

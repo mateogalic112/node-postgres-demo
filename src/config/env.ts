@@ -12,5 +12,5 @@ export const env = cleanEnv(process.env, {
 
   PORT: port({ default: 5000 }),
 
-  JWT_SECRET: str(),
+  JWT_SECRET: str()
 });

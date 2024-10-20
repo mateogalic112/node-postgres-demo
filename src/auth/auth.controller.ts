@@ -28,7 +28,7 @@ export class AuthController extends Controller {
       response.cookie(
         "Authentication",
         this.authService.createToken(createdUser.id),
-        this.authService.createCookieOptions(),
+        this.authService.createCookieOptions()
       );
 
       response.status(201).json(createdUser);
@@ -45,7 +45,7 @@ export class AuthController extends Controller {
       response.cookie(
         "Authentication",
         this.authService.createToken(user.id),
-        this.authService.createCookieOptions(),
+        this.authService.createCookieOptions()
       );
 
       response.json(user);

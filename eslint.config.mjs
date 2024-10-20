@@ -11,12 +11,12 @@ export default [
         "warn",
         {
           argsIgnorePattern: "^_", // Ignore unused arguments starting with an underscore
-          varsIgnorePattern: "^_", // Ignore unused variables starting with an underscore
-        },
+          varsIgnorePattern: "^_" // Ignore unused variables starting with an underscore
+        }
       ],
-      "@typescript-eslint/explicit-function-return-type": "off", // Disable explicit return type enforcement
-    },
+      "@typescript-eslint/explicit-function-return-type": "off" // Disable explicit return type enforcement
+    }
   },
   pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommended
 ];

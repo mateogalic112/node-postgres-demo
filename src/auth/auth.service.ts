@@ -19,7 +19,7 @@ export class AuthService {
 
     const user = await this.authRepository.createUser({
       ...payload,
-      password: await bcrypt.hash(payload.password, 10), // Hash password
+      password: await bcrypt.hash(payload.password, 10) // Hash password
     });
     if (!user) {
       throw new BadRequestError("Failed to create user");
@@ -56,7 +56,7 @@ export class AuthService {
       maxAge: 5 * 60 * 60 * 1000, // 5 hours
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production"
     };
   }
 

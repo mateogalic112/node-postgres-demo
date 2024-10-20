@@ -7,7 +7,7 @@ const pool = new Pool({
   password: env.POSTGRES_PASSWORD,
   database: env.POSTGRES_DB,
   port: env.POSTGRES_PORT,
-  idleTimeoutMillis: 30000,
+  idleTimeoutMillis: 30000
 });
 
 export default pool;
