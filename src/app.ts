@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { env } from "config/env";
 import errorMiddleware from "middleware/error.middleware";
 import { type Controller } from "interfaces/controller.interface";
@@ -18,6 +19,12 @@ class App {
 
   private initializeMiddlewares() {
     this.app.use(express.json());
+    this.app.use(
+      cors({
+        origin: env.FRONTEND_URL,
+        credentials: true
+      })
+    );
     this.app.use(cookieParser());
   }
 
