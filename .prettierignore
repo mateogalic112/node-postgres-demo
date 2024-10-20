@@ -1,1 +1,38 @@
+# Ignore node_modules (dependencies)
+node_modules/
+
+# Ignore build or dist folders (if applicable)
+dist/
+
+# Ignore environment variables
+.env
+
+# Ignore package lock and yarn lock files
 yarn.lock
+
+# Ignore logs
+logs/
+*.log
+
+# Ignore coverage folder for tests
+coverage/
+
+# Ignore the public assets folder (if you don't want to format static files)
+public/
+
+# Ignore the database migration files or generated SQL files (if applicable)
+migrations/
+*.sql
+
+# Ignore any Docker-related files
+docker-compose.yml
+Dockerfile
+
+# Ignore configuration files for other tools or IDE-specific files
+*.config.js
+*.config.ts
+.idea/
+.vscode/
+
+# Ignore git files and folders
+.git/
