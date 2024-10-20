@@ -1,7 +1,7 @@
-import { HttpError } from './http.error';
+import { HttpError } from "./http.error";
 
 export class ForbiddenError extends HttpError {
   constructor(message?: string) {
-    super(403, message || 'Forbidden');
+    super(403, message || "Forbidden");
   }
 }

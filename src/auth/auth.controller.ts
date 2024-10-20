@@ -1,15 +1,15 @@
-import { Request, Response, NextFunction } from 'express';
-import validationMiddleware from 'middleware/validation.middleware';
-import { loginSchema, registerSchema } from './auth.validation';
-import { AuthService } from './auth.service';
-import { Controller } from 'interfaces/controller.interface';
-import authMiddleware from 'middleware/auth.middleware';
+import { Request, Response, NextFunction } from "express";
+import validationMiddleware from "middleware/validation.middleware";
+import { loginSchema, registerSchema } from "./auth.validation";
+import { AuthService } from "./auth.service";
+import { Controller } from "interfaces/controller.interface";
+import authMiddleware from "middleware/auth.middleware";
 
 export class AuthController extends Controller {
   private authService = new AuthService();
 
   constructor() {
-    super('/auth');
+    super("/auth");
     this.initializeRoutes();
   }
 
@@ -23,10 +23,10 @@ export class AuthController extends Controller {
   private register = async (request: Request, response: Response, next: NextFunction) => {
     try {
       const createdUser = await this.authService.registerUser(request.body);
-      if (!createdUser) return next('No user created');
+      if (!createdUser) return next("No user created");
 
       response.cookie(
-        'Authentication',
+        "Authentication",
         this.authService.createToken(createdUser.id),
         this.authService.createCookieOptions(),
       );
@@ -40,10 +40,10 @@ export class AuthController extends Controller {
   private login = async (request: Request, response: Response, next: NextFunction) => {
     try {
       const user = await this.authService.login(request.body);
-      if (!user) return next('No user found');
+      if (!user) return next("No user found");
 
       response.cookie(
-        'Authentication',
+        "Authentication",
         this.authService.createToken(user.id),
         this.authService.createCookieOptions(),
       );
@@ -67,7 +67,7 @@ export class AuthController extends Controller {
 
   private logout = (_: Request, response: Response) => {
     response
-      .setHeader('Set-Cookie', ['Authentication=; Max-Age=0; Path=/; HttpOnly'])
+      .setHeader("Set-Cookie", ["Authentication=; Max-Age=0; Path=/; HttpOnly"])
       .status(204)
       .end();
   };

@@ -29,8 +29,6 @@ docker-compose.yml
 Dockerfile
 
 # Ignore configuration files for other tools or IDE-specific files
-*.config.js
-*.config.ts
 .idea/
 .vscode/
 
