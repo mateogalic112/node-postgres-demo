@@ -35,7 +35,7 @@ export class AuthController extends Controller {
   ) => {
     try {
       const createdUser = await this.authService.registerUser(request.body);
-      if (!createdUser) return next();
+      if (!createdUser) return next("No user created");
 
       response.cookie(
         "Authentication",
@@ -56,7 +56,7 @@ export class AuthController extends Controller {
   ) => {
     try {
       const user = await this.authService.login(request.body);
-      if (!user) return next();
+      if (!user) return next("No user found");
 
       response.cookie(
         "Authentication",
