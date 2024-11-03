@@ -4,9 +4,6 @@ import { loginSchema, registerSchema } from "./auth.validation";
 import { AuthService } from "./auth.service";
 import { Controller } from "interfaces/controller.interface";
 import authMiddleware from "middleware/auth.middleware";
-import { UnauthorizedError } from "errors/unauthorized.error";
-import { NotFoundError } from "errors/not-found";
-import { BadRequestError } from "errors/bad-request.error";
 
 export class AuthController extends Controller {
   private authService = new AuthService();
@@ -26,14 +23,11 @@ export class AuthController extends Controller {
   private register = async (request: Request, response: Response, next: NextFunction) => {
     try {
       const createdUser = await this.authService.registerUser(request.body);
-      if (!createdUser) throw new BadRequestError("No user created");
-
       response.cookie(
         "Authentication",
         this.authService.createToken(createdUser.id),
         this.authService.createCookieOptions()
       );
-
       response.status(201).json(createdUser);
     } catch (error) {
       next(error);
@@ -43,14 +37,11 @@ export class AuthController extends Controller {
   private login = async (request: Request, response: Response, next: NextFunction) => {
     try {
       const user = await this.authService.login(request.body);
-      if (!user) throw new NotFoundError("No user found");
-
       response.cookie(
         "Authentication",
         this.authService.createToken(user.id),
         this.authService.createCookieOptions()
       );
-
       response.json(user);
     } catch (error) {
       next(error);
@@ -60,8 +51,6 @@ export class AuthController extends Controller {
   private isLoggedIn = async (request: Request, response: Response, next: NextFunction) => {
     try {
       const loggedUser = await this.authService.isLoggedIn(request.userId);
-      if (!loggedUser) throw new UnauthorizedError("User not logged in");
-
       response.json(loggedUser);
     } catch (error) {
       next(error);

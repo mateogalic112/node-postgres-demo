@@ -6,6 +6,8 @@ import { env } from "config/env";
 import { BadRequestError } from "errors/bad-request.error";
 import { CookieOptions } from "express";
 import { User } from "users/users.model";
+import { NotFoundError } from "errors/not-found";
+import { UnauthorizedError } from "errors/unauthorized.error";
 
 export class AuthService {
   private authRepository = new AuthRepository();
@@ -43,8 +45,16 @@ export class AuthService {
   }
 
   public async isLoggedIn(userId?: number) {
-    if (!userId) return null;
-    return this.authRepository.findUserById(userId);
+    if (!userId) {
+      throw new UnauthorizedError("User not logged in");
+    }
+
+    const user = await this.authRepository.findUserById(userId);
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    return this.removePassword(user);
   }
 
   public createToken(userId: number) {
