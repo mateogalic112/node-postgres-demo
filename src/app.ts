@@ -19,12 +19,7 @@ class App {
 
   private initializeMiddlewares() {
     this.app.use(express.json());
-    this.app.use(
-      cors({
-        origin: env.FRONTEND_URL,
-        credentials: true
-      })
-    );
+    this.app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
     this.app.use(cookieParser());
   }
 
