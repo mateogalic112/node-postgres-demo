@@ -57,12 +57,12 @@ Step 4 - Create entry in `Users table`
 curl -H 'Content-Type: application/json' \
 -d '{"username": "mateo", "email": "mateo@gmail.com"}' \
 -X POST \
-http://localhost:5000/api/v1/users
+http://localhost:4000/api/v1/users
 ```
 
 Step 4 - Get all users
 
 ```bash
 curl -H 'Content-Type: application/json' \
-http://localhost:5000/api/v1/users
+http://localhost:4000/api/v1/users
 ```
