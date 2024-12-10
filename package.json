@@ -7,6 +7,7 @@
     "prestart": "tsup src/config --onSuccess \"node dist/database.js\"",
     "start": "node dist/server.js",
     "dev": "tsup src/server.ts --watch --onSuccess \"node dist/server.js\"",
+    "seed": "tsx src/db/seed.ts",
     "build": "tsup",
     "prettier:fix": "npx prettier --write .",
     "lint": "eslint 'src/**/*.ts' --fix"
@@ -23,6 +24,7 @@
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.0",
+    "tsx": "^4.19.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
