@@ -11,7 +11,7 @@ const users: RegisterPayload[] = Array.from({ length: 2 }, () => ({
   password: "123456"
 }));
 
-const products: CreateProductPayload[] = Array.from({ length: 2 }, () => ({
+const products: CreateProductPayload[] = Array.from({ length: 200 }, () => ({
   name: faker.commerce.productName(),
   description: faker.commerce.productDescription(),
   price: +faker.commerce.price({ min: 100, max: 10000, dec: 0 })
