@@ -1,6 +1,7 @@
 import { PaginatedRequestParams, PaginatedResponse } from "interfaces/api.interface";
 import { ProductRepository } from "./products.repository";
 import { Product } from "./products.model";
+import { CreateProductPayload } from "./products.validation";
 
 export class ProductService {
   private productRepository = new ProductRepository();
@@ -12,5 +13,9 @@ export class ProductService {
       data: products,
       nextCursor: products.length === params.limit ? { id: products[products.length - 1].id } : null
     };
+  }
+
+  public async createProduct(payload: CreateProductPayload): Promise<Product> {
+    return this.productRepository.createProduct(payload);
   }
 }

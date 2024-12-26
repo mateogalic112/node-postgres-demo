@@ -2,6 +2,7 @@ import pool from "config/database";
 import { Product } from "./products.model";
 import { PaginatedRequestParams } from "interfaces/api.interface";
 import { QueryResult } from "pg";
+import { CreateProductPayload } from "./products.validation";
 
 export class ProductRepository {
   public async getProducts(params: PaginatedRequestParams) {
@@ -21,5 +22,13 @@ export class ProductRepository {
 
     const result = await queryPromise;
     return result.rows;
+  }
+
+  public async createProduct(product: CreateProductPayload) {
+    const result = await pool.query<Product>(
+      "INSERT INTO products (name, description, price) VALUES ($1, $2, $3) RETURNING *",
+      [product.name, product.description, product.price]
+    );
+    return result.rows[0];
   }
 }
