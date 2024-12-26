@@ -12,6 +12,7 @@ class UsersController extends Controller {
     this.router.get(this.path, this.getUsers);
   }
 
+  // TODO: For testing purposes only. Remove this in production.
   private getUsers = async (_: Request, response: Response, next: NextFunction) => {
     try {
       const result = await pool.query("SELECT id, username, email FROM users");
