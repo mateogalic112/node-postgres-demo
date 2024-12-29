@@ -26,7 +26,7 @@ export class ProductRepository {
 
   public async createProduct(product: CreateProductPayload) {
     const result = await pool.query<Product>(
-      "INSERT INTO products (name, description, price) VALUES ($1, $2, $3) RETURNING *",
+      "INSERT INTO products (name, description, price) VALUES ($1, $2, $3)",
       [product.name, product.description, product.price]
     );
     return result.rows[0];
