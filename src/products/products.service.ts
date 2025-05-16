@@ -4,7 +4,7 @@ import { Product } from "./products.model";
 import { CreateProductPayload } from "./products.validation";
 
 export class ProductService {
-  private productRepository = new ProductRepository();
+  constructor(private readonly productRepository: ProductRepository) {}
 
   public async getProducts(params: PaginatedRequestParams): Promise<PaginatedResponse<Product>> {
     const products = await this.productRepository.getProducts(params);

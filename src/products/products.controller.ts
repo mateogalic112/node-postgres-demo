@@ -3,9 +3,10 @@ import { ProductService } from "./products.service";
 import { Request, Response } from "express";
 import validationMiddleware from "middleware/validation.middleware";
 import { createProductSchema, PaginatedProductsRequestSchema } from "./products.validation";
+import { ProductRepository } from "./products.repository";
 
 export class ProductController extends Controller {
-  private productService = new ProductService();
+  private productService = new ProductService(new ProductRepository());
 
   constructor() {
     super("/products");
