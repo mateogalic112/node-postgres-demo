@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import validationMiddleware from "middleware/validation.middleware";
 import { createProductSchema, PaginatedProductsRequestSchema } from "./products.validation";
 import { ProductRepository } from "./products.repository";
+import authMiddleware from "middleware/auth.middleware";
 
 export class ProductController extends Controller {
   private productService = new ProductService(new ProductRepository());
@@ -19,7 +20,12 @@ export class ProductController extends Controller {
       validationMiddleware(PaginatedProductsRequestSchema),
       this.getProducts
     );
-    this.router.post(`${this.path}`, validationMiddleware(createProductSchema), this.createProduct);
+    this.router.post(
+      `${this.path}`,
+      authMiddleware,
+      validationMiddleware(createProductSchema),
+      this.createProduct
+    );
   }
 
   private getProducts = async (request: Request, response: Response) => {
