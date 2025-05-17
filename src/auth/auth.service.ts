@@ -41,14 +41,10 @@ export class AuthService {
   }
 
   public async isLoggedIn(userId?: number) {
-    if (!userId) {
-      throw new UnauthorizedError("User not logged in");
-    }
+    if (!userId) throw new UnauthorizedError("User not logged in");
 
     const user = await this.authRepository.findUserById(userId);
-    if (!user) {
-      throw new NotFoundError("User not found");
-    }
+    if (!user) throw new NotFoundError("User not found");
 
     return this.removePassword(user);
   }

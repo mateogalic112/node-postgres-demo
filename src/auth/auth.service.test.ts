@@ -3,6 +3,8 @@ import { AuthRepository } from "./auth.repository";
 import { BadRequestError } from "errors/bad-request.error";
 import { User } from "users/users.model";
 import * as bcrypt from "bcrypt";
+import { UnauthorizedError } from "errors/unauthorized.error";
+import { NotFoundError } from "errors/not-found";
 
 // Mock the AuthRepository
 jest.mock("./auth.repository");
@@ -91,7 +93,7 @@ describe("AuthService", () => {
       ).rejects.toThrow(BadRequestError);
     });
 
-    it("should throw BadRequestError for invalid credentials", async () => {
+    it("should throw an error for invalid credentials", async () => {
       mockAuthRepository.findUserByEmail.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
@@ -104,50 +106,23 @@ describe("AuthService", () => {
     });
   });
 
-  //   describe("check if user is logged in", () => {
-  //     it("should return user data if logged in", async () => {
-  //       mockAuthRepository.findUserById.mockResolvedValue(mockUser);
+  describe("check if user is logged in", () => {
+    it("should return user data if logged in", async () => {
+      mockAuthRepository.findUserById.mockResolvedValue(mockUser);
 
-  //       const result = await authService.isLoggedIn(1);
+      const result = await authService.isLoggedIn(1);
 
-  //       expect(result).toEqual({
-  //         id: mockUser.id,
-  //         username: mockUser.username,
-  //         email: mockUser.email
-  //       });
-  //     });
+      const { password: _password, ...userWithoutPassword } = mockUser;
+      expect(result).toMatchObject(userWithoutPassword);
+    });
 
-  //     it("should throw UnauthorizedError if no userId provided", async () => {
-  //       await expect(authService.isLoggedIn(undefined)).rejects.toThrow(UnauthorizedError);
-  //     });
+    it("should throw an error if no userId provided", async () => {
+      await expect(authService.isLoggedIn(undefined)).rejects.toThrow(UnauthorizedError);
+    });
 
-  //     it("should throw NotFoundError if user not found", async () => {
-  //       mockAuthRepository.findUserById.mockResolvedValue(undefined);
-
-  //       await expect(authService.isLoggedIn(1)).rejects.toThrow(NotFoundError);
-  //     });
-  //   });
-
-  //   describe("createToken", () => {
-  //     it("should create a valid JWT token", () => {
-  //       const userId = 1;
-  //       const token = authService.createToken(userId);
-
-  //       const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
-  //       expect(decoded).toHaveProperty("_id", userId);
-  //     });
-  //   });
-
-  //   describe("createCookieOptions", () => {
-  //     it("should return cookie options with correct properties", () => {
-  //       const options = authService.createCookieOptions();
-
-  //       expect(options).toEqual({
-  //         maxAge: 5 * 60 * 60 * 1000,
-  //         httpOnly: true,
-  //         sameSite: "lax",
-  //         secure: process.env.NODE_ENV === "production"
-  //       });
-  //     });
-  //   });
+    it("should throw an error if user not found", async () => {
+      mockAuthRepository.findUserById.mockResolvedValue(null);
+      await expect(authService.isLoggedIn(2)).rejects.toThrow(NotFoundError);
+    });
+  });
 });
