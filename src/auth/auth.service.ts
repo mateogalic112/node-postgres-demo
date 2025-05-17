@@ -13,7 +13,6 @@ export class AuthService {
   constructor(private readonly authRepository: AuthRepository) {}
 
   public async registerUser(payload: RegisterPayload) {
-    // Check if email already exists
     const foundUser = await this.authRepository.findUserByEmail(payload.email);
     if (foundUser) {
       throw new BadRequestError("User with that email already exists");
@@ -23,9 +22,6 @@ export class AuthService {
       ...payload,
       password: await bcrypt.hash(payload.password, 10) // Hash password
     });
-    if (!user) {
-      throw new BadRequestError("Failed to create user");
-    }
 
     return this.removePassword(user);
   }
