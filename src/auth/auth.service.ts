@@ -10,7 +10,7 @@ import { NotFoundError } from "errors/not-found";
 import { UnauthorizedError } from "errors/unauthorized.error";
 
 export class AuthService {
-  private authRepository = new AuthRepository();
+  constructor(private readonly authRepository: AuthRepository) {}
 
   public async registerUser(payload: RegisterPayload) {
     // Check if email already exists

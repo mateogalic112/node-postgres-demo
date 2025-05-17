@@ -4,9 +4,10 @@ import { loginSchema, registerSchema } from "./auth.validation";
 import { AuthService } from "./auth.service";
 import { Controller } from "interfaces/controller.interface";
 import authMiddleware from "middleware/auth.middleware";
+import { AuthRepository } from "./auth.repository";
 
 export class AuthController extends Controller {
-  private authService = new AuthService();
+  private authService = new AuthService(new AuthRepository());
 
   constructor() {
     super("/auth");
