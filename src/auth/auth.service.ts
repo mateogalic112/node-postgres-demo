@@ -3,20 +3,16 @@ import bcrypt from "bcrypt";
 import { LoginPayload, RegisterPayload } from "./auth.validation";
 import { AuthRepository } from "./auth.repository";
 import { env } from "config/env";
-import { BadRequestError } from "errors/bad-request.error";
 import { CookieOptions } from "express";
 import { User } from "users/users.model";
-import { NotFoundError } from "errors/not-found";
-import { UnauthorizedError } from "errors/unauthorized.error";
+import { BadRequestError, UnauthorizedError, NotFoundError } from "errors/http.error";
 
 export class AuthService {
   constructor(private readonly authRepository: AuthRepository) {}
 
   public async registerUser(payload: RegisterPayload) {
     const foundUser = await this.authRepository.findUserByEmail(payload.email);
-    if (foundUser) {
-      throw new BadRequestError("User with that email already exists");
-    }
+    if (foundUser) throw new BadRequestError("User with that email already exists");
 
     const user = await this.authRepository.createUser({
       ...payload,
@@ -28,14 +24,10 @@ export class AuthService {
 
   public async login(payload: LoginPayload) {
     const user = await this.authRepository.findUserByEmail(payload.email);
-    if (!user) {
-      throw new BadRequestError("Invalid email or password");
-    }
+    if (!user) throw new BadRequestError("Invalid email or password");
 
     const isPasswordCorrect = await bcrypt.compare(payload.password, user.password);
-    if (!isPasswordCorrect) {
-      throw new BadRequestError("Invalid email or password");
-    }
+    if (!isPasswordCorrect) throw new BadRequestError("Invalid email or password");
 
     return this.removePassword(user);
   }

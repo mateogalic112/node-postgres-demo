@@ -1,7 +1,7 @@
 import { NextFunction, Response, Request } from "express";
 import pool from "config/database";
 import jwt from "jsonwebtoken";
-import { UnauthorizedError } from "errors/unauthorized.error";
+import { UnauthorizedError } from "errors/http.error";
 import { env } from "config/env";
 
 async function authMiddleware(request: Request, _: Response, next: NextFunction) {

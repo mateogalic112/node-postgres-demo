@@ -1,4 +1,4 @@
-import { BadRequestError } from "errors/bad-request.error";
+import { BadRequestError } from "errors/http.error";
 import type { Request, Response, NextFunction } from "express";
 import { AnyZodObject, ZodError } from "zod";
 

@@ -1,10 +1,8 @@
 import { AuthService } from "./auth.service";
 import { AuthRepository } from "./auth.repository";
-import { BadRequestError } from "errors/bad-request.error";
 import { User } from "users/users.model";
 import * as bcrypt from "bcrypt";
-import { UnauthorizedError } from "errors/unauthorized.error";
-import { NotFoundError } from "errors/not-found";
+import { BadRequestError, UnauthorizedError, NotFoundError } from "errors/http.error";
 
 // Mock the AuthRepository
 jest.mock("./auth.repository");

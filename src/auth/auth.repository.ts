@@ -10,6 +10,7 @@ export class AuthRepository {
       [payload.username, payload.email, payload.password]
     );
     if (result.rowCount === 0) throw new InternalServerError("Failed to create user");
+
     return result.rows[0];
   }
 
