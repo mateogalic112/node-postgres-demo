@@ -18,19 +18,16 @@ const products: CreateProductPayload[] = Array.from({ length: 200 }, () => ({
 }));
 
 export async function seedDatabase() {
-  await initializeDatabase();
-
-  const client = await pool.connect();
   try {
-    await client.query("BEGIN");
+    await initializeDatabase();
 
     // Clear the users table
-    await client.query("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
-    await client.query("TRUNCATE TABLE products RESTART IDENTITY CASCADE");
+    await pool.query("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
+    await pool.query("TRUNCATE TABLE products RESTART IDENTITY CASCADE");
 
     for (const { username, email, password } of users) {
       const hashedPassword = await bcrypt.hash(password, 10);
-      await client.query(`INSERT INTO users (username, email, password) VALUES ($1, $2, $3)`, [
+      await pool.query(`INSERT INTO users (username, email, password) VALUES ($1, $2, $3)`, [
         username,
         email,
         hashedPassword
@@ -38,22 +35,13 @@ export async function seedDatabase() {
     }
 
     for (const { name, description, price } of products) {
-      await client.query(`INSERT INTO products (name, description, price) VALUES ($1, $2, $3)`, [
+      await pool.query(`INSERT INTO products (name, description, price) VALUES ($1, $2, $3)`, [
         name,
         description,
         price
       ]);
     }
-    await client.query("COMMIT");
   } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
+    console.error("Database seeding failed:", error);
   }
 }
-
-seedDatabase()
-  .then(() => console.log("Database seeded successfully"))
-  .catch((error) => console.error("Database seeding failed:", error))
-  .finally(() => pool.end());

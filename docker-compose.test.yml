@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  test-db:
+    image: postgres:14
+    container_name: pg-test-db
+    ports:
+      - "5433:5432" # Expose port 5433 on host
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: node-postgres-demo-test

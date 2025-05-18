@@ -8,7 +8,7 @@ import { initializeDatabase } from "db/setup";
 import loggerMiddleware from "middleware/logger.middleware";
 
 class App {
-  private app: express.Application;
+  public app: express.Application;
 
   constructor(controllers: Controller[]) {
     this.app = express();

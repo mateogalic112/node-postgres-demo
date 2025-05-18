@@ -2,6 +2,10 @@ import { NextFunction, Response, Request } from "express";
 import { LoggerService } from "services/logger.service";
 
 async function loggerMiddleware(request: Request, response: Response, next: NextFunction) {
+  if (process.env.NODE_ENV === "test") {
+    return next();
+  }
+
   const start = process.hrtime();
   const logger = LoggerService.getInstance();
 

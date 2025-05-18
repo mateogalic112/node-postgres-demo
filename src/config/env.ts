@@ -2,7 +2,7 @@ import { config } from "dotenv";
 import { cleanEnv, port, str, url } from "envalid";
 
 config({
-  path: ".env.local"
+  path: process.env.NODE_ENV === "test" ? ".env.test" : ".env.local"
 });
 
 export const env = cleanEnv(process.env, {
