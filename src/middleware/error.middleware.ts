@@ -1,5 +1,6 @@
 import { HttpError } from "errors/http.error";
 import { NextFunction, Request, Response } from "express";
+import { LoggerService } from "services/logger.service";
 
 function errorMiddleware(
   error: HttpError,
@@ -13,6 +14,10 @@ function errorMiddleware(
     status,
     message
   });
+
+  LoggerService.getInstance().error(
+    `[ERROR] ${error.name} ${status}: ${error.message} ${error.stack}`
+  );
 }
 
 export default errorMiddleware;

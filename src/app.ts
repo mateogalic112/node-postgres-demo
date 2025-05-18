@@ -5,6 +5,7 @@ import errorMiddleware from "middleware/error.middleware";
 import { type Controller } from "interfaces/controller.interface";
 import cookieParser from "cookie-parser";
 import { initializeDatabase } from "db/setup";
+import loggerMiddleware from "middleware/logger.middleware";
 
 class App {
   private app: express.Application;
@@ -24,6 +25,7 @@ class App {
     this.app.use(express.json());
     this.app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
     this.app.use(cookieParser());
+    this.app.use(loggerMiddleware);
   }
 
   private initializeControllers(controllers: Controller[]) {
