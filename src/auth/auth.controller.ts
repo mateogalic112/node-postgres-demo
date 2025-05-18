@@ -24,12 +24,14 @@ export class AuthController extends Controller {
   private register = async (request: Request, response: Response, next: NextFunction) => {
     try {
       const createdUser = await this.authService.registerUser(request.body);
-      response.cookie(
-        "Authentication",
-        this.authService.createToken(createdUser.id),
-        this.authService.createCookieOptions()
-      );
-      response.status(201).json(createdUser);
+      response
+        .cookie(
+          "Authentication",
+          this.authService.createToken(createdUser.id),
+          this.authService.createCookieOptions()
+        )
+        .status(201)
+        .json(createdUser);
     } catch (error) {
       next(error);
     }
@@ -38,12 +40,13 @@ export class AuthController extends Controller {
   private login = async (request: Request, response: Response, next: NextFunction) => {
     try {
       const user = await this.authService.login(request.body);
-      response.cookie(
-        "Authentication",
-        this.authService.createToken(user.id),
-        this.authService.createCookieOptions()
-      );
-      response.json(user);
+      response
+        .cookie(
+          "Authentication",
+          this.authService.createToken(user.id),
+          this.authService.createCookieOptions()
+        )
+        .json(user);
     } catch (error) {
       next(error);
     }
