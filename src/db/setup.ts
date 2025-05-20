@@ -1,6 +1,6 @@
 import pool from "config/database";
 
-async function createTables() {
+export async function createTables() {
   await pool.query(`
         CREATE TABLE IF NOT EXISTS users (
           id SERIAL PRIMARY KEY,
@@ -27,6 +27,8 @@ async function createTables() {
 
 // Run the table creation and seeding process
 export const initializeDatabase = async () => {
+  if (process.env.NODE_ENV === "test") return;
+
   try {
     await createTables();
   } catch (error) {

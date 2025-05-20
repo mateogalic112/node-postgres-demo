@@ -1,6 +1,6 @@
 import pool from "config/database";
 import bcrypt from "bcrypt";
-import { initializeDatabase } from "./setup";
+import { createTables } from "./setup";
 import { RegisterPayload } from "auth/auth.validation";
 import { CreateProductPayload } from "products/products.validation";
 import { faker } from "@faker-js/faker";
@@ -19,7 +19,7 @@ const products: CreateProductPayload[] = Array.from({ length: 200 }, () => ({
 
 export async function seedDatabase() {
   try {
-    await initializeDatabase();
+    await createTables();
 
     // Clear the users table
     await pool.query("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
