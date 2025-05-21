@@ -25,6 +25,15 @@ export async function createTables() {
     `);
 }
 
+export async function clearAllTables() {
+  try {
+    await pool.query("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
+    await pool.query("TRUNCATE TABLE products RESTART IDENTITY CASCADE");
+  } catch (err) {
+    console.error("failed to clear tables", err);
+  }
+}
+
 // Run the table creation and seeding process
 export const initializeDatabase = async () => {
   if (process.env.NODE_ENV === "test") return;

@@ -13,10 +13,12 @@ export class LoggerService {
   }
 
   public log(message: string) {
+    if (process.env.NODE_ENV === "test") return;
     this.logger.info(message);
   }
 
   public error(message: string) {
+    if (process.env.NODE_ENV === "test") return;
     this.logger.error(message);
   }
 
