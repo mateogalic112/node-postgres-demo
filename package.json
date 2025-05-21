@@ -11,8 +11,7 @@
     "build": "tsup",
     "prettier:fix": "npx prettier --write .",
     "lint": "eslint 'src/**/*.ts' --fix",
-    "test": "NODE_ENV=test npx jest --detectOpenHandles",
-    "test:coverage": "jest --coverage"
+    "test": "./run-tests.sh"
   },
   "keywords": [],
   "author": "",
