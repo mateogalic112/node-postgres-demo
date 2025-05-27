@@ -2,9 +2,10 @@ import { Controller } from "interfaces/controller.interface";
 import { ProductService } from "./products.service";
 import { Request, Response } from "express";
 import validationMiddleware from "middleware/validation.middleware";
-import { createProductSchema, PaginatedProductsRequestSchema } from "./products.validation";
+import { createProductSchema } from "./products.validation";
 import { ProductRepository } from "./products.repository";
 import authMiddleware from "middleware/auth.middleware";
+import { PaginatedRequestSchema } from "validations/api.validation";
 
 export class ProductController extends Controller {
   private productService = new ProductService(new ProductRepository());
@@ -15,11 +16,7 @@ export class ProductController extends Controller {
   }
 
   protected initializeRoutes() {
-    this.router.get(
-      `${this.path}`,
-      validationMiddleware(PaginatedProductsRequestSchema),
-      this.getProducts
-    );
+    this.router.get(`${this.path}`, validationMiddleware(PaginatedRequestSchema), this.getProducts);
     this.router.post(
       `${this.path}`,
       authMiddleware,
