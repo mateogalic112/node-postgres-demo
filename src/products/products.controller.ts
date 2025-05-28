@@ -18,13 +18,17 @@ export class ProductController extends Controller {
     this.router.get(
       `${this.path}`,
       validationMiddleware(PaginatedRequestSchema),
-      async (request, response) => {
-        const { limit, cursor } = request.query;
-        const products = await this.productService.getProducts({
-          limit,
-          cursor
-        });
-        response.json(products);
+      async (request, response, next) => {
+        try {
+          const { limit, cursor } = request.query;
+          const products = await this.productService.getProducts({
+            limit,
+            cursor
+          });
+          response.json(products);
+        } catch (error) {
+          next(error);
+        }
       }
     );
 
@@ -32,9 +36,13 @@ export class ProductController extends Controller {
       `${this.path}`,
       authMiddleware,
       validationMiddleware(createProductSchema),
-      async (request, response) => {
-        const product = await this.productService.createProduct(request.body);
-        response.status(201).json(product);
+      async (request, response, next) => {
+        try {
+          const product = await this.productService.createProduct(request.body);
+          response.status(201).json(product);
+        } catch (error) {
+          next(error);
+        }
       }
     );
   }
