@@ -1,10 +1,10 @@
 import { Controller } from "interfaces/controller.interface";
 import { ProductService } from "./products.service";
-import validationMiddleware from "middleware/validation.middleware";
 import { createProductSchema } from "./products.validation";
 import { ProductRepository } from "./products.repository";
 import authMiddleware from "middleware/auth.middleware";
 import { PaginatedRequestSchema } from "validations/api.validation";
+import asyncMiddleware from "middleware/async.middleware";
 
 export class ProductController extends Controller {
   private productService = new ProductService(new ProductRepository());
@@ -15,35 +15,22 @@ export class ProductController extends Controller {
   }
 
   protected initializeRoutes() {
-    this.router.get(
-      `${this.path}`,
-      validationMiddleware(PaginatedRequestSchema),
-      async (request, response, next) => {
-        try {
-          const { limit, cursor } = request.query;
-          const products = await this.productService.getProducts({
-            limit,
-            cursor
-          });
-          response.json(products);
-        } catch (error) {
-          next(error);
-        }
-      }
-    );
-
-    this.router.post(
-      `${this.path}`,
-      authMiddleware,
-      validationMiddleware(createProductSchema),
-      async (request, response, next) => {
-        try {
-          const product = await this.productService.createProduct(request.body);
-          response.status(201).json(product);
-        } catch (error) {
-          next(error);
-        }
-      }
-    );
+    this.router.get(`${this.path}`, this.getProducts);
+    this.router.post(`${this.path}`, authMiddleware, this.createProduct);
   }
+
+  private getProducts = asyncMiddleware(async (request, response) => {
+    const { limit, cursor } = PaginatedRequestSchema.parse(request).query;
+    const products = await this.productService.getProducts({
+      limit,
+      cursor
+    });
+    response.json(products);
+  });
+
+  private createProduct = asyncMiddleware(async (request, response) => {
+    const payload = createProductSchema.parse(request).body;
+    const product = await this.productService.createProduct(payload);
+    response.status(201).json(product);
+  });
 }

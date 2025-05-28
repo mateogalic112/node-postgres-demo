@@ -1,7 +1,7 @@
 import { AuthService } from "./auth.service";
 import { AuthRepository } from "./auth.repository";
 import * as bcrypt from "bcrypt";
-import { BadRequestError, UnauthorizedError, NotFoundError } from "errors/http.error";
+import { BadRequestError, UnauthorizedError } from "errors/http.error";
 import { User } from "users/users.validation";
 
 // Mock the AuthRepository
@@ -108,7 +108,7 @@ describe("AuthService", () => {
     it("should return user data if logged in", async () => {
       mockAuthRepository.findUserById.mockResolvedValue(mockUser);
 
-      const result = await authService.isLoggedIn(1);
+      const result = await authService.isLoggedIn(mockUser);
 
       const { password: _password, ...userWithoutPassword } = mockUser;
       expect(result).toMatchObject(userWithoutPassword);
@@ -120,7 +120,7 @@ describe("AuthService", () => {
 
     it("should throw an error if user not found", async () => {
       mockAuthRepository.findUserById.mockResolvedValue(null);
-      await expect(authService.isLoggedIn(2)).rejects.toThrow(NotFoundError);
+      await expect(authService.isLoggedIn()).rejects.toThrow(UnauthorizedError);
     });
   });
 });

@@ -5,7 +5,7 @@ import { AuthRepository } from "./auth.repository";
 import { env } from "config/env";
 import { CookieOptions } from "express";
 import { User } from "users/users.validation";
-import { BadRequestError, UnauthorizedError, NotFoundError } from "errors/http.error";
+import { BadRequestError, UnauthorizedError } from "errors/http.error";
 
 export class AuthService {
   constructor(private readonly authRepository: AuthRepository) {}
@@ -32,12 +32,8 @@ export class AuthService {
     return this.removePassword(user);
   }
 
-  public async isLoggedIn(userId?: number) {
-    if (!userId) throw new UnauthorizedError("User not logged in");
-
-    const user = await this.authRepository.findUserById(userId);
-    if (!user) throw new NotFoundError("User not found");
-
+  public async isLoggedIn(user?: User) {
+    if (!user) throw new UnauthorizedError("User not logged in");
     return this.removePassword(user);
   }
 
