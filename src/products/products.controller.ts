@@ -1,6 +1,5 @@
 import { Controller } from "interfaces/controller.interface";
 import { ProductService } from "./products.service";
-import { type Request, type Response } from "express";
 import validationMiddleware from "middleware/validation.middleware";
 import { createProductSchema } from "./products.validation";
 import { ProductRepository } from "./products.repository";
@@ -16,24 +15,27 @@ export class ProductController extends Controller {
   }
 
   protected initializeRoutes() {
-    this.router.get(`${this.path}`, this.getProducts);
+    this.router.get(
+      `${this.path}`,
+      validationMiddleware(PaginatedRequestSchema),
+      async (request, response) => {
+        const { limit, cursor } = request.query;
+        const products = await this.productService.getProducts({
+          limit,
+          cursor
+        });
+        response.json(products);
+      }
+    );
+
     this.router.post(
       `${this.path}`,
       authMiddleware,
       validationMiddleware(createProductSchema),
-      this.createProduct
+      async (request, response) => {
+        const product = await this.productService.createProduct(request.body);
+        response.status(201).json(product);
+      }
     );
   }
-
-  private getProducts = async (request: Request, response: Response) => {
-    const { limit, cursor } = PaginatedRequestSchema.parse(request).query;
-
-    const products = await this.productService.getProducts({ limit, cursor });
-    response.json(products);
-  };
-
-  private createProduct = async (request: Request, response: Response) => {
-    const product = await this.productService.createProduct(request.body);
-    response.status(201).json(product);
-  };
 }

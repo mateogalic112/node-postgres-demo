@@ -1,9 +1,16 @@
 import { BadRequestError } from "errors/http.error";
 import type { RequestHandler } from "express";
-import { AnyZodObject, ZodError } from "zod";
+import { ZodError, z } from "zod";
 
 const validationMiddleware =
-  (schema: AnyZodObject): RequestHandler =>
+  <T extends z.ZodType<{ body?: unknown; query?: unknown; params?: unknown }>>(
+    schema: T
+  ): RequestHandler<
+    z.infer<T>["params"] extends undefined ? object : z.infer<T>["params"],
+    unknown,
+    z.infer<T>["body"] extends undefined ? unknown : z.infer<T>["body"],
+    z.infer<T>["query"] extends undefined ? object : z.infer<T>["query"]
+  > =>
   async (req, _, next) => {
     try {
       await schema.parseAsync({
