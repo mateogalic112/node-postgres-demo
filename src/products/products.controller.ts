@@ -16,7 +16,7 @@ export class ProductController extends Controller {
   }
 
   protected initializeRoutes() {
-    this.router.get(`${this.path}`, validationMiddleware(PaginatedRequestSchema), this.getProducts);
+    this.router.get(`${this.path}`, this.getProducts);
     this.router.post(
       `${this.path}`,
       authMiddleware,
@@ -26,12 +26,9 @@ export class ProductController extends Controller {
   }
 
   private getProducts = async (request: Request, response: Response) => {
-    const { limit, cursor } = request.query;
+    const { limit, cursor } = PaginatedRequestSchema.parse(request).query;
 
-    const products = await this.productService.getProducts({
-      limit: Number(limit),
-      cursor: cursor ? Number(cursor) : null
-    });
+    const products = await this.productService.getProducts({ limit, cursor });
     response.json(products);
   };
 
