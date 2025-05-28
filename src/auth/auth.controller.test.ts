@@ -2,8 +2,8 @@ import App from "app";
 import { AuthController } from "./auth.controller";
 import request from "supertest";
 import pool from "config/database";
-import { seedDatabase } from "db/seed";
-import { clearAllTables } from "db/setup";
+import { seedDatabase } from "database/seed";
+import { clearAllTables } from "database/setup";
 
 const app = new App([new AuthController()]);
 

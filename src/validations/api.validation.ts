@@ -16,4 +16,4 @@ export const PaginatedRequestSchema = z.object({
   })
 });
 
-export type PaginatedRequestParams = z.infer<typeof PaginatedRequestSchema.shape.query>;
+export type PaginatedRequestParams = z.infer<typeof PaginatedRequestSchema>["query"];

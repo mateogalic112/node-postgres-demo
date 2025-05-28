@@ -13,7 +13,7 @@ module.exports = {
     "^users/(.*)$": "<rootDir>/src/users/$1",
     "^middleware/(.*)$": "<rootDir>/src/middleware/$1",
     "^services/(.*)$": "<rootDir>/src/services/$1",
-    "^db/(.*)$": "<rootDir>/src/db/$1",
+    "^database/(.*)$": "<rootDir>/src/database/$1",
     "^interfaces/(.*)$": "<rootDir>/src/interfaces/$1",
     "^app$": "<rootDir>/src/app"
   },
