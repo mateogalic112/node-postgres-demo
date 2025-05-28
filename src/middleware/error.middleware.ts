@@ -5,7 +5,9 @@ export const errorMiddleware: ErrorRequestHandler = (error, _request, response, 
   const status = error.status || 500;
   const message = error.message || "Something went wrong";
 
-  LoggerService.getInstance().error(`[ERROR] ${error.name} ${status}: ${error.message} ${error.stack}`);
+  LoggerService.getInstance().error(
+    `[ERROR] ${error.name} ${status}: ${error.message} ${error.stack}`
+  );
 
   response.status(status).json({
     status,

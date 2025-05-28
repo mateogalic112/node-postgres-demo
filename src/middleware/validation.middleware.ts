@@ -17,7 +17,12 @@ type InferRequest<T extends RequestSchema> = {
 const validationMiddleware =
   <T extends RequestSchema>(
     schema: T
-  ): RequestHandler<InferRequest<T>["params"], unknown, InferRequest<T>["body"], InferRequest<T>["query"]> =>
+  ): RequestHandler<
+    InferRequest<T>["params"],
+    unknown,
+    InferRequest<T>["body"],
+    InferRequest<T>["query"]
+  > =>
   async (req, _, next) => {
     const result = schema.safeParse(req);
     if (!result.success) {
