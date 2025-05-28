@@ -1,10 +1,10 @@
-import { NextFunction, Response, Request } from "express";
+import type { RequestHandler, Request } from "express";
 import pool from "config/database";
 import jwt from "jsonwebtoken";
 import { UnauthorizedError } from "errors/http.error";
 import { env } from "config/env";
 
-async function authMiddleware(request: Request, _: Response, next: NextFunction) {
+export const authMiddleware: RequestHandler = async (request: Request, _, next) => {
   const token = request.cookies.Authentication;
   if (!token) return next(new UnauthorizedError());
 
@@ -17,6 +17,6 @@ async function authMiddleware(request: Request, _: Response, next: NextFunction)
   request.userId = decoded._id;
 
   next();
-}
+};
 
 export default authMiddleware;

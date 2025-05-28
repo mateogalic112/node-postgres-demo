@@ -1,7 +1,7 @@
-import { NextFunction, Response, Request } from "express";
+import type { RequestHandler } from "express";
 import { LoggerService } from "services/logger.service";
 
-async function loggerMiddleware(request: Request, response: Response, next: NextFunction) {
+export const loggerMiddleware: RequestHandler = (request, response, next) => {
   if (process.env.NODE_ENV === "test") {
     return next();
   }
@@ -29,6 +29,6 @@ async function loggerMiddleware(request: Request, response: Response, next: Next
   });
 
   next();
-}
+};
 
 export default loggerMiddleware;
