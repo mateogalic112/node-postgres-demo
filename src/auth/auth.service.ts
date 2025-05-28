@@ -4,7 +4,7 @@ import { LoginPayload, RegisterPayload } from "./auth.validation";
 import { AuthRepository } from "./auth.repository";
 import { env } from "config/env";
 import { CookieOptions } from "express";
-import { User } from "users/users.validation";
+import { User, userSchema } from "users/users.validation";
 import { BadRequestError, UnauthorizedError } from "errors/http.error";
 
 export class AuthService {
@@ -19,7 +19,9 @@ export class AuthService {
       password: await bcrypt.hash(payload.password, 10) // Hash password
     });
 
-    return this.removePassword(user);
+    const parsedUser = userSchema.parse(user);
+
+    return this.removePassword(parsedUser);
   }
 
   public async login(payload: LoginPayload) {
@@ -29,7 +31,9 @@ export class AuthService {
     const isPasswordCorrect = await bcrypt.compare(payload.password, user.password);
     if (!isPasswordCorrect) throw new BadRequestError("Invalid email or password");
 
-    return this.removePassword(user);
+    const parsedUser = userSchema.parse(user);
+
+    return this.removePassword(parsedUser);
   }
 
   public async isLoggedIn(user?: User) {

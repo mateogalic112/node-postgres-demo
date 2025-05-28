@@ -4,6 +4,8 @@ import { Controller } from "interfaces/controller.interface";
 import authMiddleware from "middleware/auth.middleware";
 import { AuthRepository } from "./auth.repository";
 import asyncMiddleware from "middleware/async.middleware";
+import { AUTH_COOKIE_NAME } from "./auth.constants";
+import { userSchema } from "users/users.validation";
 
 export class AuthController extends Controller {
   private authService = new AuthService(new AuthRepository());
@@ -25,7 +27,7 @@ export class AuthController extends Controller {
     const createdUser = await this.authService.registerUser(payload);
     response
       .cookie(
-        "Authentication",
+        AUTH_COOKIE_NAME,
         this.authService.createToken(createdUser.id),
         this.authService.createCookieOptions()
       )
@@ -38,7 +40,7 @@ export class AuthController extends Controller {
     const user = await this.authService.login(payload);
     response
       .cookie(
-        "Authentication",
+        AUTH_COOKIE_NAME,
         this.authService.createToken(user.id),
         this.authService.createCookieOptions()
       )
@@ -46,13 +48,14 @@ export class AuthController extends Controller {
   });
 
   private me = asyncMiddleware(async (_, response) => {
-    const loggedUser = await this.authService.isLoggedIn(response.locals.user);
+    const parsedUser = userSchema.parse(response.locals.user);
+    const loggedUser = await this.authService.isLoggedIn(parsedUser);
     response.json(loggedUser);
   });
 
   private logoutUser = asyncMiddleware(async (_, response) => {
     response
-      .setHeader("Set-Cookie", ["Authentication=; Max-Age=0; Path=/; HttpOnly"])
+      .setHeader(`Set-Cookie`, [`${AUTH_COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly`])
       .status(204)
       .end();
   });
