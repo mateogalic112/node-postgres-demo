@@ -2,7 +2,7 @@
   "name": "postgres-demo",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/server.js",
   "scripts": {
     "prestart": "tsup src/config --onSuccess \"node dist/database.js\"",
     "start": "node dist/server.js",
@@ -12,6 +12,12 @@
     "prettier:fix": "npx prettier --write .",
     "lint": "eslint 'src/**/*.ts' --fix",
     "test": "./run-tests.sh"
+  },
+  "tsup": {
+    "entry": [
+      "src/server.ts"
+    ],
+    "sourcemap": true
   },
   "keywords": [],
   "author": "",
