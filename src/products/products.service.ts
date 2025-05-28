@@ -1,7 +1,8 @@
-import { PaginatedRequestParams, PaginatedResponse } from "interfaces/api.interface";
+import { PaginatedResponse } from "interfaces/api.interface";
 import { ProductRepository } from "./products.repository";
 import { Product } from "./products.model";
 import { CreateProductPayload } from "./products.validation";
+import { PaginatedRequestParams } from "validations/api.validation";
 
 export class ProductService {
   constructor(private readonly productRepository: ProductRepository) {}

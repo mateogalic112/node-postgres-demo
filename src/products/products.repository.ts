@@ -1,7 +1,7 @@
 import pool from "config/database";
 import { Product } from "./products.model";
-import { PaginatedRequestParams } from "interfaces/api.interface";
 import { CreateProductPayload } from "./products.validation";
+import { PaginatedRequestParams } from "validations/api.validation";
 
 export class ProductRepository {
   public async getProducts(params: PaginatedRequestParams) {

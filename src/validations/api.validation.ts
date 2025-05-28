@@ -15,3 +15,5 @@ export const PaginatedRequestSchema = z.object({
       .nullable()
   })
 });
+
+export type PaginatedRequestParams = z.infer<typeof PaginatedRequestSchema.shape.query>;
