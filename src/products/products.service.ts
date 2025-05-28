@@ -1,7 +1,6 @@
 import { PaginatedResponse } from "interfaces/api.interface";
 import { ProductRepository } from "./products.repository";
-import { Product } from "./products.model";
-import { CreateProductPayload } from "./products.validation";
+import { CreateProductPayload, Product, productSchema } from "./products.validation";
 import { PaginatedRequestParams } from "validations/api.validation";
 
 export class ProductService {
@@ -9,9 +8,10 @@ export class ProductService {
 
   public async getProducts(params: PaginatedRequestParams): Promise<PaginatedResponse<Product>> {
     const products = await this.productRepository.getProducts(params);
+    const parsedProducts = products.map((product) => productSchema.parse(product));
 
     return {
-      data: products,
+      data: parsedProducts,
       nextCursor: products.length === params.limit ? { id: products[products.length - 1].id } : null
     };
   }

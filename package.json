@@ -7,7 +7,7 @@
     "prestart": "tsup src/config --onSuccess \"node dist/database.js\"",
     "start": "node dist/server.js",
     "dev": "tsup src/server.ts --watch --onSuccess \"node dist/server.js\"",
-    "seed": "tsx src/db/seed.ts",
+    "seed": "tsx src/database/seed.ts",
     "build": "tsup",
     "prettier:fix": "npx prettier --write .",
     "lint": "eslint 'src/**/*.ts' --fix",

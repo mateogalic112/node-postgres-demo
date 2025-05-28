@@ -4,7 +4,7 @@ import { LoginPayload, RegisterPayload } from "./auth.validation";
 import { AuthRepository } from "./auth.repository";
 import { env } from "config/env";
 import { CookieOptions } from "express";
-import { User } from "users/users.model";
+import { User } from "users/users.validation";
 import { BadRequestError, UnauthorizedError, NotFoundError } from "errors/http.error";
 
 export class AuthService {

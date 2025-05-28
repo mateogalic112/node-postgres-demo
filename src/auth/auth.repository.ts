@@ -1,6 +1,6 @@
 import pool from "config/database";
 import { RegisterPayload } from "./auth.validation";
-import { User } from "users/users.model";
+import { User } from "users/users.validation";
 import { InternalServerError } from "errors/http.error";
 
 export class AuthRepository {
