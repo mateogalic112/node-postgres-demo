@@ -1,6 +1,6 @@
 import { Controller } from "interfaces/controller.interface";
 import { ProductService } from "./products.service";
-import { Request, Response } from "express";
+import { type Request, type Response } from "express";
 import validationMiddleware from "middleware/validation.middleware";
 import { createProductSchema } from "./products.validation";
 import { ProductRepository } from "./products.repository";
@@ -26,12 +26,12 @@ export class ProductController extends Controller {
   }
 
   private getProducts = async (request: Request, response: Response) => {
-    const params = request.query;
+    const { limit, cursor } = request.query;
 
-    const limit = parseInt(params.limit as string, 10);
-    const cursor = params.cursor ? parseInt(params.cursor as string, 10) : null;
-
-    const products = await this.productService.getProducts({ limit, cursor });
+    const products = await this.productService.getProducts({
+      limit: Number(limit),
+      cursor: cursor ? Number(cursor) : null
+    });
     response.json(products);
   };
 
