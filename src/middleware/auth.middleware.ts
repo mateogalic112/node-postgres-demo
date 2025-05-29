@@ -12,7 +12,10 @@ export const authMiddleware: RequestHandler = async (request: Request, response,
   const decoded = jwt.verify(token, env.JWT_SECRET) as { _id: number };
   if (!decoded._id) return next(new UnauthorizedError());
 
-  const result = await pool.query("SELECT id FROM users WHERE id = $1", [decoded._id]);
+  const result = await pool.query(
+    "SELECT id, username, email, password, created_at, updated_at FROM users WHERE id = $1",
+    [decoded._id]
+  );
   if (result.rows.length === 0) return next(new UnauthorizedError());
 
   const { success, data: user } = userSchema.safeParse(result.rows[0]);
