@@ -1,6 +1,6 @@
 # Node.js Web Server Template
 
-### Starting project
+### Starting project 🚀
 
 - **Step 1** - Install dependencies
 
@@ -32,7 +32,7 @@ yarn migrate
 yarn dev
 ```
 
-### Logging
+### Logging 📜
 
 The application uses Winston for logging with the following features:
 
