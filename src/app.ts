@@ -4,7 +4,6 @@ import { env } from "config/env";
 import errorMiddleware from "middleware/error.middleware";
 import { type Controller } from "interfaces/controller.interface";
 import cookieParser from "cookie-parser";
-import { initializeDatabase } from "database/setup";
 import loggerMiddleware from "middleware/logger.middleware";
 
 class App {
@@ -12,8 +11,6 @@ class App {
 
   constructor(controllers: Controller[]) {
     this.app = express();
-
-    initializeDatabase();
 
     this.initializeMiddlewares();
     this.initializeControllers(controllers);

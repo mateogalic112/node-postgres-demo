@@ -1,6 +1,5 @@
 import pool from "config/database";
 import bcrypt from "bcrypt";
-import { clearAllTables, createTables } from "./setup";
 import { RegisterPayload } from "auth/auth.validation";
 import { CreateProductPayload } from "products/products.validation";
 import { faker } from "@faker-js/faker";
@@ -19,11 +18,6 @@ const products: CreateProductPayload[] = Array.from({ length: 200 }, () => ({
 
 export async function seedDatabase() {
   try {
-    await createTables();
-
-    // @dev clear all tables before seeding
-    await clearAllTables();
-
     for (const { username, email, password } of users) {
       const hashedPassword = await bcrypt.hash(password, 10);
       await pool.query(`INSERT INTO users (username, email, password) VALUES ($1, $2, $3)`, [
