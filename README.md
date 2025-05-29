@@ -1,14 +1,14 @@
-# Node.js with Postgresql DEMO
+# Node.js Web Server Template
 
 ### Starting project
 
-Step 1 - Install project dependencies
+- **Step 1** - Install dependencies
 
 ```bash
 yarn install
 ```
 
-Step 2 - Create Postgresql database with Docker command
+- **Step 2** - Create Postgresql database with Docker
 
 ```bash
 docker run -d \
@@ -20,51 +20,16 @@ docker run -d \
 postgres
 ```
 
-Step 3 - Create `Users Table` from terminal
-
-1.  Get in docker container terminal
+- **Step 3** - Run migrations
 
 ```bash
-docker exec -it {container_identifier} bash
+yarn migrate
 ```
 
-2.  Login to Postgres
+- **Step 4** - Run the server in development mode
 
 ```bash
-psql -h localhost -p 5432 -U postgres
-```
-
-3.  Go to `node-postgres-demo`
-
-```bash
-\c node-postgres-demo
-```
-
-4.  Create users table
-
-```bash
-CREATE TABLE users ( \
- id SERIAL PRIMARY KEY, \
- username VARCHAR(80), \
- email VARCHAR(255), \
- created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP \
- );
-```
-
-Step 4 - Create entry in `Users table`
-
-```bash
-curl -H 'Content-Type: application/json' \
--d '{"username": "mateo", "email": "mateo@gmail.com"}' \
--X POST \
-http://localhost:4000/api/v1/users
-```
-
-Step 4 - Get all users
-
-```bash
-curl -H 'Content-Type: application/json' \
-http://localhost:4000/api/v1/users
+yarn dev
 ```
 
 ### Logging
