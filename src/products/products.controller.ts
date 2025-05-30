@@ -4,16 +4,20 @@ import { createProductSchema } from "./products.validation";
 import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
 import { paginatedRequestSchema } from "api/api.validations";
+import { Database } from "database/database.interface";
 
 export class ProductController extends Controller {
-  constructor(private readonly productService: ProductService) {
+  constructor(
+    private readonly db: Database,
+    private readonly productService: ProductService
+  ) {
     super("/products");
     this.initializeRoutes();
   }
 
   protected initializeRoutes() {
     this.router.get(`${this.path}`, this.getProducts);
-    this.router.post(`${this.path}`, authMiddleware, this.createProduct);
+    this.router.post(`${this.path}`, authMiddleware(this.db), this.createProduct);
   }
 
   private getProducts = asyncMiddleware(async (request, response) => {

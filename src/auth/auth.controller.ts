@@ -5,9 +5,13 @@ import asyncMiddleware from "middleware/async.middleware";
 import { AUTH_COOKIE_NAME } from "./auth.constants";
 import { userSchema } from "users/users.validation";
 import { Controller } from "api/api.controllers";
+import { Database } from "database/database.interface";
 
 export class AuthController extends Controller {
-  constructor(private readonly authService: AuthService) {
+  constructor(
+    private readonly db: Database,
+    private readonly authService: AuthService
+  ) {
     super("/auth");
     this.initializeRoutes();
   }
@@ -15,8 +19,8 @@ export class AuthController extends Controller {
   protected initializeRoutes() {
     this.router.post(`${this.path}/register`, this.registerUser);
     this.router.post(`${this.path}/login`, this.loginUser);
-    this.router.get(`${this.path}/me`, authMiddleware, this.me);
-    this.router.delete(`${this.path}/logout`, authMiddleware, this.logoutUser);
+    this.router.get(`${this.path}/me`, authMiddleware(this.db), this.me);
+    this.router.delete(`${this.path}/logout`, authMiddleware(this.db), this.logoutUser);
   }
 
   private registerUser = asyncMiddleware(async (request, response) => {

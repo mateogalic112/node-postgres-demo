@@ -1,8 +1,9 @@
-import pool from "database/pool";
+import { Client } from "pg";
 import bcrypt from "bcrypt";
 import { RegisterPayload } from "auth/auth.validation";
 import { CreateProductPayload } from "products/products.validation";
 import { faker } from "@faker-js/faker";
+import { env } from "config/env";
 
 const users: RegisterPayload[] = Array.from({ length: 2 }, () => ({
   username: faker.internet.displayName(),
@@ -18,10 +19,20 @@ const products: CreateProductPayload[] = Array.from({ length: 200 }, () => ({
 }));
 
 export async function seedDatabase() {
+  const client = new Client({
+    host: env.POSTGRES_HOST,
+    user: env.POSTGRES_USER,
+    password: env.POSTGRES_PASSWORD,
+    database: env.POSTGRES_DB,
+    port: env.POSTGRES_PORT
+  });
+
   try {
+    await client.connect();
+
     for (const { username, email, password } of users) {
       const hashedPassword = await bcrypt.hash(password, 10);
-      await pool.query(`INSERT INTO users (username, email, password) VALUES ($1, $2, $3)`, [
+      await client.query(`INSERT INTO users (username, email, password) VALUES ($1, $2, $3)`, [
         username,
         email,
         hashedPassword
@@ -29,13 +40,15 @@ export async function seedDatabase() {
     }
 
     for (const { name, description, price, image_url } of products) {
-      await pool.query(
+      await client.query(
         `INSERT INTO products (name, description, price, image_url) VALUES ($1, $2, $3, $4)`,
         [name, description, price, image_url]
       );
     }
   } catch (error) {
     console.error("Database seeding failed:", error);
+  } finally {
+    await client.end();
   }
 }
 

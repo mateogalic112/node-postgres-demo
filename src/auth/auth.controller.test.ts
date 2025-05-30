@@ -20,7 +20,7 @@ describe("AuthController", () => {
     });
     await client.connect();
 
-    app = new App([new AuthController(new AuthService(new AuthRepository(client)))]);
+    app = new App([new AuthController(client, new AuthService(new AuthRepository(client)))]);
   });
 
   beforeEach(async () => {
