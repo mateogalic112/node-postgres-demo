@@ -6,18 +6,11 @@ import pool from "database/pool";
 const app = new App([new AuthController()]);
 
 describe("AuthController", () => {
-  beforeAll(async () => {
-    // @dev clear all tables before seeding
-    await pool.query("TRUNCATE TABLE users, products RESTART IDENTITY CASCADE");
-  });
-
-  afterEach(async () => {
-    // @dev clear all tables after each test
+  beforeEach(async () => {
     await pool.query("TRUNCATE TABLE users, products RESTART IDENTITY CASCADE");
   });
 
   afterAll(async () => {
-    // @dev close database connection
     await pool.end();
   });
 
