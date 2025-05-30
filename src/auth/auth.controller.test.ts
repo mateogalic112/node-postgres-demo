@@ -2,7 +2,6 @@ import App from "app";
 import { AuthController } from "./auth.controller";
 import request from "supertest";
 import pool from "database/pool";
-import { seedDatabase } from "database/seed";
 
 const app = new App([new AuthController()]);
 
@@ -10,8 +9,6 @@ describe("AuthController", () => {
   beforeAll(async () => {
     // @dev clear all tables before seeding
     await pool.query("TRUNCATE TABLE users, products RESTART IDENTITY CASCADE");
-    // @dev seed database
-    await seedDatabase();
   });
 
   afterEach(async () => {

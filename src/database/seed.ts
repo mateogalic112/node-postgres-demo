@@ -13,7 +13,8 @@ const users: RegisterPayload[] = Array.from({ length: 2 }, () => ({
 const products: CreateProductPayload[] = Array.from({ length: 200 }, () => ({
   name: faker.commerce.productName(),
   description: faker.commerce.productDescription(),
-  price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 })
+  price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
+  image_url: faker.image.url()
 }));
 
 export async function seedDatabase() {
@@ -27,14 +28,24 @@ export async function seedDatabase() {
       ]);
     }
 
-    for (const { name, description, price } of products) {
-      await pool.query(`INSERT INTO products (name, description, price) VALUES ($1, $2, $3)`, [
-        name,
-        description,
-        price
-      ]);
+    for (const { name, description, price, image_url } of products) {
+      await pool.query(
+        `INSERT INTO products (name, description, price, image_url) VALUES ($1, $2, $3, $4)`,
+        [name, description, price, image_url]
+      );
     }
   } catch (error) {
     console.error("Database seeding failed:", error);
   }
 }
+
+// Execute the seeding function
+seedDatabase()
+  .then(() => {
+    console.log("Database seeding completed successfully");
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error("Database seeding failed:", error);
+    process.exit(1);
+  });
