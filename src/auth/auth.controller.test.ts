@@ -4,27 +4,37 @@ import request from "supertest";
 import { AuthService } from "./auth.service";
 import { AuthRepository } from "./auth.repository";
 import { Client } from "pg";
-import { env } from "config/env";
-
-let client: Client;
-let app: App;
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 
 describe("AuthController", () => {
+  jest.setTimeout(60000);
+
+  let client: Client;
+  let app: App;
+  let postgresContainer: StartedPostgreSqlContainer;
+
   beforeAll(async () => {
-    client = new Client({
-      host: env.POSTGRES_HOST,
-      user: env.POSTGRES_USER,
-      password: env.POSTGRES_PASSWORD,
-      database: env.POSTGRES_DB,
-      port: env.POSTGRES_PORT
-    });
+    postgresContainer = await new PostgreSqlContainer("postgres:15").start();
+
+    client = new Client({ connectionString: postgresContainer.getConnectionUri() });
     await client.connect();
+
+    await client.query(
+      `CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(100),
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    );
 
     app = new App([new AuthController(client, new AuthService(new AuthRepository(client)))]);
   });
 
   beforeEach(async () => {
-    await client.query("TRUNCATE TABLE users, products RESTART IDENTITY CASCADE");
+    await client.query("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
   });
 
   afterAll(async () => {

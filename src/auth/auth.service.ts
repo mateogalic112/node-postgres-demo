@@ -37,7 +37,9 @@ export class AuthService {
   }
 
   public async isLoggedIn(user?: User) {
-    if (!user) throw new UnauthorizedError("User not logged in");
+    if (!user) {
+      throw new UnauthorizedError("User not logged in");
+    }
     return this.removePassword(user);
   }
 

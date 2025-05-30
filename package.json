@@ -11,7 +11,7 @@
     "migrate": "tsx src/database/migrations.ts",
     "prettier:fix": "npx prettier --write .",
     "lint": "eslint 'src/**/*.ts' --fix",
-    "test": "./run-tests.sh"
+    "test": "NODE_ENV=test npx jest --detectOpenHandles"
   },
   "tsup": {
     "entry": [
@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^9.3.0",
+    "@testcontainers/postgresql": "^11.0.0",
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",

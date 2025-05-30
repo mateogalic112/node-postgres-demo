@@ -2,9 +2,7 @@ import type { RequestHandler } from "express";
 import { LoggerService } from "services/logger.service";
 
 export const loggerMiddleware: RequestHandler = (request, response, next) => {
-  if (process.env.NODE_ENV === "test") {
-    return next();
-  }
+  if (process.env.NODE_ENV === "test") return next();
 
   const start = process.hrtime();
   const logger = LoggerService.getInstance();
