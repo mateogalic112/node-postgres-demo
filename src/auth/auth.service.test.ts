@@ -1,7 +1,7 @@
 import { AuthService } from "./auth.service";
 import { AuthRepository } from "./auth.repository";
 import * as bcrypt from "bcrypt";
-import { BadRequestError, UnauthorizedError } from "errors/http.error";
+import { BadRequestError, UnauthorizedError } from "api/api.errors";
 import { User } from "users/users.validation";
 
 // Mock the AuthRepository

@@ -1,7 +1,7 @@
 import type { RequestHandler, Request } from "express";
-import pool from "config/database";
+import pool from "database/pool";
 import jwt from "jsonwebtoken";
-import { UnauthorizedError } from "errors/http.error";
+import { UnauthorizedError } from "api/api.errors";
 import { env } from "config/env";
 import { userSchema } from "users/users.validation";
 

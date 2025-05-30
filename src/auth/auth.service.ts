@@ -5,7 +5,7 @@ import { AuthRepository } from "./auth.repository";
 import { env } from "config/env";
 import { CookieOptions } from "express";
 import { User, userSchema } from "users/users.validation";
-import { BadRequestError, UnauthorizedError } from "errors/http.error";
+import { BadRequestError, UnauthorizedError } from "api/api.errors";
 
 export class AuthService {
   constructor(private readonly authRepository: AuthRepository) {}

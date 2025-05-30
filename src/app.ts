@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { env } from "config/env";
 import errorMiddleware from "middleware/error.middleware";
-import { type Controller } from "interfaces/controller.interface";
+import { type Controller } from "api/api.controllers";
 import cookieParser from "cookie-parser";
 import loggerMiddleware from "middleware/logger.middleware";
 

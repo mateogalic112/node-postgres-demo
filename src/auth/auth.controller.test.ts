@@ -1,7 +1,7 @@
 import App from "app";
 import { AuthController } from "./auth.controller";
 import request from "supertest";
-import pool from "config/database";
+import pool from "database/pool";
 import { seedDatabase } from "database/seed";
 
 const app = new App([new AuthController()]);

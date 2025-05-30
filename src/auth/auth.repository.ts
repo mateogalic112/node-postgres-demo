@@ -1,7 +1,7 @@
-import pool from "config/database";
+import pool from "database/pool";
 import { RegisterPayload } from "./auth.validation";
 import { User } from "users/users.validation";
-import { InternalServerError } from "errors/http.error";
+import { InternalServerError } from "api/api.errors";
 
 export class AuthRepository {
   public async createUser(payload: RegisterPayload) {

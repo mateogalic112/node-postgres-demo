@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { Client } from "pg";
-import { env } from "./env";
+import { env } from "../config/env";
 
 const client = new Client({
   host: env.POSTGRES_HOST,

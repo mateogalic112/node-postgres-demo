@@ -12,7 +12,7 @@ until pg_isready -h localhost -p 5433 -U postgres; do
   sleep 1
 done
 
-NODE_ENV=test npx jest --detectOpenHandles
+NODE_ENV=test yarn migrate && npx jest --detectOpenHandles
 
 # Store the test exit code
 TEST_EXIT_CODE=$?

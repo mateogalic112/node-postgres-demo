@@ -1,4 +1,4 @@
-import pool from "config/database";
+import pool from "database/pool";
 import bcrypt from "bcrypt";
 import { RegisterPayload } from "auth/auth.validation";
 import { CreateProductPayload } from "products/products.validation";

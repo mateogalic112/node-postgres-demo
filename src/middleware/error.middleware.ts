@@ -1,4 +1,4 @@
-import { HttpError } from "errors/http.error";
+import { HttpError } from "api/api.errors";
 import type { ErrorRequestHandler } from "express";
 import { LoggerService } from "services/logger.service";
 import { ZodError } from "zod";

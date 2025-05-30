@@ -1,6 +1,6 @@
-import pool from "config/database";
+import pool from "database/pool";
 import { NextFunction, Request, Response } from "express";
-import { Controller } from "interfaces/controller.interface";
+import { Controller } from "api/api.controllers";
 
 class UsersController extends Controller {
   constructor() {

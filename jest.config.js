@@ -9,12 +9,11 @@ module.exports = {
   testMatch: ["**/*.test.ts"],
   moduleNameMapper: {
     "^config/(.*)$": "<rootDir>/src/config/$1",
-    "^errors/(.*)$": "<rootDir>/src/errors/$1",
+    "^api/(.*)$": "<rootDir>/src/api/$1",
     "^users/(.*)$": "<rootDir>/src/users/$1",
     "^middleware/(.*)$": "<rootDir>/src/middleware/$1",
     "^services/(.*)$": "<rootDir>/src/services/$1",
     "^database/(.*)$": "<rootDir>/src/database/$1",
-    "^interfaces/(.*)$": "<rootDir>/src/interfaces/$1",
     "^app$": "<rootDir>/src/app"
   },
   roots: ["<rootDir>/src"]

@@ -1,6 +1,6 @@
-import pool from "config/database";
+import pool from "database/pool";
 import { CreateProductPayload, Product } from "./products.validation";
-import { PaginatedRequestParams } from "validations/api.validation";
+import { PaginatedRequestParams } from "api/api.validations";
 
 export class ProductRepository {
   public async getProducts(params: PaginatedRequestParams) {
