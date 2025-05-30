@@ -1,6 +1,6 @@
 import { CreateProductPayload, Product } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
-import { Database } from "database/database.interface";
+import { Database } from "api/api.database";
 
 export class ProductRepository {
   constructor(private readonly db: Database) {}

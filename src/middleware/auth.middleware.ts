@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { UnauthorizedError } from "api/api.errors";
 import { env } from "config/env";
 import { userSchema } from "users/users.validation";
-import { Database } from "database/database.interface";
+import { Database } from "api/api.database";
 
 export const authMiddleware =
   (db: Database): RequestHandler =>

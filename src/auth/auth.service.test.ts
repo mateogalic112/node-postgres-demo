@@ -3,7 +3,7 @@ import { AuthRepository } from "./auth.repository";
 import * as bcrypt from "bcrypt";
 import { BadRequestError, UnauthorizedError } from "api/api.errors";
 import { User } from "users/users.validation";
-import { Database } from "database/database.interface";
+import { Database } from "api/api.database";
 
 // Mock the AuthRepository
 jest.mock("./auth.repository");

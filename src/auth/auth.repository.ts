@@ -1,7 +1,7 @@
 import { RegisterPayload } from "./auth.validation";
 import { User } from "users/users.validation";
 import { InternalServerError } from "api/api.errors";
-import { Database } from "database/database.interface";
+import { Database } from "api/api.database";
 
 export class AuthRepository {
   constructor(private readonly db: Database) {}

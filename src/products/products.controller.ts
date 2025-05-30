@@ -4,7 +4,7 @@ import { createProductSchema } from "./products.validation";
 import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
 import { paginatedRequestSchema } from "api/api.validations";
-import { Database } from "database/database.interface";
+import { Database } from "api/api.database";
 
 export class ProductController extends Controller {
   constructor(
