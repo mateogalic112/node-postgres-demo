@@ -3,8 +3,8 @@ import { ProductService } from "./products.service";
 import { createProductSchema } from "./products.validation";
 import { ProductRepository } from "./products.repository";
 import authMiddleware from "middleware/auth.middleware";
-import { PaginatedRequestSchema } from "validations/api.validation";
 import asyncMiddleware from "middleware/async.middleware";
+import { paginatedRequestSchema } from "validations/api.validation";
 
 export class ProductController extends Controller {
   private productService = new ProductService(new ProductRepository());
@@ -20,7 +20,7 @@ export class ProductController extends Controller {
   }
 
   private getProducts = asyncMiddleware(async (request, response) => {
-    const { limit, cursor } = PaginatedRequestSchema.parse(request).query;
+    const { limit, cursor } = paginatedRequestSchema.parse(request).query;
     const products = await this.productService.getProducts({
       limit,
       cursor
