@@ -1,11 +1,13 @@
-import pool from "database/pool";
 import { RegisterPayload } from "./auth.validation";
 import { User } from "users/users.validation";
 import { InternalServerError } from "api/api.errors";
+import { Database } from "database/database.interface";
 
 export class AuthRepository {
+  constructor(private readonly db: Database) {}
+
   public async createUser(payload: RegisterPayload) {
-    const result = await pool.query<User>(
+    const result = await this.db.query<User>(
       "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
       [payload.username, payload.email, payload.password]
     );
@@ -15,14 +17,14 @@ export class AuthRepository {
   }
 
   public async findUserById(id: number) {
-    const result = await pool.query<User>("SELECT * FROM users WHERE id = $1", [id]);
+    const result = await this.db.query<User>("SELECT * FROM users WHERE id = $1", [id]);
     if (result.rowCount === 0) return null;
 
     return result.rows[0];
   }
 
   public async findUserByEmail(email: string) {
-    const result = await pool.query<User>("SELECT * FROM users WHERE email = $1", [email]);
+    const result = await this.db.query<User>("SELECT * FROM users WHERE email = $1", [email]);
     if (result.rowCount === 0) return null;
 
     return result.rows[0];

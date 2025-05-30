@@ -1,16 +1,13 @@
 import { loginSchema, registerSchema } from "./auth.validation";
 import { AuthService } from "./auth.service";
 import authMiddleware from "middleware/auth.middleware";
-import { AuthRepository } from "./auth.repository";
 import asyncMiddleware from "middleware/async.middleware";
 import { AUTH_COOKIE_NAME } from "./auth.constants";
 import { userSchema } from "users/users.validation";
 import { Controller } from "api/api.controllers";
 
 export class AuthController extends Controller {
-  private authService = new AuthService(new AuthRepository());
-
-  constructor() {
+  constructor(private readonly authService: AuthService) {
     super("/auth");
     this.initializeRoutes();
   }

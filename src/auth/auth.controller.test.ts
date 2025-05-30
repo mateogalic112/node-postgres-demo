@@ -1,17 +1,34 @@
 import App from "app";
 import { AuthController } from "./auth.controller";
 import request from "supertest";
-import pool from "database/pool";
+import { AuthService } from "./auth.service";
+import { AuthRepository } from "./auth.repository";
+import { Client } from "pg";
+import { env } from "config/env";
 
-const app = new App([new AuthController()]);
+let client: Client;
+let app: App;
 
 describe("AuthController", () => {
+  beforeAll(async () => {
+    client = new Client({
+      host: env.POSTGRES_HOST,
+      user: env.POSTGRES_USER,
+      password: env.POSTGRES_PASSWORD,
+      database: env.POSTGRES_DB,
+      port: env.POSTGRES_PORT
+    });
+    await client.connect();
+
+    app = new App([new AuthController(new AuthService(new AuthRepository(client)))]);
+  });
+
   beforeEach(async () => {
-    await pool.query("TRUNCATE TABLE users, products RESTART IDENTITY CASCADE");
+    await client.query("TRUNCATE TABLE users, products RESTART IDENTITY CASCADE");
   });
 
   afterAll(async () => {
-    await pool.end();
+    await client.end();
   });
 
   describe("Register user -> /api/v1/auth/register", () => {

@@ -1,15 +1,12 @@
 import { Controller } from "api/api.controllers";
 import { ProductService } from "./products.service";
 import { createProductSchema } from "./products.validation";
-import { ProductRepository } from "./products.repository";
 import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
 import { paginatedRequestSchema } from "api/api.validations";
 
 export class ProductController extends Controller {
-  private productService = new ProductService(new ProductRepository());
-
-  constructor() {
+  constructor(private readonly productService: ProductService) {
     super("/products");
     this.initializeRoutes();
   }
