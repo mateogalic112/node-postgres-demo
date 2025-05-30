@@ -20,12 +20,6 @@ docker run -d \
 postgres
 ```
 
-- **Step 3** - Run migrations
-
-```bash
-yarn migrate
-```
-
 - **Step 4** - Run the server in development mode
 
 ```bash
