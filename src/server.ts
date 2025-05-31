@@ -2,11 +2,11 @@ import { AuthController } from "auth/auth.controller";
 import App from "./app";
 import { ProductController } from "products/products.controller";
 import { AuthService } from "auth/auth.service";
-import { AuthRepository } from "auth/auth.repository";
 import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
 import { Pool } from "pg";
 import { env } from "config/env";
+import { UsersRepository } from "users/users.repository";
 
 const pool = new Pool({
   host: env.POSTGRES_HOST,
@@ -18,7 +18,7 @@ const pool = new Pool({
 });
 
 const app = new App([
-  new AuthController(pool, new AuthService(new AuthRepository(pool))),
+  new AuthController(pool, new AuthService(new UsersRepository(pool))),
   new ProductController(pool, new ProductService(new ProductRepository(pool)))
 ]);
 

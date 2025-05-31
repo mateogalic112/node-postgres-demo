@@ -2,9 +2,9 @@ import App from "app";
 import { AuthController } from "./auth.controller";
 import request from "supertest";
 import { AuthService } from "./auth.service";
-import { AuthRepository } from "./auth.repository";
 import { Client } from "pg";
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import { UsersRepository } from "users/users.repository";
 
 describe("AuthController", () => {
   jest.setTimeout(60000);
@@ -30,7 +30,7 @@ describe("AuthController", () => {
       )`
     );
 
-    app = new App([new AuthController(client, new AuthService(new AuthRepository(client)))]);
+    app = new App([new AuthController(client, new AuthService(new UsersRepository(client)))]);
   });
 
   beforeEach(async () => {

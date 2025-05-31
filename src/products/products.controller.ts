@@ -5,6 +5,7 @@ import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
 import { paginatedRequestSchema } from "api/api.validations";
 import { Database } from "api/api.database";
+import { UsersRepository } from "users/users.repository";
 
 export class ProductController extends Controller {
   constructor(
@@ -17,7 +18,11 @@ export class ProductController extends Controller {
 
   protected initializeRoutes() {
     this.router.get(`${this.path}`, this.getProducts);
-    this.router.post(`${this.path}`, authMiddleware(this.db), this.createProduct);
+    this.router.post(
+      `${this.path}`,
+      authMiddleware(new UsersRepository(this.db)),
+      this.createProduct
+    );
   }
 
   private getProducts = asyncMiddleware(async (request, response) => {

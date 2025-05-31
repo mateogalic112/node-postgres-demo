@@ -15,8 +15,8 @@ export class ProductRepository {
 
   public async createProduct(product: CreateProductPayload) {
     const result = await this.db.query<Product>(
-      "INSERT INTO products (name, description, price) VALUES ($1, $2, $3)",
-      [product.name, product.description, product.price]
+      "INSERT INTO products (name, description, price, image_url) VALUES ($1, $2, $3, $4) RETURNING *",
+      [product.name, product.description, product.price, product.image_url]
     );
     return result.rows[0];
   }

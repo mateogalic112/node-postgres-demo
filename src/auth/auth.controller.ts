@@ -6,6 +6,7 @@ import { AUTH_COOKIE_NAME } from "./auth.constants";
 import { userSchema } from "users/users.validation";
 import { Controller } from "api/api.controllers";
 import { Database } from "api/api.database";
+import { UsersRepository } from "users/users.repository";
 
 export class AuthController extends Controller {
   constructor(
@@ -19,8 +20,12 @@ export class AuthController extends Controller {
   protected initializeRoutes() {
     this.router.post(`${this.path}/register`, this.registerUser);
     this.router.post(`${this.path}/login`, this.loginUser);
-    this.router.get(`${this.path}/me`, authMiddleware(this.db), this.me);
-    this.router.delete(`${this.path}/logout`, authMiddleware(this.db), this.logoutUser);
+    this.router.get(`${this.path}/me`, authMiddleware(new UsersRepository(this.db)), this.me);
+    this.router.delete(
+      `${this.path}/logout`,
+      authMiddleware(new UsersRepository(this.db)),
+      this.logoutUser
+    );
   }
 
   private registerUser = asyncMiddleware(async (request, response) => {

@@ -1,12 +1,12 @@
 import { AuthService } from "./auth.service";
-import { AuthRepository } from "./auth.repository";
+import { UsersRepository } from "users/users.repository";
 import * as bcrypt from "bcrypt";
 import { BadRequestError, UnauthorizedError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { Database } from "api/api.database";
 
 // Mock the AuthRepository
-jest.mock("./auth.repository");
+jest.mock("users/users.repository");
 
 // Mock the bcrypt module
 jest.mock("bcrypt", () => ({
@@ -16,7 +16,7 @@ jest.mock("bcrypt", () => ({
 
 describe("AuthService", () => {
   let authService: AuthService;
-  let mockAuthRepository: jest.Mocked<AuthRepository>;
+  let mockUsersRepository: jest.Mocked<UsersRepository>;
 
   const mockUser: User = {
     id: 1,
@@ -32,15 +32,15 @@ describe("AuthService", () => {
     jest.clearAllMocks();
 
     // Create a new instance of AuthRepository with mocked methods
-    mockAuthRepository = new AuthRepository({} as Database) as jest.Mocked<AuthRepository>;
-    authService = new AuthService(mockAuthRepository);
+    mockUsersRepository = new UsersRepository({} as Database) as jest.Mocked<UsersRepository>;
+    authService = new AuthService(mockUsersRepository);
   });
 
   describe("user registration", () => {
     it("should successfully register a new user", async () => {
       // Mock repository methods
-      mockAuthRepository.findUserByEmail.mockResolvedValue(null);
-      mockAuthRepository.createUser.mockResolvedValue(mockUser);
+      mockUsersRepository.findUserByEmail.mockResolvedValue(null);
+      mockUsersRepository.createUser.mockResolvedValue(mockUser);
       // Mock the bcrypt.hash method
       (bcrypt.hash as jest.Mock).mockResolvedValue(mockUser.password);
 
@@ -55,7 +55,7 @@ describe("AuthService", () => {
     });
 
     it("should throw an error if email already exists", async () => {
-      mockAuthRepository.findUserByEmail.mockResolvedValue(mockUser);
+      mockUsersRepository.findUserByEmail.mockResolvedValue(mockUser);
 
       await expect(
         authService.registerUser({
@@ -69,7 +69,7 @@ describe("AuthService", () => {
 
   describe("user login", () => {
     it("should successfully login a user", async () => {
-      mockAuthRepository.findUserByEmail.mockResolvedValue(mockUser);
+      mockUsersRepository.findUserByEmail.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await authService.login({
@@ -82,7 +82,7 @@ describe("AuthService", () => {
     });
 
     it("should throw an error if the user does not exist", async () => {
-      mockAuthRepository.findUserByEmail.mockResolvedValue(null);
+      mockUsersRepository.findUserByEmail.mockResolvedValue(null);
 
       await expect(
         authService.login({
@@ -93,7 +93,7 @@ describe("AuthService", () => {
     });
 
     it("should throw an error for invalid credentials", async () => {
-      mockAuthRepository.findUserByEmail.mockResolvedValue(mockUser);
+      mockUsersRepository.findUserByEmail.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
@@ -107,7 +107,7 @@ describe("AuthService", () => {
 
   describe("check if user is logged in", () => {
     it("should return user data if logged in", async () => {
-      mockAuthRepository.findUserById.mockResolvedValue(mockUser);
+      mockUsersRepository.findUserById.mockResolvedValue(mockUser);
 
       const result = await authService.isLoggedIn(mockUser);
 
@@ -120,7 +120,7 @@ describe("AuthService", () => {
     });
 
     it("should throw an error if user not found", async () => {
-      mockAuthRepository.findUserById.mockResolvedValue(null);
+      mockUsersRepository.findUserById.mockResolvedValue(null);
       await expect(authService.isLoggedIn()).rejects.toThrow(UnauthorizedError);
     });
   });

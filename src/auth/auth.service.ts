@@ -1,20 +1,20 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { LoginPayload, RegisterPayload } from "./auth.validation";
-import { AuthRepository } from "./auth.repository";
 import { env } from "config/env";
 import { CookieOptions } from "express";
 import { User, userSchema } from "users/users.validation";
 import { BadRequestError, UnauthorizedError } from "api/api.errors";
+import { UsersRepository } from "users/users.repository";
 
 export class AuthService {
-  constructor(private readonly authRepository: AuthRepository) {}
+  constructor(private readonly usersRepository: UsersRepository) {}
 
   public async registerUser(payload: RegisterPayload) {
-    const foundUser = await this.authRepository.findUserByEmail(payload.email);
+    const foundUser = await this.usersRepository.findUserByEmail(payload.email);
     if (foundUser) throw new BadRequestError("User with that email already exists");
 
-    const user = await this.authRepository.createUser({
+    const user = await this.usersRepository.createUser({
       ...payload,
       password: await bcrypt.hash(payload.password, 10) // Hash password
     });
@@ -25,7 +25,7 @@ export class AuthService {
   }
 
   public async login(payload: LoginPayload) {
-    const user = await this.authRepository.findUserByEmail(payload.email);
+    const user = await this.usersRepository.findUserByEmail(payload.email);
     if (!user) throw new BadRequestError("Invalid email or password");
 
     const isPasswordCorrect = await bcrypt.compare(payload.password, user.password);

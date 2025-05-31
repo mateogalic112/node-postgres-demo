@@ -14,7 +14,8 @@ module.exports = {
     "^middleware/(.*)$": "<rootDir>/src/middleware/$1",
     "^services/(.*)$": "<rootDir>/src/services/$1",
     "^database/(.*)$": "<rootDir>/src/database/$1",
-    "^app$": "<rootDir>/src/app"
+    "^app$": "<rootDir>/src/app",
+    "^auth/(.*)$": "<rootDir>/src/auth/$1"
   },
   roots: ["<rootDir>/src"]
 };

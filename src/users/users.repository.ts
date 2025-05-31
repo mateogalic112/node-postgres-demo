@@ -1,9 +1,9 @@
-import { RegisterPayload } from "./auth.validation";
-import { User } from "users/users.validation";
-import { InternalServerError } from "api/api.errors";
 import { Database } from "api/api.database";
+import { User } from "./users.validation";
+import { RegisterPayload } from "auth/auth.validation";
+import { InternalServerError } from "api/api.errors";
 
-export class AuthRepository {
+export class UsersRepository {
   constructor(private readonly db: Database) {}
 
   public async createUser(payload: RegisterPayload) {
