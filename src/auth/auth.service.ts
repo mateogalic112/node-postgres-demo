@@ -10,7 +10,7 @@ import { UsersRepository } from "users/users.repository";
 export class AuthService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  public async registerUser(payload: RegisterPayload) {
+  public async register(payload: RegisterPayload) {
     const foundUser = await this.usersRepository.findUserByEmail(payload.email);
     if (foundUser) throw new BadRequestError("User with that email already exists");
 

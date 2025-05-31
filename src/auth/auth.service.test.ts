@@ -44,7 +44,7 @@ describe("AuthService", () => {
       // Mock the bcrypt.hash method
       (bcrypt.hash as jest.Mock).mockResolvedValue(mockUser.password);
 
-      const result = await authService.registerUser({
+      const result = await authService.register({
         username: "testuser",
         email: "test@example.com",
         password: "password123"
@@ -58,7 +58,7 @@ describe("AuthService", () => {
       mockUsersRepository.findUserByEmail.mockResolvedValue(mockUser);
 
       await expect(
-        authService.registerUser({
+        authService.register({
           username: "testuser",
           email: "test@example.com",
           password: "password123"

@@ -30,7 +30,7 @@ export class AuthController extends Controller {
 
   private registerUser = asyncMiddleware(async (request, response) => {
     const payload = registerSchema.parse(request).body;
-    const createdUser = await this.authService.registerUser(payload);
+    const createdUser = await this.authService.register(payload);
     response
       .cookie(
         AUTH_COOKIE_NAME,
