@@ -13,7 +13,7 @@ export class ProductService {
       data: parsedProducts,
       nextCursor:
         parsedProducts.length === params.limit
-          ? { id: parsedProducts[parsedProducts.length - 1] }
+          ? { id: parsedProducts[parsedProducts.length - 1].id }
           : null
     });
   }
