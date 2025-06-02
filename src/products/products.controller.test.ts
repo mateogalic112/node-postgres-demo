@@ -10,6 +10,7 @@ import { faker } from "@faker-js/faker/.";
 import { AuthController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
+import { FilesService } from "api/api.files";
 
 describe("ProductsController", () => {
   jest.setTimeout(60000);
@@ -46,9 +47,13 @@ describe("ProductsController", () => {
       );`
     );
 
+    const fileService: FilesService = {
+      uploadFile: jest.fn().mockResolvedValue(true)
+    };
+
     app = new App([
       new AuthController(client, new AuthService(new UsersRepository(client))),
-      new ProductController(client, new ProductService(new ProductRepository(client)))
+      new ProductController(client, new ProductService(new ProductRepository(client)), fileService)
     ]);
   });
 

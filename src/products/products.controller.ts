@@ -6,11 +6,14 @@ import asyncMiddleware from "middleware/async.middleware";
 import { paginatedRequestSchema } from "api/api.validations";
 import { Database } from "api/api.database";
 import { UsersRepository } from "users/users.repository";
+import { fileMiddleware } from "middleware/file.middleware";
+import { FilesService } from "api/api.files";
 
 export class ProductController extends Controller {
   constructor(
     private readonly db: Database,
-    private readonly productService: ProductService
+    private readonly productService: ProductService,
+    private readonly filesService: FilesService
   ) {
     super("/products");
     this.initializeRoutes();
@@ -21,6 +24,7 @@ export class ProductController extends Controller {
     this.router.post(
       `${this.path}`,
       authMiddleware(new UsersRepository(this.db)),
+      fileMiddleware(5, ".jpg|.jpeg|.png|.gif|.webp").single("image"),
       this.createProduct
     );
   }
@@ -36,6 +40,16 @@ export class ProductController extends Controller {
 
   private createProduct = asyncMiddleware(async (request, response) => {
     const payload = createProductSchema.parse(request).body;
+
+    // Upload file to S3 if present
+    if (request.file) {
+      const key = `products/${crypto.randomUUID()}`;
+      const isUploaded = await this.filesService.uploadFile(request.file, key);
+      if (isUploaded) {
+        payload.image_url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+      }
+    }
+
     const product = await this.productService.createProduct(payload);
     response.status(201).json(product);
   });

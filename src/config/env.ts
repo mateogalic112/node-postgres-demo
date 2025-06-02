@@ -15,5 +15,10 @@ export const env = cleanEnv(process.env, {
   PORT: port({ default: 4000 }),
 
   JWT_SECRET: str(),
-  FRONTEND_URL: url()
+  FRONTEND_URL: url(),
+
+  AWS_ACCESS_KEY_ID: str(),
+  AWS_SECRET_ACCESS_KEY: str(),
+  AWS_REGION: str(),
+  AWS_S3_BUCKET: str()
 });
