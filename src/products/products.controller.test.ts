@@ -137,7 +137,8 @@ describe("ProductsController", () => {
       const payload: CreateProductPayload = {
         name: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
-        price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 })
+        price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
+        image_url: null
       };
 
       const mockImageBuffer = Buffer.from("fake-image-data");
