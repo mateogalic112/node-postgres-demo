@@ -23,6 +23,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.821.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -30,6 +31,7 @@
     "envalid": "^8.0.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.0",
     "pg": "^8.13.0",
     "tsx": "^4.19.2",
     "winston": "^3.17.0",
@@ -44,6 +46,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^1.4.12",
     "@types/node": "^22.7.7",
     "@types/pg": "^8.11.10",
     "@types/supertest": "^6.0.3",
