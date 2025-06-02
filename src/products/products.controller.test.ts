@@ -12,6 +12,11 @@ import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { FilesService } from "api/api.files";
 
+jest.mock("crypto", () => ({
+  ...jest.requireActual("crypto"),
+  randomUUID: jest.fn().mockReturnValue("123e4567-e89b-12d3-a456-426614174000")
+}));
+
 describe("ProductsController", () => {
   jest.setTimeout(60000);
 
@@ -59,6 +64,10 @@ describe("ProductsController", () => {
 
   beforeEach(async () => {
     await client.query("TRUNCATE TABLE users,products RESTART IDENTITY CASCADE");
+  });
+
+  afterEach(async () => {
+    jest.clearAllMocks();
   });
 
   afterAll(async () => {
@@ -128,19 +137,27 @@ describe("ProductsController", () => {
       const payload: CreateProductPayload = {
         name: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
-        price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
-        image_url: faker.image.url()
+        price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 })
       };
+
+      const mockImageBuffer = Buffer.from("fake-image-data");
 
       const response = await request(app.app)
         .post("/api/v1/products")
         .set("Cookie", authCookie)
-        .send(payload);
+        .field("name", payload.name)
+        .field("description", payload.description)
+        .field("price", payload.price)
+        .attach("image", mockImageBuffer, {
+          filename: "test-image.jpg",
+          contentType: "image/jpeg"
+        });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
         id: 1,
-        ...payload
+        ...payload,
+        image_url: `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/products/123e4567-e89b-12d3-a456-426614174000`
       });
     });
 

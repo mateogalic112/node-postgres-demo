@@ -8,6 +8,7 @@ import { Database } from "api/api.database";
 import { UsersRepository } from "users/users.repository";
 import { fileMiddleware } from "middleware/file.middleware";
 import { FilesService } from "api/api.files";
+import crypto from "crypto";
 
 export class ProductController extends Controller {
   constructor(
