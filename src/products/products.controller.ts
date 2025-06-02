@@ -9,6 +9,7 @@ import { UsersRepository } from "users/users.repository";
 import { fileMiddleware } from "middleware/file.middleware";
 import { FilesService } from "api/api.files";
 import crypto from "crypto";
+import { env } from "config/env";
 
 export class ProductController extends Controller {
   constructor(
@@ -47,7 +48,7 @@ export class ProductController extends Controller {
       const key = `products/${crypto.randomUUID()}`;
       const isUploaded = await this.filesService.uploadFile(request.file, key);
       if (isUploaded) {
-        payload.image_url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+        payload.image_url = `https://${env.AWS_S3_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
       }
     }
 

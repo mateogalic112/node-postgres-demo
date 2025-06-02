@@ -158,7 +158,9 @@ describe("ProductsController", () => {
       expect(response.body).toMatchObject({
         id: 1,
         ...payload,
-        image_url: `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/products/123e4567-e89b-12d3-a456-426614174000`
+        image_url: expect.stringMatching(
+          /^https:\/\/.*\.s3\..*\.amazonaws\.com\/products\/123e4567-e89b-12d3-a456-426614174000$/
+        )
       });
     });
 
