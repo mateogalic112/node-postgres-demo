@@ -24,7 +24,7 @@ export class ProductController extends Controller {
     this.router.post(
       `${this.path}`,
       authMiddleware(new UsersRepository(this.db)),
-      fileMiddleware(5, ".jpg|.jpeg|.png|.gif|.webp").single("image"),
+      fileMiddleware({ limitMB: 5, allowedFormats: ".jpg|.jpeg|.png|.gif|.webp" }).single("image"),
       this.createProduct
     );
   }

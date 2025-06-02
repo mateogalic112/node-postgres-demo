@@ -1,14 +1,19 @@
 import multer from "multer";
 
+interface Args {
+  limitMB: number;
+  allowedFormats: string;
+}
+
 // Configure multer for memory storage
-export const fileMiddleware = (limitMB: number, formats: string) =>
+export const fileMiddleware = ({ limitMB, allowedFormats }: Args) =>
   multer({
     storage: multer.memoryStorage(),
     fileFilter: (_req, file, cb) => {
-      if (!formats) return cb(null, true);
+      if (!allowedFormats) return cb(null, true);
 
-      if (!file.originalname.match(new RegExp(formats))) {
-        return cb(new Error(`Only ${formats} files are allowed!`));
+      if (!file.originalname.match(new RegExp(allowedFormats))) {
+        return cb(new Error(`Only ${allowedFormats} files are allowed!`));
       }
 
       cb(null, true);
