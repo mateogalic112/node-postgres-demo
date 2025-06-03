@@ -47,13 +47,13 @@ describe("ProductsController", () => {
       );`
     );
 
-    const fileService: FilesService = {
+    const filesService: FilesService = {
       uploadFile: jest.fn().mockResolvedValue("https://example.com/image.jpg")
     };
 
     app = new App([
       new AuthController(client, new AuthService(new UsersRepository(client))),
-      new ProductController(client, new ProductService(new ProductRepository(client)), fileService)
+      new ProductController(client, new ProductService(new ProductRepository(client)), filesService)
     ]);
   });
 
