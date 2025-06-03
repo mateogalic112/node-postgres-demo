@@ -29,8 +29,7 @@ export class AuthController extends Controller {
   }
 
   private registerUser = asyncMiddleware(async (request, response) => {
-    const payload = registerSchema.parse(request).body;
-    const createdUser = await this.authService.register(payload);
+    const createdUser = await this.authService.register(registerSchema.parse(request).body);
     response
       .cookie(
         AUTH_COOKIE_NAME,
@@ -42,8 +41,7 @@ export class AuthController extends Controller {
   });
 
   private loginUser = asyncMiddleware(async (request, response) => {
-    const payload = loginSchema.parse(request).body;
-    const user = await this.authService.login(payload);
+    const user = await this.authService.login(loginSchema.parse(request).body);
     response
       .cookie(
         AUTH_COOKIE_NAME,
@@ -54,8 +52,7 @@ export class AuthController extends Controller {
   });
 
   private me = asyncMiddleware(async (_, response) => {
-    const parsedUser = userSchema.parse(response.locals.user);
-    const loggedUser = await this.authService.isLoggedIn(parsedUser);
+    const loggedUser = await this.authService.isLoggedIn(userSchema.parse(response.locals.user));
     response.json(loggedUser);
   });
 
