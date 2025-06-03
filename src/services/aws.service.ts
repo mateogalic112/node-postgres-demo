@@ -34,10 +34,17 @@ export class AWSService implements FilesService {
           ContentType: file.mimetype
         })
       );
-      return uploadResult.$metadata.httpStatusCode === 200;
+
+      if (uploadResult.$metadata.httpStatusCode !== 200) {
+        throw new Error(
+          `Failed to upload file to AWS S3: ${uploadResult.$metadata.httpStatusCode}`
+        );
+      }
+
+      return `https://${env.AWS_S3_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
     } catch (error) {
-      LoggerService.getInstance().error(`Failed to upload file to AWS S3: ${error}`);
-      return false;
+      LoggerService.getInstance().error(String(error));
+      return null;
     }
   }
 }

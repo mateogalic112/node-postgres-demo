@@ -9,7 +9,6 @@ import { UsersRepository } from "users/users.repository";
 import { fileMiddleware } from "middleware/file.middleware";
 import { FilesService } from "api/api.files";
 import crypto from "crypto";
-import { env } from "config/env";
 
 export class ProductController extends Controller {
   constructor(
@@ -43,13 +42,12 @@ export class ProductController extends Controller {
   private createProduct = asyncMiddleware(async (request, response) => {
     const payload = createProductSchema.parse(request).body;
 
-    // Upload file to S3 if present
+    // Upload file if present
     if (request.file) {
-      const key = `products/${crypto.randomUUID()}`;
-      const isUploaded = await this.filesService.uploadFile(request.file, key);
-      if (isUploaded) {
-        payload.image_url = `https://${env.AWS_S3_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
-      }
+      payload.image_url = await this.filesService.uploadFile(
+        request.file,
+        `products/${crypto.randomUUID()}`
+      );
     }
 
     const product = await this.productService.createProduct(payload);

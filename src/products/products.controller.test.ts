@@ -12,11 +12,6 @@ import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { FilesService } from "api/api.files";
 
-jest.mock("crypto", () => ({
-  ...jest.requireActual("crypto"),
-  randomUUID: jest.fn().mockReturnValue("123e4567-e89b-12d3-a456-426614174000")
-}));
-
 describe("ProductsController", () => {
   jest.setTimeout(60000);
 
@@ -53,7 +48,7 @@ describe("ProductsController", () => {
     );
 
     const fileService: FilesService = {
-      uploadFile: jest.fn().mockResolvedValue(true)
+      uploadFile: jest.fn().mockResolvedValue("https://example.com/image.jpg")
     };
 
     app = new App([
@@ -158,9 +153,7 @@ describe("ProductsController", () => {
       expect(response.body).toMatchObject({
         id: 1,
         ...payload,
-        image_url: expect.stringMatching(
-          /^https:\/\/.*\.s3\..*\.amazonaws\.com\/products\/123e4567-e89b-12d3-a456-426614174000$/
-        )
+        image_url: "https://example.com/image.jpg"
       });
     });
 
