@@ -10,7 +10,7 @@ import { fileMiddleware } from "middleware/file.middleware";
 import { FilesService } from "interfaces/files.interface";
 import crypto from "crypto";
 import { MailService, MailTemplateFactory, MailTemplateType } from "interfaces/mail.interface";
-import { User } from "users/users.validation";
+import { userSchema } from "users/users.validation";
 
 export class ProductController extends Controller {
   constructor(
@@ -41,6 +41,7 @@ export class ProductController extends Controller {
   });
 
   private createProduct = asyncMiddleware(async (request, response) => {
+    const user = userSchema.parse(response.locals.user);
     const payload = createProductSchema.parse(request).body;
 
     // Upload file if present
@@ -53,7 +54,6 @@ export class ProductController extends Controller {
 
     const product = await this.productService.createProduct(payload);
 
-    const user = response.locals.user as User;
     this.mailService.sendEmail({
       to: user.email,
       template: MailTemplateFactory.getTemplate(MailTemplateType.CREATE_PRODUCT)(product)
