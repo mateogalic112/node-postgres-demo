@@ -1,18 +1,15 @@
 import { Product } from "products/products.validation";
 
-export interface MailService {
-  sendEmail({
-    to,
-    subject,
-    html
-  }: {
-    to: string;
-    subject: string;
-    html: string;
-  }): Promise<string | null>;
+export interface MailTemplate {
+  subject: string;
+  html: string;
 }
 
-export enum MailTemplate {
+export interface MailService {
+  sendEmail({ to, template }: { to: string; template: MailTemplate }): Promise<string | null>;
+}
+
+export enum MailTemplateType {
   CREATE_PRODUCT = "create_product"
 }
 
@@ -26,9 +23,9 @@ class CreateProductTemplate {
 }
 
 export class MailTemplateFactory {
-  public static getTemplate(template: MailTemplate) {
+  public static getTemplate(template: MailTemplateType) {
     switch (template) {
-      case MailTemplate.CREATE_PRODUCT:
+      case MailTemplateType.CREATE_PRODUCT:
         return CreateProductTemplate.getTemplate;
     }
   }

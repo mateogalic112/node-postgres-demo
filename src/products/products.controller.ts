@@ -9,7 +9,7 @@ import { UsersRepository } from "users/users.repository";
 import { fileMiddleware } from "middleware/file.middleware";
 import { FilesService } from "interfaces/files.interface";
 import crypto from "crypto";
-import { MailService, MailTemplate, MailTemplateFactory } from "interfaces/mail.interface";
+import { MailService, MailTemplateFactory, MailTemplateType } from "interfaces/mail.interface";
 import { User } from "users/users.validation";
 
 export class ProductController extends Controller {
@@ -56,7 +56,7 @@ export class ProductController extends Controller {
     const user = response.locals.user as User;
     this.mailService.sendEmail({
       to: user.email,
-      ...MailTemplateFactory.getTemplate(MailTemplate.CREATE_PRODUCT)(product)
+      template: MailTemplateFactory.getTemplate(MailTemplateType.CREATE_PRODUCT)(product)
     });
 
     response.status(201).json(product);

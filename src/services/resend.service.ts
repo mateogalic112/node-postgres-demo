@@ -1,7 +1,7 @@
 import { env } from "config/env";
 import { Resend } from "resend";
 import { LoggerService } from "./logger.service";
-import { MailService } from "interfaces/mail.interface";
+import { MailService, MailTemplate } from "interfaces/mail.interface";
 
 export class ResendService implements MailService {
   private static instance: ResendService;
@@ -20,12 +20,10 @@ export class ResendService implements MailService {
 
   public async sendEmail({
     to,
-    subject,
-    html
+    template
   }: {
     to: string;
-    subject: string;
-    html: string;
+    template: MailTemplate;
   }): Promise<string | null> {
     if (process.env.NODE_ENV === "test") return null;
 
@@ -33,8 +31,8 @@ export class ResendService implements MailService {
       const { data, error } = await this.resend.emails.send({
         from: env.ADMIN_EMAIL,
         to,
-        subject,
-        html
+        subject: template.subject,
+        html: template.html
       });
 
       if (error) {
