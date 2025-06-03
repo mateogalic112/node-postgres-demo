@@ -9,12 +9,15 @@ import { UsersRepository } from "users/users.repository";
 import { fileMiddleware } from "middleware/file.middleware";
 import { FilesService } from "interfaces/files.interface";
 import crypto from "crypto";
+import { MailService, MailTemplate, MailTemplateFactory } from "interfaces/mail.interface";
+import { User } from "users/users.validation";
 
 export class ProductController extends Controller {
   constructor(
     private readonly db: DatabaseService,
     private readonly productService: ProductService,
-    private readonly filesService: FilesService
+    private readonly filesService: FilesService,
+    private readonly mailService: MailService
   ) {
     super("/products");
     this.initializeRoutes();
@@ -49,6 +52,13 @@ export class ProductController extends Controller {
     }
 
     const product = await this.productService.createProduct(payload);
+
+    const user = response.locals.user as User;
+    this.mailService.sendEmail({
+      to: user.email,
+      ...MailTemplateFactory.getTemplate(MailTemplate.CREATE_PRODUCT)(product)
+    });
+
     response.status(201).json(product);
   });
 }

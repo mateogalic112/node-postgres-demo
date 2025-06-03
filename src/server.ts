@@ -8,6 +8,7 @@ import { Pool } from "pg";
 import { env } from "config/env";
 import { UsersRepository } from "users/users.repository";
 import { AWSService } from "services/aws.service";
+import { ResendService } from "services/resend.service";
 
 const db = new Pool({
   host: env.POSTGRES_HOST,
@@ -20,7 +21,12 @@ const db = new Pool({
 
 const app = new App([
   new AuthController(db, new AuthService(new UsersRepository(db))),
-  new ProductController(db, new ProductService(new ProductRepository(db)), AWSService.getInstance())
+  new ProductController(
+    db,
+    new ProductService(new ProductRepository(db)),
+    AWSService.getInstance(),
+    ResendService.getInstance()
+  )
 ]);
 
 app.listen();

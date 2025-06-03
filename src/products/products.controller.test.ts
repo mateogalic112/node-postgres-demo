@@ -11,6 +11,7 @@ import { AuthController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { FilesService } from "interfaces/files.interface";
+import { MailService } from "interfaces/mail.interface";
 
 describe("ProductsController", () => {
   jest.setTimeout(60000);
@@ -51,9 +52,18 @@ describe("ProductsController", () => {
       uploadFile: jest.fn().mockResolvedValue("https://example.com/image.jpg")
     };
 
+    const mailService: MailService = {
+      sendEmail: jest.fn().mockResolvedValue("123e4567-e89b-12d3-a456-426614174000")
+    };
+
     app = new App([
       new AuthController(client, new AuthService(new UsersRepository(client))),
-      new ProductController(client, new ProductService(new ProductRepository(client)), filesService)
+      new ProductController(
+        client,
+        new ProductService(new ProductRepository(client)),
+        filesService,
+        mailService
+      )
     ]);
   });
 
