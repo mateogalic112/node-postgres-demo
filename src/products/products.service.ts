@@ -18,7 +18,7 @@ export class ProductService {
     });
   }
 
-  public async createProduct(payload: CreateProductPayload): Promise<Product> {
-    return this.productRepository.createProduct(payload);
+  public async createProduct(userId: number, payload: CreateProductPayload): Promise<Product> {
+    return this.productRepository.createProduct(userId, payload);
   }
 }

@@ -52,7 +52,7 @@ export class ProductController extends Controller {
       );
     }
 
-    const product = await this.productService.createProduct(payload);
+    const product = await this.productService.createProduct(user.id, payload);
 
     this.mailService.sendEmail({
       to: user.email,

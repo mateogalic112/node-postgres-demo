@@ -11,6 +11,7 @@ export type CreateProductPayload = z.infer<typeof createProductSchema>;
 
 export const productSchema = z.object({
   id: z.number().int().positive(),
+  user_id: z.number().int().positive(),
   name: z.string().min(3),
   description: z.string().min(10),
   image_url: z.string().url().nullable(),

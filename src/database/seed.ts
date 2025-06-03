@@ -11,7 +11,7 @@ const users: RegisterPayload[] = Array.from({ length: 2 }, () => ({
   password: "123456"
 }));
 
-const products: CreateProductPayload[] = Array.from({ length: 200 }, () => ({
+const products: CreateProductPayload[] = Array.from({ length: 100 }, () => ({
   name: faker.commerce.productName(),
   description: faker.commerce.productDescription(),
   price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
@@ -39,10 +39,12 @@ export async function seedDatabase() {
       ]);
     }
 
+    const user = await client.query("SELECT id FROM users WHERE email = $1", [users[0].email]);
+
     for (const { name, description, price, image_url } of products) {
       await client.query(
-        `INSERT INTO products (name, description, price, image_url) VALUES ($1, $2, $3, $4)`,
-        [name, description, price, image_url]
+        `INSERT INTO products (name, description, price, image_url, user_id) VALUES ($1, $2, $3, $4, $5)`,
+        [name, description, price, image_url, user.rows[0].id]
       );
     }
   } catch (error) {

@@ -39,6 +39,7 @@ describe("ProductsController", () => {
 
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         name VARCHAR(100),
         description TEXT,
         price INT,
@@ -68,7 +69,7 @@ describe("ProductsController", () => {
   });
 
   beforeEach(async () => {
-    await client.query("TRUNCATE TABLE users,products RESTART IDENTITY CASCADE");
+    await client.query("TRUNCATE TABLE users, products RESTART IDENTITY CASCADE");
   });
 
   afterEach(async () => {
@@ -81,6 +82,11 @@ describe("ProductsController", () => {
 
   describe("GET /api/v1/products", () => {
     it("should return paginated products WITH next cursor", async () => {
+      const user = await client.query(
+        "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
+        ["testuser", "test@example.com", "password"]
+      );
+
       const products: CreateProductPayload[] = Array.from({ length: 21 }, () => ({
         name: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
@@ -90,8 +96,8 @@ describe("ProductsController", () => {
 
       for (const { name, description, price, image_url } of products) {
         await client.query(
-          `INSERT INTO products (name, description, price, image_url) VALUES ($1, $2, $3, $4)`,
-          [name, description, price, image_url]
+          `INSERT INTO products (name, description, price, image_url, user_id) VALUES ($1, $2, $3, $4, $5)`,
+          [name, description, price, image_url, user.rows[0].id]
         );
       }
 
@@ -104,6 +110,11 @@ describe("ProductsController", () => {
     });
 
     it("should return paginated products WITHOUT next cursor", async () => {
+      const user = await client.query(
+        "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
+        ["testuser", "test@example.com", "password"]
+      );
+
       const products: CreateProductPayload[] = Array.from({ length: 8 }, () => ({
         name: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
@@ -113,8 +124,8 @@ describe("ProductsController", () => {
 
       for (const { name, description, price, image_url } of products) {
         await client.query(
-          `INSERT INTO products (name, description, price, image_url) VALUES ($1, $2, $3, $4)`,
-          [name, description, price, image_url]
+          `INSERT INTO products (name, description, price, image_url, user_id) VALUES ($1, $2, $3, $4, $5)`,
+          [name, description, price, image_url, user.rows[0].id]
         );
       }
 
