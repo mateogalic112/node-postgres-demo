@@ -1,15 +1,13 @@
 import { z } from "zod";
 
 export const createProductSchema = z.object({
-  body: z.object({
-    name: z.string().min(3),
-    description: z.string().min(10),
-    price: z.coerce.number().int().positive(),
-    image_url: z.string().url().nullable().optional().default(null)
-  })
+  name: z.string().min(3),
+  description: z.string().min(10),
+  price: z.coerce.number().int().positive(),
+  image_url: z.string().url().nullable().optional().default(null)
 });
 
-export type CreateProductPayload = z.infer<typeof createProductSchema>["body"];
+export type CreateProductPayload = z.infer<typeof createProductSchema>;
 
 export const productSchema = z.object({
   id: z.number().int().positive(),

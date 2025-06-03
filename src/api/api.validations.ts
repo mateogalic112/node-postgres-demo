@@ -1,13 +1,11 @@
 import { z } from "zod";
 
 export const paginatedRequestSchema = z.object({
-  query: z.object({
-    limit: z.coerce.number().positive(),
-    cursor: z.coerce.number().positive().optional().nullable()
-  })
+  limit: z.coerce.number().positive(),
+  cursor: z.coerce.number().positive().optional().nullable()
 });
 
-export type PaginatedRequestParams = z.infer<typeof paginatedRequestSchema>["query"];
+export type PaginatedRequestParams = z.infer<typeof paginatedRequestSchema>;
 
 export const paginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
   z.object({

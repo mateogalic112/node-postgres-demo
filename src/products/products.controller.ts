@@ -35,14 +35,14 @@ export class ProductController extends Controller {
 
   private getProducts = asyncMiddleware(async (request, response) => {
     const products = await this.productService.getProducts(
-      paginatedRequestSchema.parse(request).query
+      paginatedRequestSchema.parse(request.query)
     );
     response.json(products);
   });
 
   private createProduct = asyncMiddleware(async (request, response) => {
     const user = userSchema.parse(response.locals.user);
-    const payload = createProductSchema.parse(request).body;
+    const payload = createProductSchema.parse(request.body);
 
     // Upload file if present
     if (request.file) {
