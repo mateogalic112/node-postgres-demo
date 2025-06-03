@@ -9,7 +9,7 @@ import { env } from "config/env";
 import { UsersRepository } from "users/users.repository";
 import { AWSService } from "services/aws.service";
 
-const pool = new Pool({
+const db = new Pool({
   host: env.POSTGRES_HOST,
   user: env.POSTGRES_USER,
   password: env.POSTGRES_PASSWORD,
@@ -19,12 +19,8 @@ const pool = new Pool({
 });
 
 const app = new App([
-  new AuthController(pool, new AuthService(new UsersRepository(pool))),
-  new ProductController(
-    pool,
-    new ProductService(new ProductRepository(pool)),
-    AWSService.getInstance()
-  )
+  new AuthController(db, new AuthService(new UsersRepository(db))),
+  new ProductController(db, new ProductService(new ProductRepository(db)), AWSService.getInstance())
 ]);
 
 app.listen();
