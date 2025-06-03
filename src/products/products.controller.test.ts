@@ -39,7 +39,7 @@ describe("ProductsController", () => {
 
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         name VARCHAR(100),
         description TEXT,
         price INT,
@@ -96,7 +96,7 @@ describe("ProductsController", () => {
 
       for (const { name, description, price, image_url } of products) {
         await client.query(
-          `INSERT INTO products (name, description, price, image_url, user_id) VALUES ($1, $2, $3, $4, $5)`,
+          `INSERT INTO products (name, description, price, image_url, owner_id) VALUES ($1, $2, $3, $4, $5)`,
           [name, description, price, image_url, user.rows[0].id]
         );
       }
@@ -124,7 +124,7 @@ describe("ProductsController", () => {
 
       for (const { name, description, price, image_url } of products) {
         await client.query(
-          `INSERT INTO products (name, description, price, image_url, user_id) VALUES ($1, $2, $3, $4, $5)`,
+          `INSERT INTO products (name, description, price, image_url, owner_id) VALUES ($1, $2, $3, $4, $5)`,
           [name, description, price, image_url, user.rows[0].id]
         );
       }
