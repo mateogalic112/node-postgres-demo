@@ -1,7 +1,7 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { env } from "config/env";
 import { LoggerService } from "./logger.service";
-import { FilesService } from "api/api.files";
+import { FilesService } from "interfaces/files.interface";
 
 export class AWSService implements FilesService {
   private static instance: AWSService;

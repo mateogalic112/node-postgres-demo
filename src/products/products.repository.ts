@@ -1,9 +1,9 @@
 import { CreateProductPayload, Product } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
-import { Database } from "api/api.database";
+import { DatabaseService } from "interfaces/database.interface";
 
 export class ProductRepository {
-  constructor(private readonly db: Database) {}
+  constructor(private readonly db: DatabaseService) {}
 
   public async getProducts(params: PaginatedRequestParams) {
     const result = await this.db.query<Product>(

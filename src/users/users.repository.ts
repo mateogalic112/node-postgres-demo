@@ -1,10 +1,10 @@
-import { Database } from "api/api.database";
+import { DatabaseService } from "interfaces/database.interface";
 import { User } from "./users.validation";
 import { RegisterPayload } from "auth/auth.validation";
 import { InternalServerError } from "api/api.errors";
 
 export class UsersRepository {
-  constructor(private readonly db: Database) {}
+  constructor(private readonly db: DatabaseService) {}
 
   public async createUser(payload: RegisterPayload) {
     const result = await this.db.query<User>(

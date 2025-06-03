@@ -4,15 +4,15 @@ import { createProductSchema } from "./products.validation";
 import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
 import { paginatedRequestSchema } from "api/api.validations";
-import { Database } from "api/api.database";
+import { DatabaseService } from "interfaces/database.interface";
 import { UsersRepository } from "users/users.repository";
 import { fileMiddleware } from "middleware/file.middleware";
-import { FilesService } from "api/api.files";
+import { FilesService } from "interfaces/files.interface";
 import crypto from "crypto";
 
 export class ProductController extends Controller {
   constructor(
-    private readonly db: Database,
+    private readonly db: DatabaseService,
     private readonly productService: ProductService,
     private readonly filesService: FilesService
   ) {

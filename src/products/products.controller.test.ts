@@ -10,7 +10,7 @@ import { faker } from "@faker-js/faker/.";
 import { AuthController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
-import { FilesService } from "api/api.files";
+import { FilesService } from "interfaces/files.interface";
 
 describe("ProductsController", () => {
   jest.setTimeout(60000);

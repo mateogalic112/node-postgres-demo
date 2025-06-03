@@ -5,12 +5,12 @@ import asyncMiddleware from "middleware/async.middleware";
 import { AUTH_COOKIE_NAME } from "./auth.constants";
 import { userSchema } from "users/users.validation";
 import { Controller } from "api/api.controllers";
-import { Database } from "api/api.database";
+import { DatabaseService } from "interfaces/database.interface";
 import { UsersRepository } from "users/users.repository";
 
 export class AuthController extends Controller {
   constructor(
-    private readonly db: Database,
+    private readonly db: DatabaseService,
     private readonly authService: AuthService
   ) {
     super("/auth");
