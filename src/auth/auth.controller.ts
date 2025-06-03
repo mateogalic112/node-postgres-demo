@@ -10,7 +10,7 @@ import { UsersRepository } from "users/users.repository";
 
 export class AuthController extends Controller {
   constructor(
-    private readonly db: DatabaseService,
+    private readonly DB: DatabaseService,
     private readonly authService: AuthService
   ) {
     super("/auth");
@@ -20,10 +20,10 @@ export class AuthController extends Controller {
   protected initializeRoutes() {
     this.router.post(`${this.path}/register`, this.registerUser);
     this.router.post(`${this.path}/login`, this.loginUser);
-    this.router.get(`${this.path}/me`, authMiddleware(new UsersRepository(this.db)), this.me);
+    this.router.get(`${this.path}/me`, authMiddleware(new UsersRepository(this.DB)), this.me);
     this.router.delete(
       `${this.path}/logout`,
-      authMiddleware(new UsersRepository(this.db)),
+      authMiddleware(new UsersRepository(this.DB)),
       this.logoutUser
     );
   }

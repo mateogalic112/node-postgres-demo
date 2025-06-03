@@ -14,7 +14,7 @@ import { User } from "users/users.validation";
 
 export class ProductController extends Controller {
   constructor(
-    private readonly db: DatabaseService,
+    private readonly DB: DatabaseService,
     private readonly productService: ProductService,
     private readonly filesService: FilesService,
     private readonly mailService: MailService
@@ -27,7 +27,7 @@ export class ProductController extends Controller {
     this.router.get(`${this.path}`, this.getProducts);
     this.router.post(
       `${this.path}`,
-      authMiddleware(new UsersRepository(this.db)),
+      authMiddleware(new UsersRepository(this.DB)),
       fileMiddleware({ limitMB: 5, allowedFormats: ".jpg|.jpeg|.png|.gif|.webp" }).single("image"),
       this.createProduct
     );

@@ -10,7 +10,7 @@ import { UsersRepository } from "users/users.repository";
 import { AWSService } from "services/aws.service";
 import { ResendService } from "services/resend.service";
 
-const db = new Pool({
+const DB = new Pool({
   host: env.POSTGRES_HOST,
   user: env.POSTGRES_USER,
   password: env.POSTGRES_PASSWORD,
@@ -20,10 +20,10 @@ const db = new Pool({
 });
 
 const app = new App([
-  new AuthController(db, new AuthService(new UsersRepository(db))),
+  new AuthController(DB, new AuthService(new UsersRepository(DB))),
   new ProductController(
-    db,
-    new ProductService(new ProductRepository(db)),
+    DB,
+    new ProductService(new ProductRepository(DB)),
     AWSService.getInstance(),
     ResendService.getInstance()
   )

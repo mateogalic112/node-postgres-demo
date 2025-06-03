@@ -4,10 +4,10 @@ import { RegisterPayload } from "auth/auth.validation";
 import { InternalServerError } from "api/api.errors";
 
 export class UsersRepository {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly DB: DatabaseService) {}
 
   public async createUser(payload: RegisterPayload) {
-    const result = await this.db.query<User>(
+    const result = await this.DB.query<User>(
       "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
       [payload.username, payload.email, payload.password]
     );
@@ -17,14 +17,14 @@ export class UsersRepository {
   }
 
   public async findUserById(id: number) {
-    const result = await this.db.query<User>("SELECT * FROM users WHERE id = $1", [id]);
+    const result = await this.DB.query<User>("SELECT * FROM users WHERE id = $1", [id]);
     if (result.rowCount === 0) return null;
 
     return result.rows[0];
   }
 
   public async findUserByEmail(email: string) {
-    const result = await this.db.query<User>("SELECT * FROM users WHERE email = $1", [email]);
+    const result = await this.DB.query<User>("SELECT * FROM users WHERE email = $1", [email]);
     if (result.rowCount === 0) return null;
 
     return result.rows[0];
