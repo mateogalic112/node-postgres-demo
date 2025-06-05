@@ -9,6 +9,9 @@ import { env } from "config/env";
 import { UsersRepository } from "users/users.repository";
 import { AWSService } from "services/aws.service";
 import { ResendService } from "services/resend.service";
+import { AuctionsController } from "auctions/auctions.controller";
+import { AuctionService } from "auctions/auctions.service";
+import { AuctionRepository } from "auctions/auctions.repository";
 
 const DB = new Pool({
   host: env.POSTGRES_HOST,
@@ -26,7 +29,8 @@ const app = new App([
     new ProductService(new ProductRepository(DB)),
     AWSService.getInstance(),
     ResendService.getInstance()
-  )
+  ),
+  new AuctionsController(new AuctionService(new AuctionRepository(DB)))
 ]);
 
 app.listen();
