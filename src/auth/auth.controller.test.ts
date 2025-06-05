@@ -43,7 +43,7 @@ describe("AuthController", () => {
 
   describe("Register user -> /api/v1/auth/register", () => {
     it("should register a new user", async () => {
-      const response = await request(app.app).post("/api/v1/auth/register").send({
+      const response = await request(app.getServer()).post("/api/v1/auth/register").send({
         username: "testuser",
         email: "test@example.com",
         password: "password"
@@ -57,13 +57,13 @@ describe("AuthController", () => {
     });
 
     it("should return 400 if user already exists", async () => {
-      await request(app.app).post("/api/v1/auth/register").send({
+      await request(app.getServer()).post("/api/v1/auth/register").send({
         username: "testuser",
         email: "test@example.com",
         password: "password"
       });
 
-      const response = await request(app.app).post("/api/v1/auth/register").send({
+      const response = await request(app.getServer()).post("/api/v1/auth/register").send({
         username: "testuser",
         email: "test@example.com",
         password: "password"

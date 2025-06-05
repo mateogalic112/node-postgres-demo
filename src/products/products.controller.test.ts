@@ -101,7 +101,7 @@ describe("ProductsController", () => {
         );
       }
 
-      const response = await request(app.app).get("/api/v1/products").query({ limit: 10 });
+      const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
       expect(response.status).toBe(200);
       expect(response.body.data.length).toBe(10);
       expect(response.body.nextCursor).toMatchObject({
@@ -129,7 +129,7 @@ describe("ProductsController", () => {
         );
       }
 
-      const response = await request(app.app).get("/api/v1/products").query({ limit: 10 });
+      const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
       expect(response.status).toBe(200);
       expect(response.body.data.length).toBe(8);
       expect(response.body.nextCursor).toBeNull();
@@ -139,7 +139,7 @@ describe("ProductsController", () => {
   describe("POST /api/v1/products", () => {
     it("should create a product when authenticated", async () => {
       // First register a user
-      const userResponse = await request(app.app).post("/api/v1/auth/register").send({
+      const userResponse = await request(app.getServer()).post("/api/v1/auth/register").send({
         username: "testuser",
         email: "test@example.com",
         password: "password"
@@ -159,7 +159,7 @@ describe("ProductsController", () => {
 
       const mockImageBuffer = Buffer.from("fake-image-data");
 
-      const response = await request(app.app)
+      const response = await request(app.getServer())
         .post("/api/v1/products")
         .set("Cookie", authCookie)
         .field("name", payload.name)
@@ -186,7 +186,7 @@ describe("ProductsController", () => {
         image_url: faker.image.url()
       };
 
-      const response = await request(app.app).post("/api/v1/products").send(payload);
+      const response = await request(app.getServer()).post("/api/v1/products").send(payload);
       expect(response.status).toBe(401);
     });
   });
