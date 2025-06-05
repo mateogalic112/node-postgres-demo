@@ -15,11 +15,7 @@ export const productSchema = z.object({
   name: z.string().min(3),
   description: z.string().min(10),
   image_url: z.string().url().nullable(),
-  price: z.coerce
-    .number()
-    .int()
-    .positive()
-    .transform((val) => parseInt(val.toString(), 10)),
+  price: z.coerce.number().int().positive(),
   created_at: z.date(),
   updated_at: z.date()
 });

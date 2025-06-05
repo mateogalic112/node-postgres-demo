@@ -172,9 +172,11 @@ describe("ProductsController", () => {
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
-        id: 1,
-        ...payload,
-        image_url: "https://example.com/image.jpg"
+        data: {
+          id: 1,
+          ...payload,
+          image_url: "https://example.com/image.jpg"
+        }
       });
     });
 

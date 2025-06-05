@@ -3,7 +3,7 @@ import { ProductService } from "./products.service";
 import { createProductSchema } from "./products.validation";
 import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
-import { paginatedRequestSchema } from "api/api.validations";
+import { idSchema, paginatedRequestSchema } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
 import { UsersRepository } from "users/users.repository";
 import { fileMiddleware } from "middleware/file.middleware";
@@ -25,6 +25,7 @@ export class ProductController extends Controller {
 
   protected initializeRoutes() {
     this.router.get(`${this.path}`, this.getProducts);
+    this.router.get(`${this.path}/:id`, this.getProductById);
     this.router.post(
       `${this.path}`,
       authMiddleware(new UsersRepository(this.DB)),
@@ -34,10 +35,13 @@ export class ProductController extends Controller {
   }
 
   private getProducts = asyncMiddleware(async (request, response) => {
-    const products = await this.productService.getProducts(
-      paginatedRequestSchema.parse(request.query)
-    );
-    response.json(products);
+    const { limit, cursor } = paginatedRequestSchema.parse(request.query);
+    const products = await this.productService.getProducts({ limit, cursor });
+
+    response.json({
+      data: products,
+      nextCursor: products.length === limit ? { id: products[products.length - 1].id } : null
+    });
   });
 
   private createProduct = asyncMiddleware(async (request, response) => {
@@ -59,6 +63,11 @@ export class ProductController extends Controller {
       template: MailTemplateFactory.getTemplate(MailTemplateType.CREATE_PRODUCT)(product)
     });
 
-    response.status(201).json(product);
+    response.status(201).json({ data: product });
+  });
+
+  private getProductById = asyncMiddleware(async (request, response) => {
+    const product = await this.productService.getProductById(idSchema.parse(request.params).id);
+    response.json({ data: product });
   });
 }

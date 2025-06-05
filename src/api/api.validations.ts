@@ -7,12 +7,6 @@ export const paginatedRequestSchema = z.object({
 
 export type PaginatedRequestParams = z.infer<typeof paginatedRequestSchema>;
 
-export const paginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
-  z.object({
-    data: z.array(itemSchema),
-    nextCursor: z
-      .object({
-        id: z.number().int().positive()
-      })
-      .nullable()
-  });
+export const idSchema = z.object({
+  id: z.coerce.number().int().positive()
+});

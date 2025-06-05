@@ -20,4 +20,11 @@ export class ProductRepository {
     );
     return result.rows[0];
   }
+
+  public async getProductById(id: number) {
+    const result = await this.DB.query<Product>("SELECT * FROM products WHERE id = $1", [id]);
+    if (!result.rowCount) return null;
+
+    return result.rows[0];
+  }
 }
