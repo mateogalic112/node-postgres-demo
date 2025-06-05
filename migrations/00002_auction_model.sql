@@ -1,0 +1,11 @@
+
+CREATE TABLE IF NOT EXISTS auctions (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+  winner_id INTEGER REFERENCES users(id) ON DELETE CASCADE DEFAULT NULL,
+  start_time TIMESTAMP,
+  duration_hours INT,
+  starting_price INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
