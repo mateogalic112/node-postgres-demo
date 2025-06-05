@@ -1,4 +1,3 @@
-
 CREATE TABLE IF NOT EXISTS auctions (
   id SERIAL PRIMARY KEY,
   product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
