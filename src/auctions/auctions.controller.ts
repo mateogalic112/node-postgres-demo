@@ -23,9 +23,9 @@ export class AuctionController extends Controller {
   }
 
   private getAuctions = asyncMiddleware(async (request, response) => {
-    const { limit, cursor } = paginatedRequestSchema.parse(request.query);
-    const auctions = await this.auctionService.getAuctions({ limit, cursor });
-    response.json(formatPaginatedResponse(auctions, limit));
+    const query = paginatedRequestSchema.parse(request.query);
+    const auctions = await this.auctionService.getAuctions(query);
+    response.json(formatPaginatedResponse(auctions, query.limit));
   });
 
   private createAuction = asyncMiddleware(async (request, response) => {
