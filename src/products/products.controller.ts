@@ -1,6 +1,6 @@
 import { Controller } from "api/api.controllers";
 import { ProductService } from "./products.service";
-import { createProductSchema } from "./products.validation";
+import { createProductSchema, productImageSchema } from "./products.validation";
 import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
 import { idSchema, paginatedRequestSchema } from "api/api.validations";
@@ -24,7 +24,10 @@ export class ProductController extends Controller {
     this.router.post(
       `${this.path}`,
       authMiddleware(this.usersService),
-      fileMiddleware({ limitMB: 5, allowedFormats: ".jpg|.jpeg|.png|.webp" }).single("image"),
+      fileMiddleware({
+        limitMB: productImageSchema.maxSizeMB,
+        allowedFormats: productImageSchema.allowedFormats
+      }).single("image"),
       this.createProduct
     );
   }
