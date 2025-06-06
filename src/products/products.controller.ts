@@ -24,7 +24,7 @@ export class ProductController extends Controller {
     this.router.post(
       `${this.path}`,
       authMiddleware(this.usersService),
-      fileMiddleware({ limitMB: 5, allowedFormats: ".jpg|.jpeg|.png|.gif|.webp" }).single("image"),
+      fileMiddleware({ limitMB: 5, allowedFormats: ".jpg|.jpeg|.png|.webp" }).single("image"),
       this.createProduct
     );
   }
@@ -36,7 +36,8 @@ export class ProductController extends Controller {
   });
 
   private getProductById = asyncMiddleware(async (request, response) => {
-    const product = await this.productService.getProductById(idSchema.parse(request.params).id);
+    const { id } = idSchema.parse(request.params);
+    const product = await this.productService.getProductById(id);
     response.json(formatResponse(product));
   });
 
