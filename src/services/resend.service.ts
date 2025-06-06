@@ -25,7 +25,7 @@ export class ResendService implements MailService {
     to: string;
     template: MailTemplate;
   }): Promise<string | null> {
-    if (process.env.NODE_ENV === "test") return null;
+    if (process.env.NODE_ENV !== "production") return null;
 
     try {
       const { data, error } = await this.resend.emails.send({
