@@ -26,8 +26,7 @@ export class AuctionService {
     const alreadyInAuction = await this.auctionRepository.getAuctionByProductId(payload.product_id);
     if (alreadyInAuction) throw new BadRequestError("Product already attached to an auction");
 
-    const startingPrice = product.price * 0.9; // 90% of the product price
-    const createdAuction = await this.auctionRepository.createAuction(payload, startingPrice);
+    const createdAuction = await this.auctionRepository.createAuction(payload, product.price);
 
     return {
       auction: auctionSchema.parse(createdAuction),
