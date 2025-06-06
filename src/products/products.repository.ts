@@ -1,3 +1,4 @@
+import { InternalServerError } from "api/api.errors";
 import { CreateProductPayload, Product } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
@@ -13,6 +14,13 @@ export class ProductRepository {
     return result.rows;
   }
 
+  public async getProductById(id: number) {
+    const result = await this.DB.query<Product>("SELECT * FROM products WHERE id = $1", [id]);
+    if (!result.rowCount) return null;
+
+    return result.rows[0];
+  }
+
   public async createProduct({
     userId,
     payload
@@ -24,12 +32,7 @@ export class ProductRepository {
       "INSERT INTO products (name, description, price, image_url, owner_id) VALUES ($1, $2, $3, $4, $5) RETURNING *",
       [payload.name, payload.description, payload.price, payload.imageUrl, userId]
     );
-    return result.rows[0];
-  }
-
-  public async getProductById(id: number) {
-    const result = await this.DB.query<Product>("SELECT * FROM products WHERE id = $1", [id]);
-    if (!result.rowCount) return null;
+    if (result.rows.length === 0) throw new InternalServerError("Failed to create product");
 
     return result.rows[0];
   }

@@ -1,9 +1,10 @@
+import { isFuture } from "date-fns";
 import { z } from "zod";
 
 export const createAuctionSchema = z.object({
   product_id: z.number().int().positive(),
-  start_time: z.coerce.date(),
-  duration_hours: z.number().int().positive()
+  start_time: z.coerce.date().refine(isFuture, "Auction start time must be in the future"),
+  duration_hours: z.number().int().positive().min(24, "Auction duration must be at least 24 hours")
 });
 
 export type CreateAuctionPayload = z.infer<typeof createAuctionSchema>;
