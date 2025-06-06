@@ -18,6 +18,13 @@ export class AuctionService {
     return auctions.map((auction) => auctionSchema.parse(auction));
   }
 
+  public async getAuctionById(id: number) {
+    const auction = await this.auctionRepository.getAuctionById(id);
+    if (!auction) return null;
+
+    return auctionSchema.parse(auction);
+  }
+
   public async createAuction({ user, payload }: { user: User; payload: CreateAuctionPayload }) {
     const product = await this.productService.getProductById(payload.product_id);
     if (!product) throw new NotFoundError(`Product with id ${payload.product_id} not found`);

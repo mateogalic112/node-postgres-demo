@@ -13,6 +13,12 @@ export class AuctionRepository {
     return result.rows;
   }
 
+  public async getAuctionById(id: number) {
+    const result = await this.DB.query<Auction>("SELECT * FROM auctions WHERE id = $1", [id]);
+    if (result.rows.length === 0) return null;
+    return result.rows[0];
+  }
+
   public async getAuctionByProductId(productId: number) {
     const result = await this.DB.query<Auction>("SELECT * FROM auctions WHERE product_id = $1", [
       productId

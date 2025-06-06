@@ -13,6 +13,9 @@ import { AuctionController } from "auctions/auctions.controller";
 import { AuctionService } from "auctions/auctions.service";
 import { AuctionRepository } from "auctions/auctions.repository";
 import { UserService } from "users/users.service";
+import { BidService } from "bids/bid.service";
+import { BidRepository } from "bids/bids.repository";
+import { BidController } from "bids/bid.controller";
 
 const DB = new Pool({
   host: env.POSTGRES_HOST,
@@ -37,12 +40,16 @@ const auctionService = new AuctionService(
   ResendService.getInstance()
 );
 
+const bidService = new BidService(new BidRepository(DB), auctionService, productService);
+
 const authController = new AuthController(new AuthService(usersService), usersService);
 
 const productController = new ProductController(usersService, productService);
 
 const auctionController = new AuctionController(auctionService, usersService);
 
-const app = new App([authController, productController, auctionController]);
+const bidController = new BidController(bidService, usersService);
+
+const app = new App([authController, productController, auctionController, bidController]);
 
 app.listen();
