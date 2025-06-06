@@ -4,6 +4,7 @@ import * as bcrypt from "bcrypt";
 import { BadRequestError, UnauthorizedError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { DatabaseService } from "interfaces/database.interface";
+import { UserService } from "users/users.service";
 
 // Mock the AuthRepository
 jest.mock("users/users.repository");
@@ -35,7 +36,7 @@ describe("AuthService", () => {
     mockUsersRepository = new UsersRepository(
       {} as DatabaseService
     ) as jest.Mocked<UsersRepository>;
-    authService = new AuthService(mockUsersRepository);
+    authService = new AuthService(new UserService(mockUsersRepository));
   });
 
   describe("user registration", () => {

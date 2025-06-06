@@ -23,21 +23,25 @@ const DB = new Pool({
   idleTimeoutMillis: 30000
 });
 
-const authController = new AuthController(DB, new AuthService(new UsersRepository(DB)));
-const productController = new ProductController(
-  new UserService(new UsersRepository(DB)),
-  new ProductService(
-    new ProductRepository(DB),
-    ResendService.getInstance(),
-    AWSService.getInstance()
-  )
+const usersService = new UserService(new UsersRepository(DB));
+
+const productService = new ProductService(
+  new ProductRepository(DB),
+  ResendService.getInstance(),
+  AWSService.getInstance()
 );
 
-const auctionController = new AuctionController(
-  DB,
-  new AuctionService(new AuctionRepository(DB), new ProductRepository(DB)),
+const auctionService = new AuctionService(
+  new AuctionRepository(DB),
+  productService,
   ResendService.getInstance()
 );
+
+const authController = new AuthController(new AuthService(usersService), usersService);
+
+const productController = new ProductController(usersService, productService);
+
+const auctionController = new AuctionController(auctionService, usersService);
 
 const app = new App([authController, productController, auctionController]);
 

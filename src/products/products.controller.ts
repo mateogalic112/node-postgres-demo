@@ -7,6 +7,7 @@ import { idSchema, paginatedRequestSchema } from "api/api.validations";
 import { fileMiddleware } from "middleware/file.middleware";
 import { userSchema } from "users/users.validation";
 import { UserService } from "users/users.service";
+import { formatPaginatedResponse, formatResponse } from "api/api.formats";
 
 export class ProductController extends Controller {
   constructor(
@@ -32,15 +33,12 @@ export class ProductController extends Controller {
     const { limit, cursor } = paginatedRequestSchema.parse(request.query);
     const products = await this.productService.getProducts({ limit, cursor });
 
-    response.json({
-      data: products,
-      nextCursor: products.length === limit ? { id: products[products.length - 1].id } : null
-    });
+    response.json(formatPaginatedResponse(products, limit));
   });
 
   private getProductById = asyncMiddleware(async (request, response) => {
     const product = await this.productService.getProductById(idSchema.parse(request.params).id);
-    response.json({ data: product });
+    response.json(formatResponse(product));
   });
 
   private createProduct = asyncMiddleware(async (request, response) => {
@@ -48,6 +46,6 @@ export class ProductController extends Controller {
       user: userSchema.parse(response.locals.user),
       payload: createProductSchema.parse(request)
     });
-    response.status(201).json({ data: product });
+    response.status(201).json(formatResponse(product));
   });
 }

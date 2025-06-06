@@ -3,18 +3,15 @@ import { paginatedRequestSchema } from "api/api.validations";
 import asyncMiddleware from "middleware/async.middleware";
 import { AuctionService } from "./auctions.service";
 import { createAuctionSchema } from "./auctions.validation";
-import { DatabaseService } from "interfaces/database.interface";
-import { UsersRepository } from "users/users.repository";
 import authMiddleware from "middleware/auth.middleware";
 import { userSchema } from "users/users.validation";
-import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
 import { UserService } from "users/users.service";
+import { formatPaginatedResponse, formatResponse } from "api/api.formats";
 
 export class AuctionController extends Controller {
   constructor(
-    private readonly DB: DatabaseService,
     private readonly auctionService: AuctionService,
-    private readonly mailService: MailService
+    private readonly usersService: UserService
   ) {
     super("/auctions");
     this.initializeRoutes();
@@ -22,36 +19,20 @@ export class AuctionController extends Controller {
 
   protected initializeRoutes() {
     this.router.get(`${this.path}`, this.getAuctions);
-    this.router.post(
-      `${this.path}`,
-      authMiddleware(new UserService(new UsersRepository(this.DB))),
-      this.createAuction
-    );
+    this.router.post(`${this.path}`, authMiddleware(this.usersService), this.createAuction);
   }
 
   private getAuctions = asyncMiddleware(async (request, response) => {
     const { limit, cursor } = paginatedRequestSchema.parse(request.query);
     const auctions = await this.auctionService.getAuctions({ limit, cursor });
-
-    response.json({
-      data: auctions,
-      nextCursor: auctions.length === limit ? { id: auctions[auctions.length - 1].id } : null
-    });
+    response.json(formatPaginatedResponse(auctions, limit));
   });
 
   private createAuction = asyncMiddleware(async (request, response) => {
-    const user = userSchema.parse(response.locals.user);
-
-    const { auction, product } = await this.auctionService.createAuction(
-      createAuctionSchema.parse(request.body),
-      user.id
-    );
-
-    this.mailService.sendEmail({
-      to: user.email,
-      template: CreateAuctionTemplate.getTemplate(auction, product)
+    const auction = await this.auctionService.createAuction({
+      user: userSchema.parse(response.locals.user),
+      payload: createAuctionSchema.parse(request.body)
     });
-
-    response.json({ data: auction });
+    response.json(formatResponse(auction));
   });
 }
