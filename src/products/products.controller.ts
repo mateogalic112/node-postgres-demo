@@ -32,7 +32,6 @@ export class ProductController extends Controller {
   private getProducts = asyncMiddleware(async (request, response) => {
     const { limit, cursor } = paginatedRequestSchema.parse(request.query);
     const products = await this.productService.getProducts({ limit, cursor });
-
     response.json(formatPaginatedResponse(products, limit));
   });
 
