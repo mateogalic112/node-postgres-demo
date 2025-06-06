@@ -50,9 +50,11 @@ describe("AuthController", () => {
       });
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty("id");
-      expect(response.body).toHaveProperty("username", "testuser");
-      expect(response.body).toHaveProperty("email", "test@example.com");
+      expect(response.body.data).toMatchObject({
+        id: expect.any(Number),
+        username: "testuser",
+        email: "test@example.com"
+      });
       expect(response.headers["set-cookie"]).toBeDefined();
     });
 
