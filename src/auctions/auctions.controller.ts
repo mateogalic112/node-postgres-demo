@@ -42,7 +42,8 @@ export class AuctionController extends Controller {
     const user = userSchema.parse(response.locals.user);
 
     const { auction, product } = await this.auctionService.createAuction(
-      createAuctionSchema.parse(request.body)
+      createAuctionSchema.parse(request.body),
+      user.id
     );
 
     this.mailService.sendEmail({

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const createAuctionSchema = z.object({
   product_id: z.number().int().positive(),
-  start_time: z.date(),
+  start_time: z.coerce.date(),
   duration_hours: z.number().int().positive()
 });
 

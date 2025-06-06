@@ -16,16 +16,19 @@ export class AuctionService {
     return auctions.map((auction) => auctionSchema.parse(auction));
   }
 
-  public async createAuction(payload: CreateAuctionPayload) {
+  public async createAuction(payload: CreateAuctionPayload, userId: number) {
     const product = await this.productRepository.getProductById(payload.product_id);
     if (!product) throw new NotFoundError(`Product with id ${payload.product_id} not found`);
+
+    if (product.owner_id !== userId)
+      throw new BadRequestError("You cannot auction another user's product");
 
     const alreadyInAuction = await this.auctionRepository.getAuctionByProductId(payload.product_id);
     if (alreadyInAuction) throw new BadRequestError("Product already attached to an auction");
 
     const startingPrice = product.price * 0.9; // 90% of the product price
-
     const createdAuction = await this.auctionRepository.createAuction(payload, startingPrice);
+
     return {
       auction: auctionSchema.parse(createdAuction),
       product: productSchema.parse(product)
