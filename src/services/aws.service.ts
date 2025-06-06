@@ -24,7 +24,7 @@ export class AWSService implements FilesService {
     return AWSService.instance;
   }
 
-  public async uploadFile(file: Express.Multer.File, key: string) {
+  public async uploadFile(file: { buffer: Buffer; mimetype: string }, key: string) {
     try {
       const uploadResult = await this.s3Client.send(
         new PutObjectCommand({

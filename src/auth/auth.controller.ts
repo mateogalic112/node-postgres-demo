@@ -7,6 +7,7 @@ import { userSchema } from "users/users.validation";
 import { Controller } from "api/api.controllers";
 import { DatabaseService } from "interfaces/database.interface";
 import { UsersRepository } from "users/users.repository";
+import { UserService } from "users/users.service";
 
 export class AuthController extends Controller {
   constructor(
@@ -20,10 +21,14 @@ export class AuthController extends Controller {
   protected initializeRoutes() {
     this.router.post(`${this.path}/register`, this.registerUser);
     this.router.post(`${this.path}/login`, this.loginUser);
-    this.router.get(`${this.path}/me`, authMiddleware(new UsersRepository(this.DB)), this.me);
+    this.router.get(
+      `${this.path}/me`,
+      authMiddleware(new UserService(new UsersRepository(this.DB))),
+      this.me
+    );
     this.router.delete(
       `${this.path}/logout`,
-      authMiddleware(new UsersRepository(this.DB)),
+      authMiddleware(new UserService(new UsersRepository(this.DB))),
       this.logoutUser
     );
   }

@@ -10,3 +10,9 @@ export type PaginatedRequestParams = z.infer<typeof paginatedRequestSchema>;
 export const idSchema = z.object({
   id: z.coerce.number().int().positive()
 });
+
+// Custom Zod schema for Multer file
+export const fileSchema = z.object({
+  buffer: z.instanceof(Buffer),
+  mimetype: z.string()
+});

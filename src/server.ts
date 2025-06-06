@@ -12,6 +12,7 @@ import { ResendService } from "services/resend.service";
 import { AuctionController } from "auctions/auctions.controller";
 import { AuctionService } from "auctions/auctions.service";
 import { AuctionRepository } from "auctions/auctions.repository";
+import { UserService } from "users/users.service";
 
 const DB = new Pool({
   host: env.POSTGRES_HOST,
@@ -22,19 +23,22 @@ const DB = new Pool({
   idleTimeoutMillis: 30000
 });
 
-const app = new App([
-  new AuthController(DB, new AuthService(new UsersRepository(DB))),
-  new ProductController(
-    DB,
-    new ProductService(new ProductRepository(DB)),
-    AWSService.getInstance(),
-    ResendService.getInstance()
-  ),
-  new AuctionController(
-    DB,
-    new AuctionService(new AuctionRepository(DB), new ProductRepository(DB)),
-    ResendService.getInstance()
+const authController = new AuthController(DB, new AuthService(new UsersRepository(DB)));
+const productController = new ProductController(
+  new UserService(new UsersRepository(DB)),
+  new ProductService(
+    new ProductRepository(DB),
+    ResendService.getInstance(),
+    AWSService.getInstance()
   )
-]);
+);
+
+const auctionController = new AuctionController(
+  DB,
+  new AuctionService(new AuctionRepository(DB), new ProductRepository(DB)),
+  ResendService.getInstance()
+);
+
+const app = new App([authController, productController, auctionController]);
 
 app.listen();

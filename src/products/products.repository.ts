@@ -13,10 +13,16 @@ export class ProductRepository {
     return result.rows;
   }
 
-  public async createProduct(userId: number, product: CreateProductPayload) {
+  public async createProduct({
+    userId,
+    payload
+  }: {
+    userId: number;
+    payload: CreateProductPayload["body"] & { imageUrl: string | null };
+  }) {
     const result = await this.DB.query<Product>(
       "INSERT INTO products (name, description, price, image_url, owner_id) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [product.name, product.description, product.price, product.image_url, userId]
+      [payload.name, payload.description, payload.price, payload.imageUrl, userId]
     );
     return result.rows[0];
   }

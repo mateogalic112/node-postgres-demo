@@ -11,12 +11,15 @@ const users: RegisterPayload[] = Array.from({ length: 2 }, () => ({
   password: "123456"
 }));
 
-const products: CreateProductPayload[] = Array.from({ length: 100 }, () => ({
-  name: faker.commerce.productName(),
-  description: faker.commerce.productDescription(),
-  price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
-  image_url: faker.image.url()
-}));
+const products: Array<CreateProductPayload["body"] & { image_url: string | null }> = Array.from(
+  { length: 100 },
+  () => ({
+    name: faker.commerce.productName(),
+    description: faker.commerce.productDescription(),
+    price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
+    image_url: faker.image.url()
+  })
+);
 
 export async function seedDatabase() {
   const client = new Client({

@@ -1,3 +1,3 @@
 export interface FilesService {
-  uploadFile(file: Express.Multer.File, key: string): Promise<string | null>;
+  uploadFile(file: { buffer: Buffer; mimetype: string }, key: string): Promise<string | null>;
 }

@@ -8,6 +8,7 @@ import { UsersRepository } from "users/users.repository";
 import authMiddleware from "middleware/auth.middleware";
 import { userSchema } from "users/users.validation";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
+import { UserService } from "users/users.service";
 
 export class AuctionController extends Controller {
   constructor(
@@ -23,7 +24,7 @@ export class AuctionController extends Controller {
     this.router.get(`${this.path}`, this.getAuctions);
     this.router.post(
       `${this.path}`,
-      authMiddleware(new UsersRepository(this.DB)),
+      authMiddleware(new UserService(new UsersRepository(this.DB))),
       this.createAuction
     );
   }

@@ -12,6 +12,7 @@ import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { FilesService } from "interfaces/files.interface";
 import { MailService } from "interfaces/mail.interface";
+import { UserService } from "users/users.service";
 
 describe("ProductsController", () => {
   jest.setTimeout(60000);
@@ -57,15 +58,15 @@ describe("ProductsController", () => {
       sendEmail: jest.fn().mockResolvedValue("123e4567-e89b-12d3-a456-426614174000")
     };
 
-    app = new App([
-      new AuthController(client, new AuthService(new UsersRepository(client))),
-      new ProductController(
-        client,
-        new ProductService(new ProductRepository(client)),
-        filesService,
-        mailService
-      )
-    ]);
+    const authController = new AuthController(client, new AuthService(new UsersRepository(client)));
+    const userService = new UserService(new UsersRepository(client));
+    const productService = new ProductService(
+      new ProductRepository(client),
+      mailService,
+      filesService
+    );
+
+    app = new App([authController, new ProductController(userService, productService)]);
   });
 
   beforeEach(async () => {
@@ -87,12 +88,13 @@ describe("ProductsController", () => {
         ["testuser", "test@example.com", "password"]
       );
 
-      const products: CreateProductPayload[] = Array.from({ length: 21 }, () => ({
-        name: faker.commerce.productName(),
-        description: faker.commerce.productDescription(),
-        price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
-        image_url: faker.image.url()
-      }));
+      const products: Array<CreateProductPayload["body"] & { image_url: string | null }> =
+        Array.from({ length: 21 }, () => ({
+          name: faker.commerce.productName(),
+          description: faker.commerce.productDescription(),
+          price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
+          image_url: faker.image.url()
+        }));
 
       for (const { name, description, price, image_url } of products) {
         await client.query(
@@ -115,12 +117,13 @@ describe("ProductsController", () => {
         ["testuser", "test@example.com", "password"]
       );
 
-      const products: CreateProductPayload[] = Array.from({ length: 8 }, () => ({
-        name: faker.commerce.productName(),
-        description: faker.commerce.productDescription(),
-        price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
-        image_url: faker.image.url()
-      }));
+      const products: Array<CreateProductPayload["body"] & { image_url: string | null }> =
+        Array.from({ length: 8 }, () => ({
+          name: faker.commerce.productName(),
+          description: faker.commerce.productDescription(),
+          price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
+          image_url: faker.image.url()
+        }));
 
       for (const { name, description, price, image_url } of products) {
         await client.query(
@@ -150,7 +153,7 @@ describe("ProductsController", () => {
       // Get the authentication cookie
       const authCookie = userResponse.headers["set-cookie"][0];
 
-      const payload: CreateProductPayload = {
+      const payload: CreateProductPayload["body"] & { image_url: string | null } = {
         name: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
         price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
@@ -181,7 +184,7 @@ describe("ProductsController", () => {
     });
 
     it("should NOT create a product when NOT authenticated", async () => {
-      const payload: CreateProductPayload = {
+      const payload: CreateProductPayload["body"] & { image_url: string | null } = {
         name: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
         price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),

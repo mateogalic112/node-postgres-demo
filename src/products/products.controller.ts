@@ -4,20 +4,14 @@ import { createProductSchema } from "./products.validation";
 import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
 import { idSchema, paginatedRequestSchema } from "api/api.validations";
-import { DatabaseService } from "interfaces/database.interface";
-import { UsersRepository } from "users/users.repository";
 import { fileMiddleware } from "middleware/file.middleware";
-import { FilesService } from "interfaces/files.interface";
-import crypto from "crypto";
-import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
 import { userSchema } from "users/users.validation";
+import { UserService } from "users/users.service";
 
 export class ProductController extends Controller {
   constructor(
-    private readonly DB: DatabaseService,
-    private readonly productService: ProductService,
-    private readonly filesService: FilesService,
-    private readonly mailService: MailService
+    private readonly usersService: UserService,
+    private readonly productService: ProductService
   ) {
     super("/products");
     this.initializeRoutes();
@@ -28,7 +22,7 @@ export class ProductController extends Controller {
     this.router.get(`${this.path}/:id`, this.getProductById);
     this.router.post(
       `${this.path}`,
-      authMiddleware(new UsersRepository(this.DB)),
+      authMiddleware(this.usersService),
       fileMiddleware({ limitMB: 5, allowedFormats: ".jpg|.jpeg|.png|.gif|.webp" }).single("image"),
       this.createProduct
     );
@@ -44,30 +38,16 @@ export class ProductController extends Controller {
     });
   });
 
-  private createProduct = asyncMiddleware(async (request, response) => {
-    const user = userSchema.parse(response.locals.user);
-    const payload = createProductSchema.parse(request.body);
-
-    // Upload file if present
-    if (request.file) {
-      payload.image_url = await this.filesService.uploadFile(
-        request.file,
-        `products/${crypto.randomUUID()}`
-      );
-    }
-
-    const product = await this.productService.createProduct(user.id, payload);
-
-    this.mailService.sendEmail({
-      to: user.email,
-      template: CreateProductTemplate.getTemplate(product)
-    });
-
-    response.status(201).json({ data: product });
-  });
-
   private getProductById = asyncMiddleware(async (request, response) => {
     const product = await this.productService.getProductById(idSchema.parse(request.params).id);
     response.json({ data: product });
+  });
+
+  private createProduct = asyncMiddleware(async (request, response) => {
+    const product = await this.productService.createProduct({
+      user: userSchema.parse(response.locals.user),
+      payload: createProductSchema.parse(request)
+    });
+    response.status(201).json({ data: product });
   });
 }
