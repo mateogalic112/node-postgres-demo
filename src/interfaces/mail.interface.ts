@@ -1,3 +1,4 @@
+import { Auction } from "auctions/auctions.validation";
 import { Product } from "products/products.validation";
 
 export interface MailTemplate {
@@ -9,11 +10,7 @@ export interface MailService {
   sendEmail({ to, template }: { to: string; template: MailTemplate }): Promise<string | null>;
 }
 
-export enum MailTemplateType {
-  CREATE_PRODUCT = "create_product"
-}
-
-class CreateProductTemplate {
+export class CreateProductTemplate {
   public static getTemplate(product: Product) {
     return {
       subject: "New product created",
@@ -22,11 +19,11 @@ class CreateProductTemplate {
   }
 }
 
-export class MailTemplateFactory {
-  public static getTemplate(template: MailTemplateType) {
-    switch (template) {
-      case MailTemplateType.CREATE_PRODUCT:
-        return CreateProductTemplate.getTemplate;
-    }
+export class CreateAuctionTemplate {
+  public static getTemplate(auction: Auction, product: Product) {
+    return {
+      subject: "New auction created",
+      html: `<strong>New auction created</strong> <p>Product: ${product.name}</p><p>Starting price: ${auction.starting_price}</p><p>Start time: ${auction.start_time}</p><p>Duration: ${auction.duration_hours} hours</p>`
+    };
   }
 }

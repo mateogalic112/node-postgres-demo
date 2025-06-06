@@ -9,7 +9,7 @@ import { UsersRepository } from "users/users.repository";
 import { fileMiddleware } from "middleware/file.middleware";
 import { FilesService } from "interfaces/files.interface";
 import crypto from "crypto";
-import { MailService, MailTemplateFactory, MailTemplateType } from "interfaces/mail.interface";
+import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
 import { userSchema } from "users/users.validation";
 
 export class ProductController extends Controller {
@@ -60,7 +60,7 @@ export class ProductController extends Controller {
 
     this.mailService.sendEmail({
       to: user.email,
-      template: MailTemplateFactory.getTemplate(MailTemplateType.CREATE_PRODUCT)(product)
+      template: CreateProductTemplate.getTemplate(product)
     });
 
     response.status(201).json({ data: product });

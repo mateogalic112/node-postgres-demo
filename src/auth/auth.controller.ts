@@ -37,7 +37,7 @@ export class AuthController extends Controller {
         this.authService.createCookieOptions()
       )
       .status(201)
-      .json(createdUser);
+      .json({ data: createdUser });
   });
 
   private loginUser = asyncMiddleware(async (request, response) => {
@@ -48,12 +48,12 @@ export class AuthController extends Controller {
         this.authService.createToken(user.id),
         this.authService.createCookieOptions()
       )
-      .json(user);
+      .json({ data: user });
   });
 
   private me = asyncMiddleware(async (_, response) => {
     const loggedUser = await this.authService.isLoggedIn(userSchema.parse(response.locals.user));
-    response.json(loggedUser);
+    response.json({ data: loggedUser });
   });
 
   private logoutUser = asyncMiddleware(async (_, response) => {

@@ -9,7 +9,7 @@ import { env } from "config/env";
 import { UsersRepository } from "users/users.repository";
 import { AWSService } from "services/aws.service";
 import { ResendService } from "services/resend.service";
-import { AuctionsController } from "auctions/auctions.controller";
+import { AuctionController } from "auctions/auctions.controller";
 import { AuctionService } from "auctions/auctions.service";
 import { AuctionRepository } from "auctions/auctions.repository";
 
@@ -30,7 +30,11 @@ const app = new App([
     AWSService.getInstance(),
     ResendService.getInstance()
   ),
-  new AuctionsController(new AuctionService(new AuctionRepository(DB)))
+  new AuctionController(
+    DB,
+    new AuctionService(new AuctionRepository(DB), new ProductRepository(DB)),
+    ResendService.getInstance()
+  )
 ]);
 
 app.listen();
