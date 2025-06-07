@@ -32,10 +32,7 @@ describe("AuthController", () => {
     );
 
     app = new App([
-      new AuthController(
-        new AuthService(new UserService(new UsersRepository(client))),
-        new UserService(new UsersRepository(client))
-      )
+      new AuthController(new AuthService(new UserService(new UsersRepository(client))))
     ]);
   });
 

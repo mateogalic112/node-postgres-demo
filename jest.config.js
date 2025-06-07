@@ -16,7 +16,10 @@ module.exports = {
     "^database/(.*)$": "<rootDir>/src/database/$1",
     "^app$": "<rootDir>/src/app",
     "^auth/(.*)$": "<rootDir>/src/auth/$1",
-    "^interfaces/(.*)$": "<rootDir>/src/interfaces/$1"
+    "^interfaces/(.*)$": "<rootDir>/src/interfaces/$1",
+    "^products/(.*)$": "<rootDir>/src/products/$1",
+    "^auctions/(.*)$": "<rootDir>/src/auctions/$1",
+    "^bids/(.*)$": "<rootDir>/src/bids/$1"
   },
   roots: ["<rootDir>/src"]
 };

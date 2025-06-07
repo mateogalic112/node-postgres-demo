@@ -6,13 +6,13 @@ import asyncMiddleware from "middleware/async.middleware";
 import { idSchema, paginatedRequestSchema } from "api/api.validations";
 import { fileMiddleware } from "middleware/file.middleware";
 import { userSchema } from "users/users.validation";
-import { UserService } from "users/users.service";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
+import { AuthService } from "auth/auth.service";
 
 export class ProductController extends Controller {
   constructor(
-    private readonly usersService: UserService,
-    private readonly productService: ProductService
+    private readonly productService: ProductService,
+    private readonly authService: AuthService
   ) {
     super("/products");
     this.initializeRoutes();
@@ -23,7 +23,7 @@ export class ProductController extends Controller {
     this.router.get(`${this.path}/:id`, this.getProductById);
     this.router.post(
       `${this.path}`,
-      authMiddleware(this.usersService),
+      authMiddleware(this.authService),
       fileMiddleware({
         limitMB: productImageSchema.maxSizeMB,
         allowedFormats: productImageSchema.allowedFormats

@@ -5,13 +5,13 @@ import { AuctionService } from "./auctions.service";
 import { createAuctionSchema } from "./auctions.validation";
 import authMiddleware from "middleware/auth.middleware";
 import { userSchema } from "users/users.validation";
-import { UserService } from "users/users.service";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
+import { AuthService } from "auth/auth.service";
 
 export class AuctionController extends Controller {
   constructor(
     private readonly auctionService: AuctionService,
-    private readonly usersService: UserService
+    private readonly authService: AuthService
   ) {
     super("/auctions");
     this.initializeRoutes();
@@ -19,7 +19,7 @@ export class AuctionController extends Controller {
 
   protected initializeRoutes() {
     this.router.get(`${this.path}`, this.getAuctions);
-    this.router.post(`${this.path}`, authMiddleware(this.usersService), this.createAuction);
+    this.router.post(`${this.path}`, authMiddleware(this.authService), this.createAuction);
   }
 
   private getAuctions = asyncMiddleware(async (request, response) => {

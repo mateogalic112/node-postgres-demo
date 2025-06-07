@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import loggerMiddleware from "middleware/logger.middleware";
 import { Server as SocketServer } from "socket.io";
 import { createServer, Server } from "http";
+import { createBidSchema } from "bids/bids.validation";
 
 class App {
   private app: express.Application;
@@ -55,6 +56,19 @@ class App {
       console.log(`User connected: ${socket.id}`);
       socket.on("disconnect", () => {
         console.log("user disconnected");
+      });
+      socket.on("bid:create", (payload) => {
+        const cookieHeader = socket.handshake.headers.cookie;
+        if (!cookieHeader) return;
+
+        const match = cookieHeader.match(/(?:^|;\s*)Authentication=([^;]+)/);
+        const token = match ? match[1] : null;
+
+        if (!token) return;
+        console.log({ token });
+
+        const bid = createBidSchema.parse(payload);
+        console.log({ bid });
       });
     });
   }

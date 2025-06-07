@@ -1,23 +1,23 @@
 import { Controller } from "api/api.controllers";
 import { BidService } from "./bid.service";
 import authMiddleware from "middleware/auth.middleware";
-import { UserService } from "users/users.service";
 import { formatResponse } from "api/api.formats";
 import asyncMiddleware from "middleware/async.middleware";
 import { createBidSchema } from "./bids.validation";
 import { userSchema } from "users/users.validation";
+import { AuthService } from "auth/auth.service";
 
 export class BidController extends Controller {
   constructor(
     private readonly bidService: BidService,
-    private readonly usersService: UserService
+    private readonly authService: AuthService
   ) {
     super("/bids");
     this.initializeRoutes();
   }
 
   protected initializeRoutes() {
-    this.router.post(`${this.path}`, authMiddleware(this.usersService), this.createBid);
+    this.router.post(`${this.path}`, authMiddleware(this.authService), this.createBid);
   }
 
   private createBid = asyncMiddleware(async (request, response) => {

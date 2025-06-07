@@ -42,13 +42,15 @@ const auctionService = new AuctionService(
 
 const bidService = new BidService(new BidRepository(DB), auctionService, productService);
 
-const authController = new AuthController(new AuthService(usersService), usersService);
+const authService = new AuthService(usersService);
 
-const productController = new ProductController(usersService, productService);
+const authController = new AuthController(authService);
 
-const auctionController = new AuctionController(auctionService, usersService);
+const productController = new ProductController(productService, authService);
 
-const bidController = new BidController(bidService, usersService);
+const auctionController = new AuctionController(auctionService, authService);
+
+const bidController = new BidController(bidService, authService);
 
 const app = new App([authController, productController, auctionController, bidController]);
 

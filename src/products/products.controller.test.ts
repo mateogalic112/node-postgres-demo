@@ -58,18 +58,16 @@ describe("ProductsController", () => {
       sendEmail: jest.fn().mockResolvedValue("123e4567-e89b-12d3-a456-426614174000")
     };
 
-    const authController = new AuthController(
-      new AuthService(new UserService(new UsersRepository(client))),
-      new UserService(new UsersRepository(client))
-    );
-    const userService = new UserService(new UsersRepository(client));
+    const authService = new AuthService(new UserService(new UsersRepository(client)));
+    const authController = new AuthController(authService);
+
     const productService = new ProductService(
       new ProductRepository(client),
       mailService,
       filesService
     );
 
-    app = new App([authController, new ProductController(userService, productService)]);
+    app = new App([authController, new ProductController(productService, authService)]);
   });
 
   beforeEach(async () => {

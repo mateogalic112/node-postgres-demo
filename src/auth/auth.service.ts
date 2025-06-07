@@ -43,6 +43,23 @@ export class AuthService {
     return this.removePassword(user);
   }
 
+  public async extractUserFromToken(token: string | undefined) {
+    if (!token) throw new UnauthorizedError();
+
+    const decoded = jwt.verify(token, env.JWT_SECRET) as { _id: number };
+    if (!decoded._id) throw new UnauthorizedError();
+
+    const user = await this.usersService.getUserById(decoded._id);
+    if (!user) throw new UnauthorizedError();
+
+    const { success, data: parsedUser } = userSchema.safeParse(user);
+    if (!success) {
+      throw new UnauthorizedError();
+    }
+
+    return parsedUser;
+  }
+
   public createToken(userId: number) {
     return jwt.sign({ _id: userId }, env.JWT_SECRET, { expiresIn: 60 * 60 });
   }
