@@ -1,13 +1,13 @@
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import App from "app";
 import { Client } from "pg";
-import { ProductController } from "./products.controller";
+import { ProductHttpController } from "./products.controller";
 import { ProductService } from "./products.service";
 import { ProductRepository } from "./products.repository";
 import request from "supertest";
 import { CreateProductPayload } from "./products.validation";
 import { faker } from "@faker-js/faker/.";
-import { AuthController } from "auth/auth.controller";
+import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { FilesService } from "interfaces/files.interface";
@@ -59,7 +59,7 @@ describe("ProductsController", () => {
     };
 
     const authService = new AuthService(new UserService(new UsersRepository(client)));
-    const authController = new AuthController(authService);
+    const authController = new AuthHttpController(authService);
 
     const productService = new ProductService(
       new ProductRepository(client),
@@ -67,7 +67,7 @@ describe("ProductsController", () => {
       filesService
     );
 
-    app = new App([authController, new ProductController(productService, authService)], []);
+    app = new App([authController, new ProductHttpController(productService, authService)], []);
   });
 
   beforeEach(async () => {

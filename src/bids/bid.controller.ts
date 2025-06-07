@@ -7,7 +7,7 @@ import { createBidSchema } from "./bids.validation";
 import { userSchema } from "users/users.validation";
 import { AuthService } from "auth/auth.service";
 
-export class BidController extends HttpController {
+export class BidHttpController extends HttpController {
   constructor(
     private readonly bidService: BidService,
     private readonly authService: AuthService

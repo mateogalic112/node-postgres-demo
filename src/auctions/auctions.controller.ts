@@ -8,7 +8,7 @@ import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
 import { AuthService } from "auth/auth.service";
 
-export class AuctionController extends HttpController {
+export class AuctionHttpController extends HttpController {
   constructor(
     private readonly auctionService: AuctionService,
     private readonly authService: AuthService

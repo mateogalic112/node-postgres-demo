@@ -1,5 +1,5 @@
 import App from "app";
-import { AuthController } from "./auth.controller";
+import { AuthHttpController } from "./auth.controller";
 import request from "supertest";
 import { AuthService } from "./auth.service";
 import { Client } from "pg";
@@ -32,7 +32,7 @@ describe("AuthController", () => {
     );
 
     app = new App(
-      [new AuthController(new AuthService(new UserService(new UsersRepository(client))))],
+      [new AuthHttpController(new AuthService(new UserService(new UsersRepository(client))))],
       []
     );
   });

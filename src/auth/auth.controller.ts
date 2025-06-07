@@ -7,7 +7,7 @@ import { userSchema } from "users/users.validation";
 import { HttpController } from "api/api.controllers";
 import { formatResponse } from "api/api.formats";
 
-export class AuthController extends HttpController {
+export class AuthHttpController extends HttpController {
   constructor(private readonly authService: AuthService) {
     super("/auth");
     this.initializeRoutes();

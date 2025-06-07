@@ -1,6 +1,6 @@
-import { AuthController } from "auth/auth.controller";
+import { AuthHttpController } from "auth/auth.controller";
 import App from "./app";
-import { ProductController } from "products/products.controller";
+import { ProductHttpController } from "products/products.controller";
 import { AuthService } from "auth/auth.service";
 import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
@@ -9,13 +9,13 @@ import { env } from "config/env";
 import { UsersRepository } from "users/users.repository";
 import { AWSService } from "services/aws.service";
 import { ResendService } from "services/resend.service";
-import { AuctionController } from "auctions/auctions.controller";
+import { AuctionHttpController } from "auctions/auctions.controller";
 import { AuctionService } from "auctions/auctions.service";
 import { AuctionRepository } from "auctions/auctions.repository";
 import { UserService } from "users/users.service";
 import { BidService } from "bids/bid.service";
 import { BidRepository } from "bids/bids.repository";
-import { BidController } from "bids/bid.controller";
+import { BidHttpController } from "bids/bid.controller";
 import { BidsSocketController } from "bids/bids.socket";
 
 const DB = new Pool({
@@ -47,10 +47,10 @@ const authService = new AuthService(usersService);
 
 const app = new App(
   [
-    new AuthController(authService),
-    new ProductController(productService, authService),
-    new AuctionController(auctionService, authService),
-    new BidController(bidService, authService)
+    new AuthHttpController(authService),
+    new ProductHttpController(productService, authService),
+    new AuctionHttpController(auctionService, authService),
+    new BidHttpController(bidService, authService)
   ],
   [new BidsSocketController(bidService, authService)]
 );

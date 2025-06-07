@@ -9,7 +9,7 @@ import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
 import { AuthService } from "auth/auth.service";
 
-export class ProductController extends HttpController {
+export class ProductHttpController extends HttpController {
   constructor(
     private readonly productService: ProductService,
     private readonly authService: AuthService
