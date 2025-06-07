@@ -15,7 +15,6 @@ import { AuctionRepository } from "auctions/auctions.repository";
 import { UserService } from "users/users.service";
 import { BidService } from "bids/bid.service";
 import { BidRepository } from "bids/bids.repository";
-import { BidHttpController } from "bids/bid.controller";
 import { BidSocketController } from "bids/bids.socket";
 
 const DB = new Pool({
@@ -49,8 +48,7 @@ const app = new App(
   [
     new AuthHttpController(authService),
     new ProductHttpController(productService, authService),
-    new AuctionHttpController(auctionService, authService),
-    new BidHttpController(bidService, authService)
+    new AuctionHttpController(auctionService, authService)
   ],
   [new BidSocketController(bidService, authService)]
 );

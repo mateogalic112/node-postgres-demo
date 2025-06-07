@@ -60,13 +60,13 @@ export class AuthService {
     return parsedUser;
   }
 
-  public async extractTokenFromCookie(cookieHeader: string | undefined) {
-    if (!cookieHeader) return null;
+  public async extractUserFromCookie(cookieHeader: string | undefined) {
+    if (!cookieHeader) throw new UnauthorizedError();
 
     const token = cookieHeader.split("Authentication=")[1];
-    if (!token) return null;
+    if (!token) throw new UnauthorizedError();
 
-    return token;
+    return this.extractUserFromToken(token);
   }
 
   public createToken(userId: number) {
@@ -75,7 +75,7 @@ export class AuthService {
 
   public createCookieOptions(): CookieOptions {
     return {
-      maxAge: 5 * 60 * 60 * 1000, // 5 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production"

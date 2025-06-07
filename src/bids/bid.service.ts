@@ -13,7 +13,7 @@ export class BidService {
     private readonly productService: ProductService
   ) {}
 
-  public async createBid(user: User, payload: CreateBidPayload) {
+  public async createBid({ user, payload }: { user: User; payload: CreateBidPayload }) {
     const auction = await this.auctionService.getAuctionById(payload.auction_id);
     if (!auction) throw new NotFoundError(`Auction with id ${payload.auction_id} not found`);
 

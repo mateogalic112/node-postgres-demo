@@ -3,6 +3,7 @@ import { CreateBidPayload } from "./bids.validation";
 import { SocketController } from "api/api.controllers";
 import { BidService } from "./bid.service";
 import { AuthService } from "auth/auth.service";
+import { formatResponse } from "api/api.formats";
 
 export class BidSocketController extends SocketController {
   private socket: Socket | null = null;
@@ -23,22 +24,15 @@ export class BidSocketController extends SocketController {
     if (!this.socket) return;
 
     try {
-      const token = await this.authService.extractTokenFromCookie(
+      const user = await this.authService.extractUserFromCookie(
         this.socket.handshake.headers.cookie
       );
-      if (!token) {
-        this.socket.emit("bid:error", { message: "Authentication required" });
-        return;
-      }
 
-      const user = await this.authService.extractUserFromToken(token);
-      if (!user) {
-        this.socket.emit("bid:error", { message: "Authentication required" });
-        return;
-      }
-
-      const bid = await this.bidService.createBid(user, payload);
-      this.socket.emit("bid:created", bid);
+      const bid = await this.bidService.createBid({
+        user,
+        payload
+      });
+      this.socket.emit("bid:created", formatResponse(bid));
     } catch (error) {
       this.socket.emit("bid:error", { message: (error as Error).message });
     }
