@@ -2,10 +2,6 @@
 module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
-  moduleFileExtensions: ["ts", "js"],
-  transform: {
-    "^.+\\.ts$": "ts-jest"
-  },
   testMatch: ["**/*.test.ts"],
   moduleNameMapper: {
     "^config/(.*)$": "<rootDir>/src/config/$1",
@@ -20,6 +16,5 @@ module.exports = {
     "^products/(.*)$": "<rootDir>/src/products/$1",
     "^auctions/(.*)$": "<rootDir>/src/auctions/$1",
     "^bids/(.*)$": "<rootDir>/src/bids/$1"
-  },
-  roots: ["<rootDir>/src"]
+  }
 };
