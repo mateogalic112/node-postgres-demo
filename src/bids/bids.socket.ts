@@ -4,7 +4,7 @@ import { SocketController } from "api/api.controllers";
 import { BidService } from "./bid.service";
 import { AuthService } from "auth/auth.service";
 
-export class BidsSocketController extends SocketController {
+export class BidSocketController extends SocketController {
   private socket: Socket | null = null;
 
   constructor(
