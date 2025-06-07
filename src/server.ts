@@ -44,14 +44,11 @@ const bidService = new BidService(new BidRepository(DB), auctionService, product
 
 const authService = new AuthService(usersService);
 
-const authController = new AuthController(authService);
-
-const productController = new ProductController(productService, authService);
-
-const auctionController = new AuctionController(auctionService, authService);
-
-const bidController = new BidController(bidService, authService);
-
-const app = new App([authController, productController, auctionController, bidController]);
+const app = new App([
+  new AuthController(authService),
+  new ProductController(productService, authService),
+  new AuctionController(auctionService, authService),
+  new BidController(bidService, authService)
+]);
 
 app.listen();
