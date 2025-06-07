@@ -4,10 +4,10 @@ import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
 import { AUTH_COOKIE_NAME } from "./auth.constants";
 import { userSchema } from "users/users.validation";
-import { Controller } from "api/api.controllers";
+import { HttpController } from "api/api.controllers";
 import { formatResponse } from "api/api.formats";
 
-export class AuthController extends Controller {
+export class AuthController extends HttpController {
   constructor(private readonly authService: AuthService) {
     super("/auth");
     this.initializeRoutes();

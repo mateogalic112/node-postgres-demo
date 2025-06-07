@@ -31,9 +31,10 @@ describe("AuthController", () => {
       )`
     );
 
-    app = new App([
-      new AuthController(new AuthService(new UserService(new UsersRepository(client))))
-    ]);
+    app = new App(
+      [new AuthController(new AuthService(new UserService(new UsersRepository(client))))],
+      []
+    );
   });
 
   beforeEach(async () => {

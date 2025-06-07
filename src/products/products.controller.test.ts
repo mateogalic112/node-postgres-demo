@@ -67,7 +67,7 @@ describe("ProductsController", () => {
       filesService
     );
 
-    app = new App([authController, new ProductController(productService, authService)]);
+    app = new App([authController, new ProductController(productService, authService)], []);
   });
 
   beforeEach(async () => {

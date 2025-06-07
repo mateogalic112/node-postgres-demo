@@ -1,4 +1,4 @@
-import { Controller } from "api/api.controllers";
+import { HttpController } from "api/api.controllers";
 import { ProductService } from "./products.service";
 import { createProductSchema, productImageSchema } from "./products.validation";
 import authMiddleware from "middleware/auth.middleware";
@@ -9,7 +9,7 @@ import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
 import { AuthService } from "auth/auth.service";
 
-export class ProductController extends Controller {
+export class ProductController extends HttpController {
   constructor(
     private readonly productService: ProductService,
     private readonly authService: AuthService

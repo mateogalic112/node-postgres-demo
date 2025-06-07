@@ -2,19 +2,18 @@ import express from "express";
 import cors from "cors";
 import { env } from "config/env";
 import errorMiddleware from "middleware/error.middleware";
-import { type Controller } from "api/api.controllers";
+import { SocketController, type HttpController } from "api/api.controllers";
 import cookieParser from "cookie-parser";
 import loggerMiddleware from "middleware/logger.middleware";
 import { Server as SocketServer } from "socket.io";
 import { createServer, Server } from "http";
-import { createBidSchema } from "bids/bids.validation";
 
 class App {
   private app: express.Application;
   private server: Server;
   private io: SocketServer;
 
-  constructor(controllers: Controller[]) {
+  constructor(httpControllers: HttpController[], socketControllers: SocketController[]) {
     this.app = express();
     this.server = createServer(this.app);
     this.io = new SocketServer(this.server, {
@@ -25,7 +24,8 @@ class App {
     });
 
     this.initializeMiddlewares();
-    this.initializeControllers(controllers);
+    this.initializeControllers(httpControllers);
+    this.initializeSocketHandlers(socketControllers);
 
     this.app.use(errorMiddleware);
   }
@@ -37,9 +37,23 @@ class App {
     this.app.use(loggerMiddleware);
   }
 
-  private initializeControllers(controllers: Controller[]) {
+  private initializeControllers(controllers: HttpController[]) {
     controllers.forEach((controller) => {
       this.app.use("/api/v1", controller.router);
+    });
+  }
+
+  private initializeSocketHandlers(controllers: SocketController[]) {
+    this.io.on("connection", (socket) => {
+      console.log(`User connected: ${socket.id}`);
+
+      controllers.forEach((controller) => {
+        controller.initializeEventHandlers(socket);
+      });
+
+      socket.on("disconnect", () => {
+        console.log("user disconnected");
+      });
     });
   }
 
@@ -50,26 +64,6 @@ class App {
   public listen() {
     this.server.listen(env.PORT, () => {
       console.log(`App listening on the port ${env.PORT}`);
-    });
-
-    this.io.on("connection", (socket) => {
-      console.log(`User connected: ${socket.id}`);
-      socket.on("disconnect", () => {
-        console.log("user disconnected");
-      });
-      socket.on("bid:create", (payload) => {
-        const cookieHeader = socket.handshake.headers.cookie;
-        if (!cookieHeader) return;
-
-        const match = cookieHeader.match(/(?:^|;\s*)Authentication=([^;]+)/);
-        const token = match ? match[1] : null;
-
-        if (!token) return;
-        console.log({ token });
-
-        const bid = createBidSchema.parse(payload);
-        console.log({ bid });
-      });
     });
   }
 }

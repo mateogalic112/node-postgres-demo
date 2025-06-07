@@ -1,4 +1,4 @@
-import { Controller } from "api/api.controllers";
+import { HttpController } from "api/api.controllers";
 import { paginatedRequestSchema } from "api/api.validations";
 import asyncMiddleware from "middleware/async.middleware";
 import { AuctionService } from "./auctions.service";
@@ -8,7 +8,7 @@ import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
 import { AuthService } from "auth/auth.service";
 
-export class AuctionController extends Controller {
+export class AuctionController extends HttpController {
   constructor(
     private readonly auctionService: AuctionService,
     private readonly authService: AuthService

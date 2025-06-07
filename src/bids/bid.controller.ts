@@ -1,4 +1,4 @@
-import { Controller } from "api/api.controllers";
+import { HttpController } from "api/api.controllers";
 import { BidService } from "./bid.service";
 import authMiddleware from "middleware/auth.middleware";
 import { formatResponse } from "api/api.formats";
@@ -7,7 +7,7 @@ import { createBidSchema } from "./bids.validation";
 import { userSchema } from "users/users.validation";
 import { AuthService } from "auth/auth.service";
 
-export class BidController extends Controller {
+export class BidController extends HttpController {
   constructor(
     private readonly bidService: BidService,
     private readonly authService: AuthService

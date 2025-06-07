@@ -1,6 +1,7 @@
 import { Router } from "express";
+import { Socket } from "socket.io";
 
-export abstract class Controller {
+export abstract class HttpController {
   public router: Router;
 
   constructor(protected path: string) {
@@ -8,4 +9,10 @@ export abstract class Controller {
   }
 
   protected abstract initializeRoutes(): void;
+}
+
+export abstract class SocketController {
+  constructor() {}
+
+  public abstract initializeEventHandlers(socket: Socket): void;
 }
