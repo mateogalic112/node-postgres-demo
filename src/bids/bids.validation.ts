@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createBidSchema = z.object({
-  auction_id: z.number().int().positive(),
+  auction_id: z.coerce.number().int().positive(),
   amount: z.coerce.number().int().positive()
 });
 
