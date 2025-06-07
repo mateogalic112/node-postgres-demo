@@ -23,13 +23,9 @@ export class BidSocketController extends SocketController {
     if (!this.socket) return;
 
     try {
-      const cookieHeader = this.socket.handshake.headers.cookie;
-      if (!cookieHeader) {
-        this.socket.emit("bid:error", { message: "Authentication required" });
-        return;
-      }
-
-      const token = cookieHeader.split("Authentication=")[1];
+      const token = await this.authService.extractTokenFromCookie(
+        this.socket.handshake.headers.cookie
+      );
       if (!token) {
         this.socket.emit("bid:error", { message: "Authentication required" });
         return;

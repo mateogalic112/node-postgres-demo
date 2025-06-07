@@ -60,6 +60,15 @@ export class AuthService {
     return parsedUser;
   }
 
+  public async extractTokenFromCookie(cookieHeader: string | undefined) {
+    if (!cookieHeader) return null;
+
+    const token = cookieHeader.split("Authentication=")[1];
+    if (!token) return null;
+
+    return token;
+  }
+
   public createToken(userId: number) {
     return jwt.sign({ _id: userId }, env.JWT_SECRET, { expiresIn: 60 * 60 });
   }
