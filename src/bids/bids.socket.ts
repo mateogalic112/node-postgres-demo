@@ -12,12 +12,12 @@ export class BidSocketController extends SocketController {
     private readonly bidService: BidService,
     private readonly authService: AuthService
   ) {
-    super();
+    super("bid");
   }
 
   public initializeEventHandlers(socket: Socket) {
     this.socket = socket;
-    this.socket.on("bid:create", this.handleCreateBid.bind(this));
+    this.socket.on(`${this.namespace}:create`, this.handleCreateBid.bind(this));
   }
 
   private async handleCreateBid(payload: unknown) {
@@ -28,9 +28,9 @@ export class BidSocketController extends SocketController {
         user: await this.authService.extractUserFromCookie(this.socket.handshake.headers.cookie),
         payload: createBidSchema.parse(payload)
       });
-      this.socket.emit("bid:created", formatResponse(bid));
+      this.socket.emit(`${this.namespace}:created`, formatResponse(bid));
     } catch (error) {
-      this.socket.emit("bid:error", { message: (error as Error).message });
+      this.socket.emit(`${this.namespace}:error`, { message: (error as Error).message });
     }
   }
 }
