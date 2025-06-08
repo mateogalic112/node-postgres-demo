@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { CreateBidPayload } from "./bids.validation";
+import { createBidSchema } from "./bids.validation";
 import { SocketController } from "api/api.controllers";
 import { BidService } from "./bid.service";
 import { AuthService } from "auth/auth.service";
@@ -20,17 +20,13 @@ export class BidSocketController extends SocketController {
     this.socket.on("bid:create", this.handleCreateBid.bind(this));
   }
 
-  private async handleCreateBid(payload: CreateBidPayload) {
+  private async handleCreateBid(payload: unknown) {
     if (!this.socket) return;
 
     try {
-      const user = await this.authService.extractUserFromCookie(
-        this.socket.handshake.headers.cookie
-      );
-
       const bid = await this.bidService.createBid({
-        user,
-        payload
+        user: await this.authService.extractUserFromCookie(this.socket.handshake.headers.cookie),
+        payload: createBidSchema.parse(payload)
       });
       this.socket.emit("bid:created", formatResponse(bid));
     } catch (error) {
