@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "yarn migrate && tsup src/server.ts --watch --onSuccess \"node dist/server.js\"",
+    "dev": "./start.sh && yarn migrate && tsup src/server.ts --watch --onSuccess \"node dist/server.js\"",
     "seed": "tsx src/database/seed.ts",
     "build": "tsup",
     "migrate": "tsx src/database/migrations.ts",
