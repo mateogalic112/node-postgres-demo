@@ -19,6 +19,7 @@ export class BidService {
     await this.assertMinimumBidIncrease(auction, payload.amount);
 
     const newBid = await this.bidRepository.createBid(user.id, payload);
+
     return bidSchema.parse(newBid);
   }
 

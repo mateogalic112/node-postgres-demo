@@ -31,7 +31,6 @@ export class AuctionService {
     const product = await this.productService.getProductById(payload.product_id);
 
     this.productService.assertProductOwner(product, user);
-
     await this.assertProductIsAvailable(payload.product_id);
 
     const newAuction = await this.auctionRepository.createAuction(payload, product.price);

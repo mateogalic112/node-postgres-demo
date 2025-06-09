@@ -47,7 +47,7 @@ export class AuthService {
     const decoded = jwt.verify(token, env.JWT_SECRET) as { _id: number };
     if (!decoded._id) throw new UnauthorizedError();
 
-    const user = await this.usersService.getUserById(decoded._id);
+    const user = await this.usersService.findUserById(decoded._id);
     if (!user) throw new UnauthorizedError();
 
     const { success, data: parsedUser } = userSchema.safeParse(user);

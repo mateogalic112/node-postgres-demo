@@ -40,7 +40,7 @@ export class ProductHttpController extends HttpController {
 
   private getProductById = asyncMiddleware(async (request, response) => {
     const { id } = idSchema.parse(request.params);
-    const product = await this.productService.findProductById(id);
+    const product = await this.productService.getProductById(id);
     response.json(formatResponse(product));
   });
 

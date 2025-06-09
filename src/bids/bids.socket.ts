@@ -29,9 +29,9 @@ export class BidSocketController extends SocketController {
         this.socket.handshake.headers.cookie
       );
 
-      const bid = await this.bidService.createBid(user, createBidSchema.parse(payload));
+      const newBid = await this.bidService.createBid(user, createBidSchema.parse(payload));
 
-      this.socket.emit(`${this.namespace}:created`, formatResponse(bid));
+      this.socket.emit(`${this.namespace}:created`, formatResponse(newBid));
     } catch (error) {
       this.socket.emit(`${this.namespace}:error`, { message: (error as HttpError).message });
     }
