@@ -75,13 +75,14 @@ export class AuctionService {
 
   public async assertAuctionOwner(auction: Auction, user: User) {
     const product = await this.productService.getProductById(auction.product_id);
-    if (product.owner_id === user.id)
+    if (product.owner_id === user.id) {
       throw new BadRequestError("You cannot bid on your own auction");
+    }
   }
 
   private async assertProductIsAvailable(productId: number) {
     const productAuctions = await this.auctionRepository.getAuctionsByProductId(productId);
-    if (productAuctions.some((auction) => auction.winner_id)) {
+    if (productAuctions.every((auction) => auction.is_cancelled || auction.winner_id)) {
       throw new BadRequestError("Product already attached to an auction");
     }
   }
