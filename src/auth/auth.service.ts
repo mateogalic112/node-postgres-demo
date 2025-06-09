@@ -21,7 +21,7 @@ export class AuthService {
       password: await bcrypt.hash(payload.password, 10) // Hash password
     });
 
-    return this.removePassword(userSchema.parse(user));
+    return this.removePassword(user);
   }
 
   public async login(payload: LoginPayload) {
@@ -31,7 +31,7 @@ export class AuthService {
     const isPasswordCorrect = await bcrypt.compare(payload.password, user.password);
     if (!isPasswordCorrect) throw new BadRequestError("Invalid email or password");
 
-    return this.removePassword(userSchema.parse(user));
+    return this.removePassword(user);
   }
 
   public async isLoggedIn(user?: User) {

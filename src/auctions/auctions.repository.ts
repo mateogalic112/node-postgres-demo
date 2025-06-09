@@ -22,18 +22,18 @@ export class AuctionRepository {
     return result.rows[0];
   }
 
-  public async getAuctionsByProductId(productId: number) {
-    const result = await this.DB.query<Auction>("SELECT * FROM auctions WHERE product_id = $1", [
-      productId
-    ]);
-    return result.rows;
-  }
-
   public async createAuction(user: User, payload: CreateAuctionPayload, startingPrice: number) {
     const result = await this.DB.query<Auction>(
       "INSERT INTO auctions (creator_id, product_id, start_time, duration_hours, starting_price) VALUES ($1, $2, $3, $4, $5) RETURNING *",
       [user.id, payload.product_id, payload.start_time, payload.duration_hours, startingPrice]
     );
     return result.rows[0];
+  }
+
+  public async getAuctionsByProductId(productId: number) {
+    const result = await this.DB.query<Auction>("SELECT * FROM auctions WHERE product_id = $1", [
+      productId
+    ]);
+    return result.rows;
   }
 }

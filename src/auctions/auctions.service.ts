@@ -30,7 +30,10 @@ export class AuctionService {
   public async createAuction({ user, payload }: { user: User; payload: CreateAuctionPayload }) {
     const product = await this.productService.getProductById(payload.product_id);
 
-    this.productService.assertProductOwner(product, user);
+    if (product.owner_id !== user.id) {
+      throw new BadRequestError("You are not the owner of this product");
+    }
+
     await this.assertProductIsAvailable(payload.product_id);
 
     const newAuction = await this.auctionRepository.createAuction(user, payload, product.price);
@@ -70,12 +73,6 @@ export class AuctionService {
 
     if (auction.is_cancelled) {
       throw new BadRequestError("Auction has been cancelled");
-    }
-  }
-
-  public async assertAuctionOwner(auction: Auction, user: User) {
-    if (auction.creator_id === user.id) {
-      throw new BadRequestError("You cannot bid on your own auction");
     }
   }
 

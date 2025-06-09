@@ -1,10 +1,10 @@
 import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
 import { ProductRepository } from "./products.repository";
-import { CreateProductPayload, Product, productSchema } from "./products.validation";
+import { CreateProductPayload, productSchema } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { User } from "users/users.validation";
 import { FilesService } from "interfaces/files.interface";
-import { BadRequestError, NotFoundError } from "api/api.errors";
+import { NotFoundError } from "api/api.errors";
 
 export class ProductService {
   constructor(
@@ -31,20 +31,17 @@ export class ProductService {
       ? await this.filesService.uploadFile(payload.file, `products/${crypto.randomUUID()}`)
       : null;
 
-    const product = await this.productRepository.createProduct({
-      userId: user.id,
-      payload: {
-        ...payload.body,
-        imageUrl
-      }
+    const newProduct = await this.productRepository.createProduct(user, {
+      ...payload.body,
+      imageUrl
     });
 
     this.mailService.sendEmail({
       to: user.email,
-      template: CreateProductTemplate.getTemplate(product)
+      template: CreateProductTemplate.getTemplate(newProduct)
     });
 
-    return productSchema.parse(product);
+    return productSchema.parse(newProduct);
   }
 
   public async getProductById(id: number) {
@@ -53,11 +50,5 @@ export class ProductService {
       throw new NotFoundError(`Product with id ${id} not found`);
     }
     return productSchema.parse(product);
-  }
-
-  public async assertProductOwner(product: Product, user: User) {
-    if (product.owner_id !== user.id) {
-      throw new BadRequestError("You are not the owner of this product");
-    }
   }
 }

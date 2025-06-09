@@ -1,6 +1,7 @@
 import { CreateProductPayload, Product } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
+import { User } from "users/users.validation";
 
 export class ProductRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -21,16 +22,13 @@ export class ProductRepository {
     return result.rows[0];
   }
 
-  public async createProduct({
-    userId,
-    payload
-  }: {
-    userId: number;
-    payload: CreateProductPayload["body"] & { imageUrl: string | null };
-  }) {
+  public async createProduct(
+    user: User,
+    payload: CreateProductPayload["body"] & { imageUrl: string | null }
+  ) {
     const result = await this.DB.query<Product>(
       "INSERT INTO products (name, description, price, image_url, owner_id) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [payload.name, payload.description, payload.price, payload.imageUrl, userId]
+      [payload.name, payload.description, payload.price, payload.imageUrl, user.id]
     );
     return result.rows[0];
   }
