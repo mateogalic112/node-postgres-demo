@@ -74,8 +74,7 @@ export class AuctionService {
   }
 
   public async assertAuctionOwner(auction: Auction, user: User) {
-    const product = await this.productService.getProductById(auction.product_id);
-    if (product.owner_id === user.id) {
+    if (auction.creator_id === user.id) {
       throw new BadRequestError("You cannot bid on your own auction");
     }
   }
