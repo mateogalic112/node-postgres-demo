@@ -40,7 +40,7 @@ const auctionService = new AuctionService(
   ResendService.getInstance()
 );
 
-const bidService = new BidService(new BidRepository(DB), auctionService, productService);
+const bidService = new BidService(new BidRepository(DB), auctionService);
 
 const authService = new AuthService(usersService);
 
