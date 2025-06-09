@@ -67,6 +67,10 @@ export class AuctionService {
     if (this.hasAuctionEnded(auction)) {
       throw new BadRequestError("Auction has ended");
     }
+
+    if (auction.is_cancelled) {
+      throw new BadRequestError("Auction has been cancelled");
+    }
   }
 
   public async assertAuctionOwner(auction: Auction, user: User) {
