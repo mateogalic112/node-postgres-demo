@@ -19,10 +19,10 @@ export class AuctionService {
     return auctions.map((auction) => auctionSchema.parse(auction));
   }
 
-  public async findAuctionById(id: number) {
+  public async getAuctionById(id: number) {
     const auction = await this.auctionRepository.findAuctionById(id);
     if (!auction) {
-      return null;
+      throw new NotFoundError(`Auction with id ${id} not found`);
     }
     return auctionSchema.parse(auction);
   }
@@ -52,14 +52,6 @@ export class AuctionService {
 
   private hasAuctionEnded(auction: Auction) {
     return isPast(addHours(auction.start_time, auction.duration_hours));
-  }
-
-  public async getAuctionById(id: number) {
-    const auction = await this.findAuctionById(id);
-    if (!auction) {
-      throw new NotFoundError(`Auction with id ${id} not found`);
-    }
-    return auctionSchema.parse(auction);
   }
 
   public assertAuctionIsActive(auction: Auction) {

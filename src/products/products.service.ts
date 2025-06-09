@@ -18,10 +18,10 @@ export class ProductService {
     return products.map((product) => productSchema.parse(product));
   }
 
-  public async findProductById(id: number) {
+  public async getProductById(id: number) {
     const product = await this.productRepository.findProductById(id);
     if (!product) {
-      return null;
+      throw new NotFoundError(`Product with id ${id} not found`);
     }
     return productSchema.parse(product);
   }
@@ -42,13 +42,5 @@ export class ProductService {
     });
 
     return productSchema.parse(newProduct);
-  }
-
-  public async getProductById(id: number) {
-    const product = await this.productRepository.findProductById(id);
-    if (!product) {
-      throw new NotFoundError(`Product with id ${id} not found`);
-    }
-    return productSchema.parse(product);
   }
 }
