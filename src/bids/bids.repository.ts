@@ -9,9 +9,6 @@ export class BidRepository {
       "INSERT INTO bids (auction_id, user_id, amount) VALUES ($1, $2, $3) RETURNING *",
       [payload.auction_id, userId, payload.amount]
     );
-    if (result.rows.length === 0) {
-      throw new Error("Failed to create bid");
-    }
     return result.rows[0];
   }
 
