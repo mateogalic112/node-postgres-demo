@@ -28,9 +28,10 @@ export class BidService {
 
     const MIN_BID_INCREASE_AMOUNT = auction.starting_price * 0.1;
 
-    const highestBid =
-      (await this.bidRepository.getHighestAuctionBidAmount(auction.id))?.amount ||
-      auction.starting_price;
+    const highestBid = Math.max(
+      await this.bidRepository.getHighestAuctionBidAmount(auction.id),
+      auction.starting_price
+    );
 
     if (payload.amount < highestBid + MIN_BID_INCREASE_AMOUNT)
       throw new BadRequestError(

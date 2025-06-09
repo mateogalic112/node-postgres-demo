@@ -14,13 +14,13 @@ export class BidRepository {
     return result.rows[0];
   }
 
-  public async getHighestAuctionBidAmount(auctionId: number) {
+  public async getHighestAuctionBidAmount(auctionId: number): Promise<number> {
     const result = await this.DB.query<{ amount: number }>(
       "SELECT amount FROM bids WHERE auction_id = $1 ORDER BY amount DESC LIMIT 1",
       [auctionId]
     );
-    if (result.rows.length === 0) return null;
+    if (result.rows.length === 0) return 0;
 
-    return result.rows[0];
+    return result.rows[0].amount;
   }
 }
