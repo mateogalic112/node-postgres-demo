@@ -4,6 +4,7 @@ import { SocketController } from "api/api.controllers";
 import { BidService } from "./bid.service";
 import { AuthService } from "auth/auth.service";
 import { formatResponse } from "api/api.formats";
+import { HttpError } from "api/api.errors";
 
 export class BidSocketController extends SocketController {
   private socket: Socket | null = null;
@@ -24,13 +25,15 @@ export class BidSocketController extends SocketController {
     if (!this.socket) return;
 
     try {
-      const bid = await this.bidService.createBid({
-        user: await this.authService.extractUserFromCookie(this.socket.handshake.headers.cookie),
-        payload: createBidSchema.parse(payload)
-      });
+      const user = await this.authService.extractUserFromCookie(
+        this.socket.handshake.headers.cookie
+      );
+
+      const bid = await this.bidService.createBid(user, createBidSchema.parse(payload));
+
       this.socket.emit(`${this.namespace}:created`, formatResponse(bid));
     } catch (error) {
-      this.socket.emit(`${this.namespace}:error`, { message: (error as Error).message });
+      this.socket.emit(`${this.namespace}:error`, { message: (error as HttpError).message });
     }
   }
 }

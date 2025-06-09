@@ -11,7 +11,7 @@ export class BidService {
     private readonly auctionService: AuctionService
   ) {}
 
-  public async createBid({ user, payload }: { user: User; payload: CreateBidPayload }) {
+  public async createBid(user: User, payload: CreateBidPayload) {
     const auction = await this.auctionService.getAuctionById(payload.auction_id);
 
     this.auctionService.assertAuctionIsActive(auction);

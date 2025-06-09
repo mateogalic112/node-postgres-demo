@@ -5,7 +5,7 @@ import { BadRequestError, NotFoundError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
 import { ProductService } from "products/products.service";
-import { addHours, isPast } from "date-fns";
+import { addHours, isAfter, isPast } from "date-fns";
 
 export class AuctionService {
   constructor(
@@ -44,6 +44,10 @@ export class AuctionService {
     return auctionSchema.parse(newAuction);
   }
 
+  private hasAuctionStarted(auction: Auction) {
+    return isAfter(auction.start_time, new Date());
+  }
+
   private hasAuctionEnded(auction: Auction) {
     return isPast(addHours(auction.start_time, auction.duration_hours));
   }
@@ -57,6 +61,10 @@ export class AuctionService {
   }
 
   public assertAuctionIsActive(auction: Auction) {
+    if (!this.hasAuctionStarted(auction)) {
+      throw new BadRequestError("Auction has not started yet");
+    }
+
     if (this.hasAuctionEnded(auction)) {
       throw new BadRequestError("Auction has ended");
     }
