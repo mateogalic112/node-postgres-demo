@@ -33,7 +33,7 @@ export class AuctionService {
     this.productService.assertProductOwner(product, user);
     await this.assertProductIsAvailable(payload.product_id);
 
-    const newAuction = await this.auctionRepository.createAuction(payload, product.price);
+    const newAuction = await this.auctionRepository.createAuction(user, payload, product.price);
 
     this.mailService.sendEmail({
       to: user.email,

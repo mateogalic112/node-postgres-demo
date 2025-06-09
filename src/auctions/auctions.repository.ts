@@ -1,6 +1,7 @@
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
 import { Auction, CreateAuctionPayload } from "./auctions.validation";
+import { User } from "users/users.validation";
 
 export class AuctionRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -28,10 +29,10 @@ export class AuctionRepository {
     return result.rows;
   }
 
-  public async createAuction(payload: CreateAuctionPayload, startingPrice: number) {
+  public async createAuction(user: User, payload: CreateAuctionPayload, startingPrice: number) {
     const result = await this.DB.query<Auction>(
-      "INSERT INTO auctions (product_id, start_time, duration_hours, starting_price) VALUES ($1, $2, $3, $4) RETURNING *",
-      [payload.product_id, payload.start_time, payload.duration_hours, startingPrice]
+      "INSERT INTO auctions (creator_id, product_id, start_time, duration_hours, starting_price) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [user.id, payload.product_id, payload.start_time, payload.duration_hours, startingPrice]
     );
     return result.rows[0];
   }

@@ -56,7 +56,7 @@ export class ProductService {
   }
 
   public async assertProductOwner(product: Product, user: User) {
-    if (product.owner_id === user.id) {
+    if (product.owner_id !== user.id) {
       throw new BadRequestError("You are not the owner of this product");
     }
   }

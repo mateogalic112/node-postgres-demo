@@ -25,7 +25,7 @@ export class BidService {
 
   private async assertMinimumBidIncrease(auction: Auction, currentBid: number) {
     //@notice: 10% of the auction starting price
-    const MINIMUM_BID_INCREASE_AMOUNT = auction.starting_price * 0.1;
+    const MINIMUM_BID_INCREASE_AMOUNT = Math.round(auction.starting_price * 0.1);
 
     const highestBid = Math.max(
       await this.bidRepository.getHighestAuctionBidAmount(auction.id),
