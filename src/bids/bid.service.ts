@@ -12,7 +12,7 @@ export class BidService {
   ) {}
 
   public async createBid({ user, payload }: { user: User; payload: CreateBidPayload }) {
-    const auction = await this.auctionService.getAuctionByIdOrThrow(payload.auction_id);
+    const auction = await this.auctionService.getAuctionById(payload.auction_id);
 
     this.auctionService.assertAuctionIsActive(auction);
     await this.auctionService.assertAuctionOwner(auction, user);
@@ -31,9 +31,10 @@ export class BidService {
       auction.starting_price
     );
 
-    if (currentBid < highestBid + MINIMUM_BID_INCREASE_AMOUNT)
+    if (currentBid < highestBid + MINIMUM_BID_INCREASE_AMOUNT) {
       throw new BadRequestError(
         `Bid amount must be greater than ${highestBid + MINIMUM_BID_INCREASE_AMOUNT}`
       );
+    }
   }
 }

@@ -13,19 +13,19 @@ export class AuctionRepository {
     return result.rows;
   }
 
-  public async getAuctionById(id: number) {
+  public async findAuctionById(id: number) {
     const result = await this.DB.query<Auction>("SELECT * FROM auctions WHERE id = $1", [id]);
-    if (result.rows.length === 0) return null;
+    if (result.rows.length === 0) {
+      return null;
+    }
     return result.rows[0];
   }
 
-  public async getAuctionByProductId(productId: number) {
+  public async getAuctionsByProductId(productId: number) {
     const result = await this.DB.query<Auction>("SELECT * FROM auctions WHERE product_id = $1", [
       productId
     ]);
-    if (result.rows.length === 0) return null;
-
-    return result.rows[0];
+    return result.rows;
   }
 
   public async createAuction(payload: CreateAuctionPayload, startingPrice: number) {
@@ -33,8 +33,9 @@ export class AuctionRepository {
       "INSERT INTO auctions (product_id, start_time, duration_hours, starting_price) VALUES ($1, $2, $3, $4) RETURNING *",
       [payload.product_id, payload.start_time, payload.duration_hours, startingPrice]
     );
-    if (result.rows.length === 0) throw new Error("Failed to create auction");
-
+    if (result.rows.length === 0) {
+      throw new Error("Failed to create auction");
+    }
     return result.rows[0];
   }
 }

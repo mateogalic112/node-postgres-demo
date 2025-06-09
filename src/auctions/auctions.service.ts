@@ -19,22 +19,20 @@ export class AuctionService {
     return auctions.map((auction) => auctionSchema.parse(auction));
   }
 
-  public async getAuctionById(id: number) {
-    const auction = await this.auctionRepository.getAuctionById(id);
-    if (!auction) return null;
-
+  public async findAuctionById(id: number) {
+    const auction = await this.auctionRepository.findAuctionById(id);
+    if (!auction) {
+      return null;
+    }
     return auctionSchema.parse(auction);
   }
 
   public async createAuction({ user, payload }: { user: User; payload: CreateAuctionPayload }) {
     const product = await this.productService.getProductById(payload.product_id);
-    if (!product) throw new NotFoundError(`Product with id ${payload.product_id} not found`);
 
-    if (product.owner_id !== user.id)
-      throw new BadRequestError("You cannot auction another user's product");
+    this.productService.assertProductOwner(product, user);
 
-    const alreadyInAuction = await this.auctionRepository.getAuctionByProductId(payload.product_id);
-    if (alreadyInAuction) throw new BadRequestError("Product already attached to an auction");
+    await this.assertProductIsAvailable(payload.product_id);
 
     const newAuction = await this.auctionRepository.createAuction(payload, product.price);
 
@@ -46,23 +44,34 @@ export class AuctionService {
     return auctionSchema.parse(newAuction);
   }
 
-  public async getAuctionByIdOrThrow(id: number) {
-    const auction = await this.getAuctionById(id);
-    if (!auction) throw new NotFoundError(`Auction with id ${id} not found`);
+  private hasAuctionEnded(auction: Auction) {
+    return isPast(addHours(auction.start_time, auction.duration_hours));
+  }
 
-    return auction;
+  public async getAuctionById(id: number) {
+    const auction = await this.findAuctionById(id);
+    if (!auction) {
+      throw new NotFoundError(`Auction with id ${id} not found`);
+    }
+    return auctionSchema.parse(auction);
   }
 
   public assertAuctionIsActive(auction: Auction) {
-    if (isPast(addHours(auction.start_time, auction.duration_hours)))
+    if (this.hasAuctionEnded(auction)) {
       throw new BadRequestError("Auction has ended");
+    }
   }
 
   public async assertAuctionOwner(auction: Auction, user: User) {
     const product = await this.productService.getProductById(auction.product_id);
-    if (!product) throw new NotFoundError(`Product with id ${auction.product_id} not found`);
-
     if (product.owner_id === user.id)
       throw new BadRequestError("You cannot bid on your own auction");
+  }
+
+  private async assertProductIsAvailable(productId: number) {
+    const productAuctions = await this.auctionRepository.getAuctionsByProductId(productId);
+    if (productAuctions.some((auction) => auction.winner_id)) {
+      throw new BadRequestError("Product already attached to an auction");
+    }
   }
 }

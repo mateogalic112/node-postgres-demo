@@ -1,9 +1,10 @@
 import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
 import { ProductRepository } from "./products.repository";
-import { CreateProductPayload, productSchema } from "./products.validation";
+import { CreateProductPayload, Product, productSchema } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { User } from "users/users.validation";
 import { FilesService } from "interfaces/files.interface";
+import { BadRequestError, NotFoundError } from "api/api.errors";
 
 export class ProductService {
   constructor(
@@ -17,10 +18,11 @@ export class ProductService {
     return products.map((product) => productSchema.parse(product));
   }
 
-  public async getProductById(id: number) {
-    const product = await this.productRepository.getProductById(id);
-    if (!product) return null;
-
+  public async findProductById(id: number) {
+    const product = await this.productRepository.findProductById(id);
+    if (!product) {
+      return null;
+    }
     return productSchema.parse(product);
   }
 
@@ -43,5 +45,19 @@ export class ProductService {
     });
 
     return productSchema.parse(product);
+  }
+
+  public async getProductById(id: number) {
+    const product = await this.productRepository.findProductById(id);
+    if (!product) {
+      throw new NotFoundError(`Product with id ${id} not found`);
+    }
+    return productSchema.parse(product);
+  }
+
+  public async assertProductOwner(product: Product, user: User) {
+    if (product.owner_id === user.id) {
+      throw new BadRequestError("You are not the owner of this product");
+    }
   }
 }

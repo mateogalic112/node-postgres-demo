@@ -12,16 +12,16 @@ export class AuthService {
 
   public async register(payload: RegisterPayload) {
     const foundUser = await this.usersService.findUserByEmail(payload.email);
-    if (foundUser) throw new BadRequestError("User with that email already exists");
+    if (foundUser) {
+      throw new BadRequestError("User with that email already exists");
+    }
 
     const user = await this.usersService.createUser({
       ...payload,
       password: await bcrypt.hash(payload.password, 10) // Hash password
     });
 
-    const parsedUser = userSchema.parse(user);
-
-    return this.removePassword(parsedUser);
+    return this.removePassword(userSchema.parse(user));
   }
 
   public async login(payload: LoginPayload) {
@@ -31,9 +31,7 @@ export class AuthService {
     const isPasswordCorrect = await bcrypt.compare(payload.password, user.password);
     if (!isPasswordCorrect) throw new BadRequestError("Invalid email or password");
 
-    const parsedUser = userSchema.parse(user);
-
-    return this.removePassword(parsedUser);
+    return this.removePassword(userSchema.parse(user));
   }
 
   public async isLoggedIn(user?: User) {
