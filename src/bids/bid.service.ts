@@ -1,7 +1,7 @@
 import { AuctionService } from "auctions/auctions.service";
 import { BidRepository } from "./bids.repository";
 import { bidSchema, CreateBidPayload } from "./bids.validation";
-import { BadRequestError, NotFoundError } from "api/api.errors";
+import { BadRequestError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { Auction } from "auctions/auctions.validation";
 
@@ -12,8 +12,7 @@ export class BidService {
   ) {}
 
   public async createBid({ user, payload }: { user: User; payload: CreateBidPayload }) {
-    const auction = await this.auctionService.getAuctionById(payload.auction_id);
-    if (!auction) throw new NotFoundError(`Auction with id ${payload.auction_id} not found`);
+    const auction = await this.auctionService.getAuctionByIdOrThrow(payload.auction_id);
 
     this.auctionService.assertAuctionIsActive(auction);
     await this.auctionService.assertAuctionOwner(auction, user);

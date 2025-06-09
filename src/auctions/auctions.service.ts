@@ -36,14 +36,21 @@ export class AuctionService {
     const alreadyInAuction = await this.auctionRepository.getAuctionByProductId(payload.product_id);
     if (alreadyInAuction) throw new BadRequestError("Product already attached to an auction");
 
-    const auction = await this.auctionRepository.createAuction(payload, product.price);
+    const newAuction = await this.auctionRepository.createAuction(payload, product.price);
 
     this.mailService.sendEmail({
       to: user.email,
-      template: CreateAuctionTemplate.getTemplate(auction, product)
+      template: CreateAuctionTemplate.getTemplate(newAuction, product)
     });
 
-    return auctionSchema.parse(auction);
+    return auctionSchema.parse(newAuction);
+  }
+
+  public async getAuctionByIdOrThrow(id: number) {
+    const auction = await this.getAuctionById(id);
+    if (!auction) throw new NotFoundError(`Auction with id ${id} not found`);
+
+    return auction;
   }
 
   public assertAuctionIsActive(auction: Auction) {
