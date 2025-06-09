@@ -81,7 +81,7 @@ export class AuctionService {
 
   private async assertProductIsAvailable(productId: number) {
     const productAuctions = await this.auctionRepository.getAuctionsByProductId(productId);
-    if (productAuctions.every((auction) => auction.is_cancelled || auction.winner_id)) {
+    if (!productAuctions.every((auction) => auction.is_cancelled || auction.winner_id)) {
       throw new BadRequestError("Product already attached to an auction");
     }
   }
