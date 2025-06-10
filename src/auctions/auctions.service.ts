@@ -48,14 +48,14 @@ export class AuctionService {
 
   public async cancelAuction({ user, auctionId }: { user: User; auctionId: number }) {
     const auction = await this.getAuctionById(auctionId);
+
     if (auction.creator_id !== user.id) {
       throw new BadRequestError("You are not the creator of this auction");
     }
 
-    this.assertAuctionIsActive(auction);
+    this.assertAuctionIsScheduled(auction);
 
     const updatedAuction = await this.auctionRepository.cancelAuction(user.id, auctionId);
-
     return auctionSchema.parse(updatedAuction);
   }
 
@@ -72,6 +72,16 @@ export class AuctionService {
       throw new BadRequestError("Auction has not started yet");
     }
 
+    if (this.hasAuctionEnded(auction)) {
+      throw new BadRequestError("Auction has ended");
+    }
+
+    if (auction.is_cancelled) {
+      throw new BadRequestError("Auction has been cancelled");
+    }
+  }
+
+  public assertAuctionIsScheduled(auction: Auction) {
     if (this.hasAuctionEnded(auction)) {
       throw new BadRequestError("Auction has ended");
     }
