@@ -9,6 +9,7 @@ import { addDays } from "date-fns";
 import { Product } from "products/products.validation";
 import { BadRequestError } from "api/api.errors";
 import { Auction } from "./auctions.validation";
+import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
 
 jest.mock("auctions/auctions.repository");
 jest.mock("products/products.service");
@@ -18,6 +19,7 @@ describe("AuctionService", () => {
   let auctionService: AuctionService;
   let auctionRepository: jest.Mocked<AuctionRepository>;
   let mockedProductService: jest.Mocked<ProductService>;
+  let mailService: jest.Mocked<MailService>;
 
   const user = { id: 1 } as User;
 
@@ -25,7 +27,7 @@ describe("AuctionService", () => {
     // Clear all mocks before each test
     jest.clearAllMocks();
 
-    const mailService = {
+    mailService = {
       sendEmail: jest.fn().mockResolvedValue("123e4567-e89b-12d3-a456-426614174000")
     };
 
@@ -89,11 +91,16 @@ describe("AuctionService", () => {
     });
 
     it("should create a new auction", async () => {
-      mockedProductService.getProductById.mockResolvedValue({
+      const product = {
         id: 1,
         owner_id: user.id,
+        name: "Product 1",
+        description: "Product 1 description",
+        image_url: "https://example.com/image.jpg",
         price: 100
-      } as Product);
+      } as Product;
+
+      mockedProductService.getProductById.mockResolvedValue(product);
 
       auctionRepository.getAuctionsByProductId.mockResolvedValue([
         {
@@ -119,9 +126,14 @@ describe("AuctionService", () => {
         updated_at: new Date()
       } as Auction);
 
-      await auctionService.createAuction({
+      const newAuction = await auctionService.createAuction({
         user,
         payload
+      });
+
+      expect(mailService.sendEmail).toHaveBeenCalledWith({
+        to: user.email,
+        template: CreateAuctionTemplate.getTemplate(newAuction, product)
       });
     });
   });
