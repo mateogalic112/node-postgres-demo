@@ -32,7 +32,6 @@ describe("AuthService", () => {
     // Clear all mocks before each test
     jest.clearAllMocks();
 
-    // Create a new instance of AuthRepository with mocked methods
     mockUsersRepository = new UsersRepository(
       {} as DatabaseService
     ) as jest.Mocked<UsersRepository>;
