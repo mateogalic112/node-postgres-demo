@@ -17,21 +17,18 @@ jest.mock("interfaces/mail.interface");
 
 describe("AuctionService", () => {
   let auctionService: AuctionService;
-  let auctionRepository: jest.Mocked<AuctionRepository>;
+  let mockedAuctionRepository: jest.Mocked<AuctionRepository>;
   let mockedProductService: jest.Mocked<ProductService>;
   let mailService: jest.Mocked<MailService>;
 
   const user = { id: 1 } as User;
 
   beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks();
-
     mailService = {
       sendEmail: jest.fn().mockResolvedValue("123e4567-e89b-12d3-a456-426614174000")
     };
 
-    auctionRepository = new AuctionRepository(
+    mockedAuctionRepository = new AuctionRepository(
       {} as DatabaseService
     ) as jest.Mocked<AuctionRepository>;
 
@@ -41,7 +38,7 @@ describe("AuctionService", () => {
       {} as FilesService
     ) as jest.Mocked<ProductService>;
 
-    auctionService = new AuctionService(auctionRepository, mockedProductService, mailService);
+    auctionService = new AuctionService(mockedAuctionRepository, mockedProductService, mailService);
   });
 
   describe("Create a new auction", () => {
@@ -71,7 +68,7 @@ describe("AuctionService", () => {
         owner_id: user.id
       } as Product);
 
-      auctionRepository.getAuctionsByProductId.mockResolvedValue([
+      mockedAuctionRepository.getAuctionsByProductId.mockResolvedValue([
         {
           id: 1,
           creator_id: user.id,
@@ -94,15 +91,12 @@ describe("AuctionService", () => {
       const product = {
         id: 1,
         owner_id: user.id,
-        name: "Product 1",
-        description: "Product 1 description",
-        image_url: "https://example.com/image.jpg",
         price: 100
       } as Product;
 
       mockedProductService.getProductById.mockResolvedValue(product);
 
-      auctionRepository.getAuctionsByProductId.mockResolvedValue([
+      mockedAuctionRepository.getAuctionsByProductId.mockResolvedValue([
         {
           id: 1,
           creator_id: user.id,
@@ -113,13 +107,13 @@ describe("AuctionService", () => {
         } as Auction
       ]);
 
-      auctionRepository.createAuction.mockResolvedValue({
+      mockedAuctionRepository.createAuction.mockResolvedValue({
         id: 1,
         creator_id: user.id,
-        product_id: 1,
-        start_time: addDays(new Date(), 1),
-        duration_hours: 24,
-        starting_price: 100,
+        product_id: product.id,
+        start_time: payload.start_time,
+        duration_hours: payload.duration_hours,
+        starting_price: product.price,
         is_cancelled: false,
         winner_id: null,
         created_at: new Date(),
