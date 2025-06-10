@@ -13,17 +13,14 @@ export class BidService {
 
   public async createBid(user: User, payload: CreateBidPayload) {
     const auction = await this.auctionService.getAuctionById(payload.auction_id);
-
     if (auction.creator_id === user.id) {
       throw new BadRequestError("You cannot bid on your own auction");
     }
 
     this.auctionService.assertAuctionIsActive(auction);
-
     await this.assertMinimumBidIncrease(auction, payload.amount);
 
     const newBid = await this.bidRepository.createBid(user.id, payload);
-
     return bidSchema.parse(newBid);
   }
 
