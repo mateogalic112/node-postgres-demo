@@ -34,7 +34,7 @@ describe("AuctionService", () => {
     it("should fail if the user is not the owner of the product", async () => {
       mockedProductService.getProductById.mockResolvedValue({
         id: 1,
-        owner_id: user.id + 1
+        owner_id: user.id + 10
       } as Product);
 
       await expect(auctionService.createAuction({ user, payload })).rejects.toThrow(
@@ -49,14 +49,7 @@ describe("AuctionService", () => {
       } as Product);
 
       mockedAuctionRepository.getAuctionsByProductId.mockResolvedValue([
-        {
-          id: 1,
-          creator_id: user.id,
-          product_id: 1,
-          start_time: addDays(new Date(), 1),
-          duration_hours: 24,
-          is_cancelled: false
-        } as Auction
+        { id: 1, is_cancelled: false } as Auction
       ]);
 
       await expect(auctionService.createAuction({ user, payload })).rejects.toThrow(
@@ -65,11 +58,7 @@ describe("AuctionService", () => {
     });
 
     it("should create a new auction", async () => {
-      const product = {
-        id: 1,
-        owner_id: user.id,
-        price: 100
-      } as Product;
+      const product = { id: 1, owner_id: user.id, price: 100 } as Product;
 
       mockedProductService.getProductById.mockResolvedValue(product);
 
