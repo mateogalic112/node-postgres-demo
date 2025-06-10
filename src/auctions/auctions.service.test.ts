@@ -32,10 +32,9 @@ describe("AuctionService", () => {
     } as CreateAuctionPayload;
 
     it("should fail if the user is not the owner of the product", async () => {
-      mockedProductService.getProductById.mockResolvedValue({
-        id: 1,
-        owner_id: user.id + 10
-      } as Product);
+      const product = { id: 1, owner_id: user.id + 10 } as Product;
+
+      mockedProductService.getProductById.mockResolvedValue(product);
 
       await expect(auctionService.createAuction({ user, payload })).rejects.toThrow(
         new BadRequestError("You are not the owner of this product")
@@ -43,10 +42,9 @@ describe("AuctionService", () => {
     });
 
     it("should fail if the product is already attached to an auction", async () => {
-      mockedProductService.getProductById.mockResolvedValue({
-        id: 1,
-        owner_id: user.id
-      } as Product);
+      const product = { id: 1, owner_id: user.id } as Product;
+
+      mockedProductService.getProductById.mockResolvedValue(product);
 
       mockedAuctionRepository.getAuctionsByProductId.mockResolvedValue([
         { id: 1, is_cancelled: false } as Auction
