@@ -5,7 +5,7 @@ import { BadRequestError, NotFoundError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
 import { ProductService } from "products/products.service";
-import { addHours, isAfter, isPast } from "date-fns";
+import { addHours, isBefore, isPast } from "date-fns";
 
 export class AuctionService {
   constructor(
@@ -46,8 +46,21 @@ export class AuctionService {
     return auctionSchema.parse(newAuction);
   }
 
+  public async cancelAuction({ user, auctionId }: { user: User; auctionId: number }) {
+    const auction = await this.getAuctionById(auctionId);
+    if (auction.creator_id !== user.id) {
+      throw new BadRequestError("You are not the creator of this auction");
+    }
+
+    this.assertAuctionIsActive(auction);
+
+    const updatedAuction = await this.auctionRepository.cancelAuction(user.id, auctionId);
+
+    return auctionSchema.parse(updatedAuction);
+  }
+
   private hasAuctionStarted(auction: Auction) {
-    return isAfter(auction.start_time, new Date());
+    return isBefore(auction.start_time, new Date());
   }
 
   private hasAuctionEnded(auction: Auction) {

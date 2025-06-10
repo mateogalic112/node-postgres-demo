@@ -1,5 +1,5 @@
 import { HttpController } from "api/api.controllers";
-import { paginatedRequestSchema } from "api/api.validations";
+import { idSchema, paginatedRequestSchema } from "api/api.validations";
 import asyncMiddleware from "middleware/async.middleware";
 import { AuctionService } from "./auctions.service";
 import { createAuctionSchema } from "./auctions.validation";
@@ -20,6 +20,11 @@ export class AuctionHttpController extends HttpController {
   protected initializeRoutes() {
     this.router.get(`${this.path}`, this.getAuctions);
     this.router.post(`${this.path}`, authMiddleware(this.authService), this.createAuction);
+    this.router.patch(
+      `${this.path}/:id/cancel`,
+      authMiddleware(this.authService),
+      this.cancelAuction
+    );
   }
 
   private getAuctions = asyncMiddleware(async (request, response) => {
@@ -32,6 +37,15 @@ export class AuctionHttpController extends HttpController {
     const auction = await this.auctionService.createAuction({
       user: userSchema.parse(response.locals.user),
       payload: createAuctionSchema.parse(request.body)
+    });
+    response.json(formatResponse(auction));
+  });
+
+  private cancelAuction = asyncMiddleware(async (request, response) => {
+    const { id: auctionId } = idSchema.parse(request.params);
+    const auction = await this.auctionService.cancelAuction({
+      user: userSchema.parse(response.locals.user),
+      auctionId
     });
     response.json(formatResponse(auction));
   });
