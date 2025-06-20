@@ -59,14 +59,6 @@ export class AuctionService {
     return auctionSchema.parse(updatedAuction);
   }
 
-  private hasAuctionStarted(auction: Auction) {
-    return isBefore(auction.start_time, new Date());
-  }
-
-  private hasAuctionEnded(auction: Auction) {
-    return isPast(addHours(auction.start_time, auction.duration_hours));
-  }
-
   public assertAuctionIsActive(auction: Auction) {
     if (!this.hasAuctionStarted(auction)) {
       throw new BadRequestError("Auction has not started yet");
@@ -89,6 +81,14 @@ export class AuctionService {
     if (auction.is_cancelled) {
       throw new BadRequestError("Auction has been cancelled");
     }
+  }
+
+  private hasAuctionStarted(auction: Auction) {
+    return isBefore(auction.start_time, new Date());
+  }
+
+  private hasAuctionEnded(auction: Auction) {
+    return isPast(addHours(auction.start_time, auction.duration_hours));
   }
 
   private async assertProductIsAvailable(productId: number) {
