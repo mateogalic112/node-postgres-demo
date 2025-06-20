@@ -12,6 +12,14 @@ export class BidRepository {
     return result.rows[0];
   }
 
+  public async getBidsByAuctionId(auctionId: number) {
+    const result = await this.DB.query<Array<Bid>>(
+      "SELECT * FROM bids WHERE auction_id = $1 ORDER BY created_at DESC",
+      [auctionId]
+    );
+    return result.rows;
+  }
+
   public async getHighestAuctionBidAmount(auctionId: number): Promise<number> {
     const result = await this.DB.query<{ amount: number }>(
       "SELECT amount FROM bids WHERE auction_id = $1 ORDER BY amount DESC LIMIT 1",

@@ -13,9 +13,10 @@ import { AuctionHttpController } from "auctions/auctions.controller";
 import { AuctionService } from "auctions/auctions.service";
 import { AuctionRepository } from "auctions/auctions.repository";
 import { UserService } from "users/users.service";
-import { BidService } from "bids/bid.service";
+import { BidService } from "bids/bids.service";
 import { BidRepository } from "bids/bids.repository";
 import { BidSocketController } from "bids/bids.socket";
+import { BidHttpController } from "bids/bids.controller";
 
 const DB = new Pool({
   host: env.POSTGRES_HOST,
@@ -48,7 +49,8 @@ const app = new App(
   [
     new AuthHttpController(authService),
     new ProductHttpController(productService, authService),
-    new AuctionHttpController(auctionService, authService)
+    new AuctionHttpController(auctionService, authService),
+    new BidHttpController(bidService)
   ],
   [new BidSocketController(bidService, authService)]
 );

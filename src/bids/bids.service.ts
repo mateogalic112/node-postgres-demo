@@ -24,6 +24,12 @@ export class BidService {
     return bidSchema.parse(newBid);
   }
 
+  public async getBidsByAuctionId(auctionId: number) {
+    const auctionBids = await this.bidRepository.getBidsByAuctionId(auctionId);
+
+    return auctionBids.map((bid) => bidSchema.parse(bid));
+  }
+
   private async assertMinimumBidIncrease(auction: Auction, currentBid: number) {
     //@notice: 10% of the auction starting price
     const MINIMUM_BID_INCREASE_AMOUNT = Math.round(auction.starting_price * 0.1);
