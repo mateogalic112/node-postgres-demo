@@ -19,6 +19,7 @@ export class AuctionHttpController extends HttpController {
 
   protected initializeRoutes() {
     this.router.get(`${this.path}`, this.getAuctions);
+    this.router.get(`${this.path}/:id`, this.getAuctionById);
     this.router.post(`${this.path}`, authMiddleware(this.authService), this.createAuction);
     this.router.patch(
       `${this.path}/:id/cancel`,
@@ -31,6 +32,12 @@ export class AuctionHttpController extends HttpController {
     const query = paginatedRequestSchema.parse(request.query);
     const auctions = await this.auctionService.getAuctions(query);
     response.json(formatPaginatedResponse(auctions, query.limit));
+  });
+
+  private getAuctionById = asyncMiddleware(async (request, response) => {
+    const { id: auctionId } = idSchema.parse(request.params);
+    const auction = await this.auctionService.getAuctionById(auctionId);
+    response.json(formatResponse(auction));
   });
 
   private createAuction = asyncMiddleware(async (request, response) => {
