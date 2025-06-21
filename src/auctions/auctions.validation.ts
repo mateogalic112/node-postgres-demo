@@ -9,6 +9,10 @@ export const createAuctionSchema = z.object({
 
 export type CreateAuctionPayload = z.infer<typeof createAuctionSchema>;
 
+export const joinAuctionSchema = z.object({
+  auction_id: z.number().int().positive()
+});
+
 export const auctionSchema = z.object({
   id: z.number().int().positive(),
   creator_id: z.number().int().positive(),

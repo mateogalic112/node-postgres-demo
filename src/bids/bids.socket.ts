@@ -13,7 +13,7 @@ export class BidSocketController extends SocketController {
     private readonly bidService: BidService,
     private readonly authService: AuthService
   ) {
-    super("bid");
+    super("bids");
   }
 
   public initializeEventHandlers(socket: Socket) {
@@ -28,10 +28,12 @@ export class BidSocketController extends SocketController {
         this.socket.handshake.headers.cookie
       );
 
-      const newBid = await this.bidService.createBid(user, createBidSchema.parse(payload));
+      const parsedPayload = createBidSchema.parse(payload);
+      const newBid = await this.bidService.createBid(user, parsedPayload);
 
-      // TODO later replace with room id
-      this.socket.emit(`${this.namespace}:created`, formatResponse(newBid));
+      this.socket
+        .to(`auction-${parsedPayload.auction_id}`)
+        .emit(`${this.namespace}:created`, formatResponse(newBid));
     } catch (error) {
       this.socket.emit(`${this.namespace}:error`, { message: (error as HttpError).message });
     }
