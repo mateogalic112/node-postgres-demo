@@ -83,6 +83,10 @@ export class AuctionService {
     }
   }
 
+  public getAuctionRoomName(namespace: string, auctionId: number) {
+    return `${namespace}-${auctionId}`;
+  }
+
   private hasAuctionStarted(auction: Auction) {
     return isBefore(auction.start_time, new Date());
   }

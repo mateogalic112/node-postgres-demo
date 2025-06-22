@@ -5,6 +5,7 @@ import { BidService } from "./bids.service";
 import { AuthService } from "auth/auth.service";
 import { formatResponse } from "api/api.formats";
 import { HttpError } from "api/api.errors";
+import { AuctionService } from "auctions/auctions.service";
 
 enum BidEvent {
   CREATE_BID = "CREATE_BID",
@@ -19,7 +20,8 @@ export class BidSocketController extends SocketController {
 
   constructor(
     private readonly bidService: BidService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly auctionService: AuctionService
   ) {
     super("bids");
   }
@@ -36,7 +38,7 @@ export class BidSocketController extends SocketController {
         const newBid = await this.bidService.createBid(user, createBidSchema.parse(payload));
 
         socket
-          .to(`auction-${newBid.auction_id}`)
+          .to(this.auctionService.getAuctionRoomName("auctions", newBid.auction_id))
           .emit(this.bidEvents.BID_CREATED, formatResponse(newBid));
 
         socket.emit(this.bidEvents.BID_CREATED, formatResponse(newBid));
