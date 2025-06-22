@@ -7,14 +7,14 @@ import { formatResponse } from "api/api.formats";
 import { HttpError } from "api/api.errors";
 
 enum BidEvent {
-  ON_CREATE = "ON_CREATE",
-  CREATED = "CREATED"
+  CREATE_BID = "CREATE_BID",
+  BID_CREATED = "BID_CREATED"
 }
 
 export class BidSocketController extends SocketController {
   private bidEvents: Record<BidEvent, string> = {
-    [BidEvent.ON_CREATE]: `${this.namespace}:${BidEvent.ON_CREATE}`,
-    [BidEvent.CREATED]: `${this.namespace}:${BidEvent.CREATED}`
+    [BidEvent.CREATE_BID]: `${this.namespace}:${BidEvent.CREATE_BID.toLowerCase()}`,
+    [BidEvent.BID_CREATED]: `${this.namespace}:${BidEvent.BID_CREATED.toLowerCase()}`
   };
 
   constructor(
@@ -25,7 +25,7 @@ export class BidSocketController extends SocketController {
   }
 
   public initializeEventHandlers(socket: Socket) {
-    socket.on(this.bidEvents.ON_CREATE, this.handleCreateBid(socket));
+    socket.on(this.bidEvents.CREATE_BID, this.handleCreateBid(socket));
   }
 
   private handleCreateBid = (socket: Socket) => {
@@ -37,9 +37,9 @@ export class BidSocketController extends SocketController {
 
         socket
           .to(`auction-${newBid.auction_id}`)
-          .emit(this.bidEvents.CREATED, formatResponse(newBid));
+          .emit(this.bidEvents.BID_CREATED, formatResponse(newBid));
 
-        socket.emit(this.bidEvents.CREATED, formatResponse(newBid));
+        socket.emit(this.bidEvents.BID_CREATED, formatResponse(newBid));
       } catch (error) {
         socket.emit(this.events.ERROR, {
           message: (error as HttpError).message

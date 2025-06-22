@@ -4,13 +4,21 @@ import { AuthService } from "auth/auth.service";
 import { HttpError } from "api/api.errors";
 import { joinAuctionSchema } from "./auctions.validation";
 
+enum AuctionEvent {
+  JOIN_AUCTION = "JOIN_AUCTION"
+}
+
 export class AuctionSocketController extends SocketController {
+  private auctionEvents: Record<AuctionEvent, string> = {
+    [AuctionEvent.JOIN_AUCTION]: `${this.namespace}:${AuctionEvent.JOIN_AUCTION.toLowerCase()}`
+  };
+
   constructor(private readonly authService: AuthService) {
     super("auctions");
   }
 
   public initializeEventHandlers(socket: Socket) {
-    socket.on(`${this.namespace}:join`, this.handleJoinAuction(socket));
+    socket.on(this.auctionEvents.JOIN_AUCTION, this.handleJoinAuction(socket));
   }
 
   private handleJoinAuction(socket: Socket) {
@@ -22,7 +30,7 @@ export class AuctionSocketController extends SocketController {
 
         socket.join(`auction-${auction_id}`);
       } catch (error) {
-        socket.emit(`${this.namespace}:error`, { message: (error as HttpError).message });
+        socket.emit(this.events.ERROR, { message: (error as HttpError).message });
       }
     };
   }
