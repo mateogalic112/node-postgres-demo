@@ -6,7 +6,17 @@ import { AuthService } from "auth/auth.service";
 import { formatResponse } from "api/api.formats";
 import { HttpError } from "api/api.errors";
 
+enum BidEvent {
+  ON_CREATE = "ON_CREATE",
+  CREATED = "CREATED"
+}
+
 export class BidSocketController extends SocketController {
+  private bidEvents: Record<BidEvent, string> = {
+    [BidEvent.ON_CREATE]: `${this.namespace}:${BidEvent.ON_CREATE}`,
+    [BidEvent.CREATED]: `${this.namespace}:${BidEvent.CREATED}`
+  };
+
   constructor(
     private readonly bidService: BidService,
     private readonly authService: AuthService
@@ -15,7 +25,7 @@ export class BidSocketController extends SocketController {
   }
 
   public initializeEventHandlers(socket: Socket) {
-    socket.on(`${this.namespace}:create`, this.handleCreateBid(socket));
+    socket.on(this.bidEvents.ON_CREATE, this.handleCreateBid(socket));
   }
 
   private handleCreateBid = (socket: Socket) => {
@@ -27,11 +37,13 @@ export class BidSocketController extends SocketController {
 
         socket
           .to(`auction-${newBid.auction_id}`)
-          .emit(`${this.namespace}:created`, formatResponse(newBid));
+          .emit(this.bidEvents.CREATED, formatResponse(newBid));
 
-        socket.emit(`${this.namespace}:created`, formatResponse(newBid));
+        socket.emit(this.bidEvents.CREATED, formatResponse(newBid));
       } catch (error) {
-        socket.emit(`${this.namespace}:error`, { message: (error as HttpError).message });
+        socket.emit(this.events.ERROR, {
+          message: (error as HttpError).message
+        });
       }
     };
   };
