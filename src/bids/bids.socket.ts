@@ -34,13 +34,14 @@ export class BidSocketController extends SocketController {
     return async (payload: unknown) => {
       try {
         const user = await this.authService.extractUserFromCookie(socket.handshake.headers.cookie);
-
         const newBid = await this.bidService.createBid(user, createBidSchema.parse(payload));
 
+        //@dev sends event to everyone EXCEPT sender
         socket
           .to(this.auctionService.getAuctionRoomName("auctions", newBid.auction_id))
           .emit(this.bidEvents.BID_CREATED, formatResponse(newBid));
 
+        //@dev sends event ONLY to sender
         socket.emit(this.bidEvents.BID_CREATED, formatResponse(newBid));
       } catch (error) {
         socket.emit(this.events.ERROR, {

@@ -25,7 +25,6 @@ export class AuctionSocketController extends SocketController {
     return async (payload: unknown) => {
       try {
         const { auction_id } = joinAuctionSchema.parse(payload);
-
         socket.join(this.auctionService.getAuctionRoomName(this.namespace, auction_id));
       } catch (error) {
         socket.emit(this.events.ERROR, { message: (error as HttpError).message });
