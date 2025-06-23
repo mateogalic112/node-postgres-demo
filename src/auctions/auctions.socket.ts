@@ -1,6 +1,5 @@
 import { Socket } from "socket.io";
 import { SocketController } from "api/api.controllers";
-import { AuthService } from "auth/auth.service";
 import { HttpError } from "api/api.errors";
 import { joinAuctionSchema } from "./auctions.validation";
 import { AuctionService } from "./auctions.service";
@@ -14,10 +13,7 @@ export class AuctionSocketController extends SocketController {
     [AuctionEvent.JOIN_AUCTION]: `${this.namespace}:${AuctionEvent.JOIN_AUCTION.toLowerCase()}`
   };
 
-  constructor(
-    private readonly authService: AuthService,
-    private readonly auctionService: AuctionService
-  ) {
+  constructor(private readonly auctionService: AuctionService) {
     super("auctions");
   }
 
@@ -28,8 +24,6 @@ export class AuctionSocketController extends SocketController {
   private handleJoinAuction(socket: Socket) {
     return async (payload: unknown) => {
       try {
-        await this.authService.extractUserFromCookie(socket.handshake.headers.cookie);
-
         const { auction_id } = joinAuctionSchema.parse(payload);
 
         socket.join(this.auctionService.getAuctionRoomName(this.namespace, auction_id));

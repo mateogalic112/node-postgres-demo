@@ -54,7 +54,7 @@ const app = new App(
     new BidHttpController(bidService)
   ],
   [
-    new AuctionSocketController(authService, auctionService),
+    new AuctionSocketController(auctionService),
     new BidSocketController(bidService, authService, auctionService)
   ]
 );
