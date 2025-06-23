@@ -26,7 +26,6 @@ export class BidService {
 
   public async getBidsByAuctionId(auctionId: number) {
     const auctionBids = await this.bidRepository.getBidsByAuctionId(auctionId);
-
     return auctionBids.map((bid) => bidSchema.parse(bid));
   }
 
