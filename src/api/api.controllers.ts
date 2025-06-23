@@ -17,7 +17,7 @@ enum SocketEvents {
 
 export abstract class SocketController {
   protected events: Record<SocketEvents, string> = {
-    [SocketEvents.ERROR]: `${this.namespace}:${SocketEvents.ERROR}`
+    [SocketEvents.ERROR]: `${this.namespace}:${SocketEvents.ERROR.toLowerCase()}`
   };
 
   constructor(protected readonly namespace: string) {}
