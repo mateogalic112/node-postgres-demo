@@ -4,8 +4,8 @@ import { SocketController } from "api/api.controllers";
 import { BidService } from "./bids.service";
 import { AuthService } from "auth/auth.service";
 import { formatResponse } from "api/api.formats";
-import { HttpError } from "api/api.errors";
 import { AuctionService } from "auctions/auctions.service";
+import { getErrorMessage } from "api/api.errors";
 
 enum BidEvent {
   CREATE_BID = "CREATE_BID",
@@ -45,7 +45,7 @@ export class BidSocketController extends SocketController {
         socket.emit(this.bidEvents.BID_CREATED, formatResponse(newBid));
       } catch (error) {
         socket.emit(this.events.ERROR, {
-          message: (error as HttpError).message
+          message: getErrorMessage(error)
         });
       }
     };

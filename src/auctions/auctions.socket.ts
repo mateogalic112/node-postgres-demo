@@ -1,8 +1,8 @@
 import { Socket } from "socket.io";
 import { SocketController } from "api/api.controllers";
-import { HttpError } from "api/api.errors";
 import { auctionRoomSchema } from "./auctions.validation";
 import { AuctionService } from "./auctions.service";
+import { getErrorMessage } from "api/api.errors";
 
 enum AuctionEvent {
   JOIN_AUCTION = "JOIN_AUCTION",
@@ -30,7 +30,7 @@ export class AuctionSocketController extends SocketController {
         const { auction_id } = auctionRoomSchema.parse(payload);
         socket.join(this.auctionService.getAuctionRoomName(this.namespace, auction_id));
       } catch (error) {
-        socket.emit(this.events.ERROR, { message: (error as HttpError).message });
+        socket.emit(this.events.ERROR, { message: getErrorMessage(error) });
       }
     };
   }
@@ -41,7 +41,7 @@ export class AuctionSocketController extends SocketController {
         const { auction_id } = auctionRoomSchema.parse(payload);
         socket.leave(this.auctionService.getAuctionRoomName(this.namespace, auction_id));
       } catch (error) {
-        socket.emit(this.events.ERROR, { message: (error as HttpError).message });
+        socket.emit(this.events.ERROR, { message: getErrorMessage(error) });
       }
     };
   }
