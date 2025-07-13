@@ -41,22 +41,36 @@ export class InternalServerError extends HttpError {
   }
 }
 
-export const getErrorStatus = (error: ZodError | HttpError | MulterError): number => {
+export class PgError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+
+  static isPgError(error: unknown): boolean {
+    return !!error && typeof error === "object" && "code" in error;
+  }
+}
+
+export const getErrorStatus = (error: unknown): number => {
   if (error instanceof ZodError) return 400;
   if (error instanceof HttpError) return error.status;
   if (error instanceof MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") return 413;
     return 400;
   }
+  if (error instanceof PgError) return error.status;
   return 500;
 };
 
-export const getErrorMessage = (error: ZodError | HttpError | MulterError | unknown): string => {
+export const getErrorMessage = (error: unknown): string => {
   if (error instanceof ZodError) return error.errors.map((e) => e.message).join(", ");
   if (error instanceof HttpError) return error.message;
   if (error instanceof MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") return "File size too large";
     return error.message;
   }
+  if (error instanceof PgError) return error.message;
   return "Something went wrong";
 };
