@@ -68,7 +68,7 @@ export class AuthService {
   }
 
   public createToken(userId: number) {
-    return jwt.sign({ _id: userId }, env.JWT_SECRET, { expiresIn: 60 * 60 });
+    return jwt.sign({ _id: userId }, env.JWT_SECRET, { expiresIn: 60 * 60 * 24 }); // 24 hours
   }
 
   public createCookieOptions(): CookieOptions {
