@@ -51,6 +51,14 @@ export class PgError extends Error {
   static isPgError(error: unknown): boolean {
     return !!error && typeof error === "object" && "code" in error;
   }
+
+  static isSerializationFailure(error: unknown): boolean {
+    return this.isPgError(error) && (error as { code: string }).code === "40001";
+  }
+
+  static isDeadlockDetected(error: unknown): boolean {
+    return this.isPgError(error) && (error as { code: string }).code === "40P01";
+  }
 }
 
 export const getErrorStatus = (error: unknown): number => {

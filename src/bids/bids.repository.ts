@@ -93,19 +93,21 @@ export class BidRepository {
         if (timeoutHandle) clearTimeout(timeoutHandle);
         await client.query("ROLLBACK");
 
-        if (this.isSerializationFailure(error) && canTryAgain) {
-          const delay = this.getExponentialBackoffDelay(RETRY_DELAY_MS, attempt);
+        if (canTryAgain) {
+          if (PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error)) {
+            const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
 
-          logger.log(
-            `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${IDEMPOTENCY_KEY}]`
-          );
+            logger.log(
+              `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${IDEMPOTENCY_KEY}]`
+            );
 
-          // Release connection before delay to prevent pool exhaustion
-          client.release();
+            // Release connection before delay to prevent pool exhaustion
+            client.release();
 
-          // Non-blocking delay - event loop remains responsive
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          continue;
+            // Non-blocking delay - event loop remains responsive
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
         }
 
         // Handle specific PostgreSQL errors
@@ -138,18 +140,6 @@ export class BidRepository {
       `[MONEY_BID_EXHAUSTED] All retry attempts exhausted for user ${userId} bidding $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} [Key: ${IDEMPOTENCY_KEY}]`
     );
     throw new PgError("Unable to place bid due to high system load. Please try again.", 503);
-  }
-
-  private isSerializationFailure(error: unknown) {
-    return (
-      PgError.isPgError(error) &&
-      ((error as { code: string }).code === "40001" || // serialization_failure
-        (error as { code: string }).code === "40P01") // deadlock_detected
-    );
-  }
-
-  private getExponentialBackoffDelay(delayMs: number, attempt: number) {
-    return delayMs * Math.pow(2, attempt);
   }
 
   private async checkForDuplicateBid(
