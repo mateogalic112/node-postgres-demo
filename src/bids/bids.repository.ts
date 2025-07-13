@@ -29,6 +29,8 @@ export class BidRepository {
       const canTryAgain = attempt < MAX_RETRIES - 1;
 
       const client = await this.DB.connect();
+      let connectionReleased = false;
+
       let timeoutHandle: NodeJS.Timeout | undefined;
 
       try {
@@ -103,9 +105,12 @@ export class BidRepository {
 
             // Release connection before delay to prevent pool exhaustion
             client.release();
+            connectionReleased = true;
 
             // Non-blocking delay - event loop remains responsive
             await new Promise((resolve) => setTimeout(resolve, delay));
+
+            // Continue to next iteration without hitting finally block
             continue;
           }
         }
@@ -132,7 +137,10 @@ export class BidRepository {
 
         throw error;
       } finally {
-        client.release();
+        // Only release if connection wasn't already released in retry logic
+        if (!connectionReleased) {
+          client.release();
+        }
       }
     }
 
