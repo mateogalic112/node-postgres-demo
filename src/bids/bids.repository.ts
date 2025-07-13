@@ -28,7 +28,6 @@ export class BidRepository {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const client = await this.DB.connect();
       let timeoutHandle: NodeJS.Timeout | undefined;
-      let connectionReleased = false;
 
       try {
         // Set transaction timeout to prevent indefinite blocking
@@ -69,7 +68,7 @@ export class BidRepository {
         this.assertMinimumBidIncrease({
           auction,
           currentBid: bidAmount,
-          highestBid: highestBid.getAmount()
+          highestBid: highestBid.getAmountInCents()
         });
 
         const result = await client.query<Bid>(
@@ -106,7 +105,6 @@ export class BidRepository {
 
           // Release connection before delay to prevent pool exhaustion
           client.release();
-          connectionReleased = true;
 
           // Non-blocking delay - event loop remains responsive
           await new Promise((resolve) => setTimeout(resolve, delay));
@@ -135,10 +133,7 @@ export class BidRepository {
 
         throw error;
       } finally {
-        // Only release if connection wasn't already released in retry logic
-        if (!connectionReleased) {
-          client.release();
-        }
+        client.release();
       }
     }
 
@@ -213,7 +208,7 @@ export class BidRepository {
   }) {
     const MINIMUM_BID_INCREASE_AMOUNT = Math.round(auction.starting_price * 0.1); // 10% of starting price
 
-    if (currentBid.getAmount() < highestBid + MINIMUM_BID_INCREASE_AMOUNT) {
+    if (currentBid.getAmountInCents() < highestBid + MINIMUM_BID_INCREASE_AMOUNT) {
       const minimumBidIncrease = new Money(highestBid + MINIMUM_BID_INCREASE_AMOUNT);
       throw new BadRequestError(`Bid must be at least ${minimumBidIncrease.getFormattedAmount()}`);
     }

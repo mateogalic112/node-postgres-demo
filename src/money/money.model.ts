@@ -1,8 +1,8 @@
 export class Money {
-  constructor(private readonly amount: number) {}
+  constructor(private readonly amountInCents: number) {}
 
-  public getAmount() {
-    return this.amount;
+  public getAmountInCents() {
+    return this.amountInCents;
   }
 
   public getFormattedAmount(decimals: number = 2) {
@@ -11,6 +11,6 @@ export class Money {
       currency: "EUR",
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals
-    }).format(this.amount / 100);
+    }).format(this.amountInCents / 100);
   }
 }
