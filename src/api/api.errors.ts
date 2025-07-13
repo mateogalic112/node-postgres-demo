@@ -75,7 +75,7 @@ export const getErrorStatus = (error: unknown): number => {
 };
 
 export const getErrorMessage = (error: unknown): string => {
-  if (error instanceof TokenExpiredError) return "Token expired";
+  if (error instanceof TokenExpiredError) return error.message;
   if (error instanceof ZodError) return error.errors.map((e) => e.message).join(", ");
   if (error instanceof HttpError) return error.message;
   if (error instanceof MulterError) {
