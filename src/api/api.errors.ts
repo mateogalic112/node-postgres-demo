@@ -60,6 +60,10 @@ export class PgError extends Error {
   static isDeadlockDetected(error: unknown): boolean {
     return this.isPgError(error) && (error as { code: string }).code === "40P01";
   }
+
+  static isUniqueViolation(error: unknown): boolean {
+    return this.isPgError(error) && (error as { code: string }).code === "23505";
+  }
 }
 
 export const getErrorStatus = (error: unknown): number => {

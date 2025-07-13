@@ -112,6 +112,12 @@ export class BidRepository {
           throw new PgError(errorMessage, 409);
         }
 
+        if (PgError.isUniqueViolation(error)) {
+          const errorMessage = "Bid already exists. Please try again.";
+          logger.error(`[MONEY_BID_DUPLICATE] ${errorMessage} [Key: ${IDEMPOTENCY_KEY}]`);
+          throw new PgError(errorMessage, 409);
+        }
+
         // Log all other errors
         const duration = Date.now() - START_TIME;
         logger.error(
