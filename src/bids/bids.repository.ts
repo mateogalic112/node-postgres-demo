@@ -28,6 +28,7 @@ export class BidRepository {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const client = await this.DB.connect();
       let timeoutHandle: NodeJS.Timeout | undefined;
+      let connectionReleased = false;
 
       try {
         // Set transaction timeout to prevent indefinite blocking
@@ -103,6 +104,11 @@ export class BidRepository {
             `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${IDEMPOTENCY_KEY}]`
           );
 
+          // Release connection before delay to prevent pool exhaustion
+          client.release();
+          connectionReleased = true;
+
+          // Non-blocking delay - event loop remains responsive
           await new Promise((resolve) => setTimeout(resolve, delay));
           continue;
         }
@@ -129,7 +135,10 @@ export class BidRepository {
 
         throw error;
       } finally {
-        client.release();
+        // Only release if connection wasn't already released in retry logic
+        if (!connectionReleased) {
+          client.release();
+        }
       }
     }
 
