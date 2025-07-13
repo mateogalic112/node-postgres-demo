@@ -62,7 +62,7 @@ export class BidRepository {
 
         this.assertMinimumBidIncrease({
           auction,
-          currentBid: bidAmount,
+          bidAmount,
           highestBid
         });
 
@@ -175,11 +175,11 @@ export class BidRepository {
 
   private assertMinimumBidIncrease({
     auction,
-    currentBid,
+    bidAmount,
     highestBid
   }: {
     auction: Auction;
-    currentBid: Money;
+    bidAmount: Money;
     highestBid: Money;
   }) {
     const MINIMUM_BID_INCREASE_AMOUNT = Math.round(auction.starting_price * 0.1); // 10% of starting price
@@ -187,7 +187,7 @@ export class BidRepository {
       highestBid.getAmountInCents() + MINIMUM_BID_INCREASE_AMOUNT
     );
 
-    if (currentBid.getAmountInCents() < minimumAcceptableBid.getAmountInCents()) {
+    if (bidAmount.getAmountInCents() < minimumAcceptableBid.getAmountInCents()) {
       throw new BadRequestError(
         `Bid must be at least ${minimumAcceptableBid.getFormattedAmount()}`
       );
