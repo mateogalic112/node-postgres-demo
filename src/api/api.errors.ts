@@ -1,3 +1,4 @@
+import { TokenExpiredError } from "jsonwebtoken";
 import { MulterError } from "multer";
 import { ZodError } from "zod";
 
@@ -62,6 +63,7 @@ export class PgError extends Error {
 }
 
 export const getErrorStatus = (error: unknown): number => {
+  if (error instanceof TokenExpiredError) return 401;
   if (error instanceof ZodError) return 400;
   if (error instanceof HttpError) return error.status;
   if (error instanceof MulterError) {
@@ -73,6 +75,7 @@ export const getErrorStatus = (error: unknown): number => {
 };
 
 export const getErrorMessage = (error: unknown): string => {
+  if (error instanceof TokenExpiredError) return "Token expired";
   if (error instanceof ZodError) return error.errors.map((e) => e.message).join(", ");
   if (error instanceof HttpError) return error.message;
   if (error instanceof MulterError) {
