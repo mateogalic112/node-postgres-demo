@@ -30,9 +30,6 @@ export class BidRepository {
       // @link https://node-postgres.com/features/transactions
       const client = await this.DB.connect();
 
-      // @dev We need a flag to prevent releasing the connection if it was already released in the retry logic
-      let connectionReleased = false;
-
       // @dev Set transaction timeout to prevent indefinite blocking
       let timeoutHandle: NodeJS.Timeout | undefined;
 
@@ -48,11 +45,11 @@ export class BidRepository {
         // @dev SERIALIZABLE isolation for maximum consistency (required for real money)
         await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
-        const auction = await this.getActionForBidding(client, payload.auction_id, userId);
+        const auction = await this.getBiddingAuction(client, payload.auction_id, userId);
 
         const highestBid = new Money(
           Math.max(
-            await this.getHighestAuctionBidAmount(client, auction.id),
+            await this.getHighestBidAmountForAuction(client, auction.id),
             auction.starting_price
           )
         );
@@ -60,11 +57,7 @@ export class BidRepository {
           `[MONEY_BID_VALIDATION] Auction ${payload.auction_id}: current_highest=$${highestBid.getFormattedAmount()}, attempt=$${bidAmount.getFormattedAmount()} [Key: ${IDEMPOTENCY_KEY}]`
         );
 
-        this.assertMinimumBidIncrease({
-          auction,
-          bidAmount,
-          highestBid
-        });
+        this.assertMinimumBidIncrease({ auction, bidAmount, highestBid });
 
         const result = await client.query<Bid>(
           `INSERT INTO bids (auction_id, user_id, amount_in_cents, idempotency_key, created_at) 
@@ -95,9 +88,6 @@ export class BidRepository {
               `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${IDEMPOTENCY_KEY}]`
             );
 
-            client.release();
-            connectionReleased = true;
-
             await new Promise((resolve) => setTimeout(resolve, delay));
 
             continue;
@@ -127,9 +117,7 @@ export class BidRepository {
         throw error;
       } finally {
         // Only release if connection wasn't already released in retry logic
-        if (!connectionReleased) {
-          client.release();
-        }
+        client.release();
       }
     }
 
@@ -139,7 +127,7 @@ export class BidRepository {
     throw new PgError("Unable to place bid due to high system load. Please try again.", 503);
   }
 
-  private async getActionForBidding(client: PoolClient, auctionId: number, userId: number) {
+  private async getBiddingAuction(client: PoolClient, auctionId: number, userId: number) {
     const result = await client.query<Auction>(
       `SELECT * FROM auctions 
        WHERE id = $1 AND creator_id != $2 AND is_cancelled = FALSE 
@@ -156,7 +144,10 @@ export class BidRepository {
     return result.rows[0];
   }
 
-  private async getHighestAuctionBidAmount(client: PoolClient, auctionId: number): Promise<number> {
+  private async getHighestBidAmountForAuction(
+    client: PoolClient,
+    auctionId: number
+  ): Promise<number> {
     const result = await client.query<{ amount_in_cents: number }>(
       `SELECT amount_in_cents FROM bids 
        WHERE auction_id = $1 
