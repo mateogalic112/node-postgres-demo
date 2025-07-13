@@ -166,7 +166,7 @@ export class BidRepository {
        WHERE id = $1 AND is_cancelled = FALSE 
        AND start_time < NOW() 
        AND start_time + duration_hours * INTERVAL '1 hour' > NOW()
-       FOR UPDATE NOWAIT`, // Use NOWAIT to fail fast instead of blocking
+       FOR UPDATE NOWAIT`,
       [auctionId]
     );
 
@@ -186,7 +186,7 @@ export class BidRepository {
        WHERE auction_id = $1 
        ORDER BY amount DESC 
        LIMIT 1
-       FOR UPDATE NOWAIT`, // Use NOWAIT to fail fast instead of blocking
+       FOR UPDATE NOWAIT`,
       [auctionId]
     );
 
@@ -206,10 +206,12 @@ export class BidRepository {
     highestBid: number;
   }) {
     const MINIMUM_BID_INCREASE_AMOUNT = Math.round(auction.starting_price * 0.1); // 10% of starting price
+    const minimumAcceptableBid = new Money(highestBid + MINIMUM_BID_INCREASE_AMOUNT);
 
-    if (currentBid.getAmountInCents() < highestBid + MINIMUM_BID_INCREASE_AMOUNT) {
-      const minimumBidIncrease = new Money(highestBid + MINIMUM_BID_INCREASE_AMOUNT);
-      throw new BadRequestError(`Bid must be at least ${minimumBidIncrease.getFormattedAmount()}`);
+    if (currentBid.getAmountInCents() < minimumAcceptableBid.getAmountInCents()) {
+      throw new BadRequestError(
+        `Bid must be at least ${minimumAcceptableBid.getFormattedAmount()}`
+      );
     }
   }
 
