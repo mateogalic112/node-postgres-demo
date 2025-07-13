@@ -3,47 +3,158 @@ import { Bid, CreateBidPayload } from "./bids.validation";
 import { Auction } from "auctions/auctions.validation";
 import { BadRequestError, NotFoundError, PgError } from "api/api.errors";
 import { PoolClient } from "pg";
+import { LoggerService } from "services/logger.service";
 
 export class BidRepository {
   constructor(private readonly DB: DatabaseService) {}
 
   public async createBid(userId: number, payload: CreateBidPayload) {
-    const client = await this.DB.connect();
+    const MAX_RETRIES = 5;
+    const RETRY_DELAY_MS = 100;
+    const TRANSACTION_TIMEOUT_MS = 10_000;
 
-    try {
-      await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
-      const auction = await this.getActiveAuctionByIdWithLock(client, payload.auction_id);
+    const START_TIME = Date.now();
 
-      if (auction.creator_id === userId) {
-        throw new BadRequestError("Auction creator cannot place bids on their own auction");
+    // Generate idempotency key for this bid attempt
+    const IDEMPOTENCY_KEY = `bid_${userId}_${payload.auction_id}_${payload.amount}_${START_TIME}`;
+
+    const logger = LoggerService.getInstance();
+    logger.log(
+      `[MONEY_BID_START] User ${userId} bidding $${payload.amount} on auction ${payload.auction_id} [Key: ${IDEMPOTENCY_KEY}]`
+    );
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const client = await this.DB.connect();
+      let timeoutHandle: NodeJS.Timeout | undefined;
+
+      try {
+        // Set transaction timeout to prevent indefinite blocking
+        timeoutHandle = this.handleTransactionTimeout(
+          client,
+          `[MONEY_BID_TIMEOUT] Transaction timeout after ${TRANSACTION_TIMEOUT_MS}ms [Key: ${IDEMPOTENCY_KEY}]`,
+          TRANSACTION_TIMEOUT_MS
+        );
+
+        // SERIALIZABLE isolation for maximum consistency (required for real money)
+        await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
+
+        // Check for duplicate bid (idempotency protection)
+        const existingBid = await this.checkForDuplicateBid(client, userId, payload);
+        if (existingBid) {
+          logger.log(`[MONEY_BID_DUPLICATE] Returning existing bid [Key: ${IDEMPOTENCY_KEY}]`);
+          await client.query("COMMIT");
+          return existingBid;
+        }
+
+        const auction = await this.getActiveAuctionByIdWithLock(client, payload.auction_id);
+
+        if (auction.creator_id === userId) {
+          throw new BadRequestError("Auction creator cannot place bids on their own auction");
+        }
+
+        const highestBid = Math.max(
+          await this.getHighestAuctionBidAmountWithLock(client, auction.id),
+          auction.starting_price
+        );
+
+        logger.log(
+          `[MONEY_BID_VALIDATION] Auction ${payload.auction_id}: current_highest=$${highestBid}, attempt=$${payload.amount} [Key: ${IDEMPOTENCY_KEY}]`
+        );
+
+        this.assertMinimumBidIncrease({ auction, currentBid: payload.amount, highestBid });
+
+        const result = await client.query<Bid>(
+          `INSERT INTO bids (auction_id, user_id, amount, created_at) 
+           VALUES ($1, $2, $3, NOW()) 
+           RETURNING *`,
+          [payload.auction_id, userId, payload.amount]
+        );
+
+        await client.query("COMMIT");
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+
+        const duration = Date.now() - START_TIME;
+        logger.log(
+          `[MONEY_BID_SUCCESS] User ${userId} successfully bid $${payload.amount} on auction ${payload.auction_id} in ${duration}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${IDEMPOTENCY_KEY}]`
+        );
+
+        return result.rows[0];
+      } catch (error) {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+        await client.query("ROLLBACK");
+
+        // Handle serialization failures with retry logic
+        if (
+          PgError.isPgError(error) &&
+          ((error as { code: string }).code === "40001" || // serialization_failure
+            (error as { code: string }).code === "40P01") && // deadlock_detected
+          attempt < MAX_RETRIES - 1
+        ) {
+          const delay = RETRY_DELAY_MS * Math.pow(2, attempt); // Exponential backoff
+          logger.log(
+            `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${IDEMPOTENCY_KEY}]`
+          );
+
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+
+        // Handle specific PostgreSQL errors
+        if (PgError.isPgError(error)) {
+          const pgError = error as { code: string };
+
+          if (pgError.code === "40001") {
+            // Serialization failure after all retries
+            const errorMsg = "High bidding activity detected. Please try again.";
+            logger.error(
+              `[MONEY_BID_SERIALIZATION_EXHAUSTED] ${errorMsg} [Key: ${IDEMPOTENCY_KEY}]`
+            );
+            throw new PgError(errorMsg, 409);
+          }
+        }
+
+        // Log all other errors
+        const duration = Date.now() - START_TIME;
+        logger.error(
+          `[MONEY_BID_ERROR] User ${userId} failed to bid $${payload.amount} on auction ${payload.auction_id} after ${duration}ms: ${error instanceof Error ? error.message : String(error)} [Key: ${IDEMPOTENCY_KEY}]`
+        );
+
+        throw error;
+      } finally {
+        client.release();
       }
-
-      const highestBid = Math.max(
-        await this.getHighestAuctionBidAmountWithLock(client, auction.id),
-        auction.starting_price
-      );
-
-      this.assertMinimumBidIncrease({ auction, currentBid: payload.amount, highestBid });
-
-      const result = await client.query<Bid>(
-        "INSERT INTO bids (auction_id, user_id, amount) VALUES ($1, $2, $3) RETURNING *",
-        [payload.auction_id, userId, payload.amount]
-      );
-
-      await client.query("COMMIT");
-
-      return result.rows[0];
-    } catch (error) {
-      await client.query("ROLLBACK");
-
-      if (PgError.isPgError(error) && (error as { code: string }).code === "40001") {
-        throw new PgError("Someone has already placed a higher bid", 400);
-      }
-
-      throw error;
-    } finally {
-      client.release();
     }
+
+    logger.error(
+      `[MONEY_BID_EXHAUSTED] All retry attempts exhausted for user ${userId} bidding $${payload.amount} on auction ${payload.auction_id} [Key: ${IDEMPOTENCY_KEY}]`
+    );
+    throw new PgError("Unable to place bid due to high system load. Please try again.", 503);
+  }
+
+  private handleTransactionTimeout(client: PoolClient, message: string, timeoutMs: number) {
+    return setTimeout(() => {
+      LoggerService.getInstance().error(message);
+      client.query("ROLLBACK").catch(() => {});
+      client.release();
+    }, timeoutMs);
+  }
+
+  private async checkForDuplicateBid(
+    client: PoolClient,
+    userId: number,
+    payload: CreateBidPayload
+  ): Promise<Bid | null> {
+    // Check for exact duplicate bids within the last 30 seconds (idempotency window)
+    const result = await client.query<Bid>(
+      `SELECT * FROM bids 
+       WHERE user_id = $1 AND auction_id = $2 AND amount = $3 
+       AND created_at > NOW() - INTERVAL '30 seconds'
+       ORDER BY created_at DESC 
+       LIMIT 1`,
+      [userId, payload.auction_id, payload.amount]
+    );
+
+    return result.rows[0] || null;
   }
 
   private async getActiveAuctionByIdWithLock(client: PoolClient, auctionId: number) {
@@ -52,7 +163,7 @@ export class BidRepository {
        WHERE id = $1 AND is_cancelled = FALSE 
        AND start_time < NOW() 
        AND start_time + duration_hours * INTERVAL '1 hour' > NOW()
-       FOR UPDATE`, // Row-level lock to prevent concurrent modifications
+       FOR UPDATE NOWAIT`, // Use NOWAIT to fail fast instead of blocking
       [auctionId]
     );
 
@@ -72,7 +183,7 @@ export class BidRepository {
        WHERE auction_id = $1 
        ORDER BY amount DESC 
        LIMIT 1
-       FOR UPDATE`, // Lock the highest bid row to prevent race conditions
+       FOR UPDATE NOWAIT`, // Use NOWAIT to fail fast instead of blocking
       [auctionId]
     );
 
@@ -91,12 +202,11 @@ export class BidRepository {
     currentBid: number;
     highestBid: number;
   }) {
-    //@notice: 10% of the auction starting price
-    const MINIMUM_BID_INCREASE_AMOUNT = Math.round(auction.starting_price * 0.1);
+    const MINIMUM_BID_INCREASE_AMOUNT = Math.round(auction.starting_price * 0.1); // 10% of starting price
 
     if (currentBid < highestBid + MINIMUM_BID_INCREASE_AMOUNT) {
       throw new BadRequestError(
-        `Bid amount must be greater than ${highestBid + MINIMUM_BID_INCREASE_AMOUNT}`
+        `Bid must be at least $${((highestBid + MINIMUM_BID_INCREASE_AMOUNT) / 100).toFixed(2)}`
       );
     }
   }
