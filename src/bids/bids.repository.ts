@@ -55,15 +55,21 @@ export class BidRepository {
           throw new BadRequestError("Auction creator cannot place bids on their own auction");
         }
 
-        const highestBid = Math.max(
-          await this.getHighestAuctionBidAmountWithLock(client, auction.id),
-          auction.starting_price
+        const highestBid = new Money(
+          Math.max(
+            await this.getHighestAuctionBidAmountWithLock(client, auction.id),
+            auction.starting_price
+          )
         );
         logger.log(
-          `[MONEY_BID_VALIDATION] Auction ${payload.auction_id}: current_highest=$${highestBid}, attempt=$${bidAmount.getFormattedAmount()} [Key: ${IDEMPOTENCY_KEY}]`
+          `[MONEY_BID_VALIDATION] Auction ${payload.auction_id}: current_highest=$${highestBid.getFormattedAmount()}, attempt=$${bidAmount.getFormattedAmount()} [Key: ${IDEMPOTENCY_KEY}]`
         );
 
-        this.assertMinimumBidIncrease({ auction, currentBid: bidAmount, highestBid });
+        this.assertMinimumBidIncrease({
+          auction,
+          currentBid: bidAmount,
+          highestBid: highestBid.getAmount()
+        });
 
         const result = await client.query<Bid>(
           `INSERT INTO bids (auction_id, user_id, amount, created_at) 
