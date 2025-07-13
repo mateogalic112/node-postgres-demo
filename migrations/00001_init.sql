@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS bids (
   id SERIAL PRIMARY KEY,
   auction_id INTEGER REFERENCES auctions(id) ON DELETE CASCADE,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-  amount INT,
+  amount_in_cents INT,
+  idempotency_key TEXT UNIQUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
