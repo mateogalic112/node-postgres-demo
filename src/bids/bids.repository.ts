@@ -25,6 +25,7 @@ export class BidRepository {
       `[MONEY_BID_START] User ${userId} bidding ${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} at ${START_TIME} [Key: ${IDEMPOTENCY_KEY}]`
     );
 
+    // @dev We need to retry the transaction if it fails due to serialization failure or deadlock detected
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       // @dev You must use the same client instance for all statements within a transaction!
       // @link https://node-postgres.com/features/transactions
@@ -79,8 +80,7 @@ export class BidRepository {
         if (timeoutHandle) clearTimeout(timeoutHandle);
         await client.query("ROLLBACK");
 
-        const CAN_TRY_AGAIN = attempt < MAX_RETRIES - 1;
-        if (CAN_TRY_AGAIN) {
+        if (attempt < MAX_RETRIES - 1) {
           if (PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error)) {
             const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
 
@@ -108,15 +108,12 @@ export class BidRepository {
           throw new PgError(errorMessage, 409);
         }
 
-        // Log all other errors
-        const duration = Date.now() - START_TIME;
         logger.error(
-          `[MONEY_BID_ERROR] User ${userId} failed to bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} after ${duration}ms: ${error instanceof Error ? error.message : String(error)} [Key: ${IDEMPOTENCY_KEY}]`
+          `[MONEY_BID_ERROR] User ${userId} failed to bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} after ${Date.now() - START_TIME}ms: ${error instanceof Error ? error.message : String(error)} [Key: ${IDEMPOTENCY_KEY}]`
         );
 
         throw error;
       } finally {
-        // Only release if connection wasn't already released in retry logic
         client.release();
       }
     }
