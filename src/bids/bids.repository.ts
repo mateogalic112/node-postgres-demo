@@ -15,7 +15,7 @@ export class BidRepository {
     const TRANSACTION_TIMEOUT_MS = 10_000;
 
     const bidAmount = new Money(payload.amount_in_cents);
-    // @notice Prevent duplicate bids for the same auction and amount
+    // @dev Prevent duplicate bids for the same auction with the same amount from the same user
     const IDEMPOTENCY_KEY = `bid_${userId}_${payload.auction_id}_${bidAmount.getAmountInCents()}`;
 
     const START_TIME = Date.now();
