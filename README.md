@@ -1,4 +1,4 @@
-# Node.js Web Server Template
+# Node.js Web Socket Server Template
 
 ### Starting project 🚀
 
