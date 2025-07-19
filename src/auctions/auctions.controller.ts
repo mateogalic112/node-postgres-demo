@@ -45,7 +45,7 @@ export class AuctionHttpController extends HttpController {
       user: userSchema.parse(response.locals.user),
       payload: createAuctionSchema.parse(request.body)
     });
-    response.json(formatResponse(auction));
+    response.status(201).json(formatResponse(auction));
   });
 
   private cancelAuction = asyncMiddleware(async (request, response) => {
