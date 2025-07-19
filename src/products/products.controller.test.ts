@@ -13,42 +13,23 @@ import { UsersRepository } from "users/users.repository";
 import { FilesService } from "interfaces/files.interface";
 import { MailService } from "interfaces/mail.interface";
 import { UserService } from "users/users.service";
+import { migrate } from "database/setup";
 
 describe("ProductsController", () => {
-  jest.setTimeout(60000);
-
   let client: Client;
   let app: App;
   let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
+    // @dev Start the postgres container
     postgresContainer = await new PostgreSqlContainer("postgres:15").start();
 
+    // @dev Connect to the database
     client = new Client({ connectionString: postgresContainer.getConnectionUri() });
     await client.connect();
 
-    await client.query(
-      `
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(100),
-        email VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS products (
-        id SERIAL PRIMARY KEY,
-        owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-        name VARCHAR(100),
-        description TEXT,
-        price INT,
-        image_url VARCHAR(2048) DEFAULT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );`
-    );
+    // @dev Run migrations
+    await migrate(client);
 
     const filesService: FilesService = {
       uploadFile: jest.fn().mockResolvedValue("https://example.com/image.jpg")
