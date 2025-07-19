@@ -1,8 +1,6 @@
-import type { QueryResult, QueryConfig, QueryResultRow, QueryConfigValues, PoolClient } from "pg";
+import type { QueryResult, QueryConfig, QueryResultRow, QueryConfigValues } from "pg";
 
 export interface DatabaseService {
-  connect(): Promise<PoolClient>;
-
   query<R extends QueryResultRow, I = unknown[]>(
     queryTextOrConfig: string | QueryConfig<I>,
     values?: QueryConfigValues<I>

@@ -4,8 +4,6 @@ import { ProductHttpController } from "products/products.controller";
 import { AuthService } from "auth/auth.service";
 import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
-import { Pool } from "pg";
-import { env } from "config/env";
 import { UsersRepository } from "users/users.repository";
 import { AWSService } from "services/aws.service";
 import { ResendService } from "services/resend.service";
@@ -18,15 +16,9 @@ import { BidRepository } from "bids/bids.repository";
 import { BidSocketController } from "bids/bids.socket";
 import { BidHttpController } from "bids/bids.controller";
 import { AuctionSocketController } from "auctions/auctions.socket";
+import { PostgresService } from "services/postgres.service";
 
-const DB = new Pool({
-  host: env.POSTGRES_HOST,
-  user: env.POSTGRES_USER,
-  password: env.POSTGRES_PASSWORD,
-  database: env.POSTGRES_DB,
-  port: env.POSTGRES_PORT,
-  idleTimeoutMillis: 30000
-});
+const DB = PostgresService.getInstance();
 
 const usersService = new UserService(new UsersRepository(DB));
 
@@ -42,7 +34,7 @@ const auctionService = new AuctionService(
   ResendService.getInstance()
 );
 
-const bidService = new BidService(new BidRepository(DB), auctionService);
+const bidService = new BidService(new BidRepository(DB));
 
 const authService = new AuthService(usersService);
 

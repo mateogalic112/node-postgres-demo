@@ -7,7 +7,7 @@ import { LoggerService } from "services/logger.service";
 import { Money } from "money/money.model";
 
 export class BidRepository {
-  constructor(private readonly DB: DatabaseService) {}
+  constructor(private readonly DB: DatabaseService & { connect: () => Promise<PoolClient> }) {}
 
   public async createBid(userId: number, payload: CreateBidPayload) {
     const MAX_RETRIES = 5;
