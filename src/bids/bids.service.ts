@@ -3,12 +3,15 @@ import { BidRepository } from "./bids.repository";
 import { bidSchema, CreateBidPayload } from "./bids.validation";
 import { User } from "users/users.validation";
 import { Money } from "money/money.model";
-import { PostgresService } from "services/postgres.service";
 import { BadRequestError, PgError } from "api/api.errors";
 import { Auction } from "auctions/auctions.validation";
+import { DatabaseService } from "interfaces/database.interface";
 
 export class BidService {
-  constructor(private readonly bidRepository: BidRepository) {}
+  constructor(
+    private readonly bidRepository: BidRepository,
+    private readonly databaseService: DatabaseService
+  ) {}
 
   public async createBid(user: User, payload: CreateBidPayload) {
     const MAX_RETRIES = 5;
@@ -29,7 +32,7 @@ export class BidService {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       // @dev You must use the same client instance for all statements within a transaction!
       // @link https://node-postgres.com/features/transactions
-      const client = await PostgresService.getInstance().connect();
+      const client = await this.databaseService.getClient();
 
       // @dev Set transaction timeout to prevent indefinite blocking
       let timeoutHandle: NodeJS.Timeout | undefined;

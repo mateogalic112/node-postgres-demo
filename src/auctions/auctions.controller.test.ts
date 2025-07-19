@@ -1,6 +1,6 @@
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import App from "app";
-import { Client } from "pg";
+import { Client, PoolClient } from "pg";
 import request from "supertest";
 import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
@@ -12,6 +12,13 @@ import { AuctionService } from "./auctions.service";
 import { AuctionRepository } from "./auctions.repository";
 import { AuctionHttpController } from "./auctions.controller";
 import { CreateAuctionPayload } from "./auctions.validation";
+import { faker } from "@faker-js/faker/.";
+import { ProductHttpController } from "products/products.controller";
+import { ProductService } from "products/products.service";
+import { ProductRepository } from "products/products.repository";
+import { FilesService } from "interfaces/files.interface";
+import { addDays } from "date-fns";
+import { DatabaseService } from "interfaces/database.interface";
 
 describe("AuctionsController", () => {
   let client: Client;
@@ -33,16 +40,33 @@ describe("AuctionsController", () => {
       sendEmail: jest.fn().mockResolvedValue("123e4567-e89b-12d3-a456-426614174000")
     };
 
-    const authService = new AuthService(new UserService(new UsersRepository(client)));
+    const filesService: FilesService = {
+      uploadFile: jest.fn().mockResolvedValue("https://example.com/image.jpg")
+    };
+
+    const DB: DatabaseService = {
+      query: client.query.bind(client),
+      getClient: async () => ({ ...client, release: client.end }) as unknown as PoolClient
+    };
+
+    const authService = new AuthService(new UserService(new UsersRepository(DB)));
     const authController = new AuthHttpController(authService);
 
-    const auctionService = new AuctionService(new AuctionRepository(client), mailService);
+    const auctionService = new AuctionService(new AuctionRepository(DB), DB, mailService);
+    const productService = new ProductService(new ProductRepository(DB), mailService, filesService);
 
-    app = new App([authController, new AuctionHttpController(auctionService, authService)], []);
+    app = new App(
+      [
+        authController,
+        new AuctionHttpController(auctionService, authService),
+        new ProductHttpController(productService, authService)
+      ],
+      []
+    );
   });
 
   beforeEach(async () => {
-    await client.query("TRUNCATE TABLE auctions, products RESTART IDENTITY CASCADE");
+    await client.query("TRUNCATE TABLE users, auctions, products RESTART IDENTITY CASCADE");
   });
 
   afterEach(async () => {
@@ -50,7 +74,17 @@ describe("AuctionsController", () => {
   });
 
   afterAll(async () => {
-    await client.end();
+    try {
+      await client.end();
+    } catch (error) {
+      console.warn("Error ending client:", error);
+    }
+
+    try {
+      await postgresContainer.stop({ timeout: 1000 });
+    } catch (error) {
+      console.warn("Error stopping container:", error);
+    }
   });
 
   describe("POST /api/v1/auctions", () => {
@@ -66,47 +100,46 @@ describe("AuctionsController", () => {
       expect(response.status).toBe(401);
     });
 
-    // it.skip("should create an auction when authenticated", async () => {
-    //   // First register a user
-    //   const userResponse = await request(app.getServer()).post("/api/v1/auth/register").send({
-    //     username: "testuser",
-    //     email: "test@example.com",
-    //     password: "password"
-    //   });
+    it("should create an auction when authenticated", async () => {
+      // First register a user
+      const userResponse = await request(app.getServer()).post("/api/v1/auth/register").send({
+        username: "testuser",
+        email: "test@example.com",
+        password: "password"
+      });
 
-    //   expect(userResponse.status).toBe(201);
+      expect(userResponse.status).toBe(201);
 
-    //   // Get the authentication cookie
-    //   const authCookie = userResponse.headers["set-cookie"][0];
+      // Get the authentication cookie
+      const authCookie = userResponse.headers["set-cookie"][0];
 
-    //   const payload: CreateProductPayload["body"] & { image_url: string | null } = {
-    //     name: faker.commerce.productName(),
-    //     description: faker.commerce.productDescription(),
-    //     price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
-    //     image_url: null
-    //   };
+      const productResponse = await request(app.getServer())
+        .post("/api/v1/products")
+        .set("Cookie", authCookie)
+        .field("name", faker.commerce.productName())
+        .field("description", faker.commerce.productDescription());
 
-    //   const mockImageBuffer = Buffer.from("fake-image-data");
+      expect(productResponse.status).toBe(201);
 
-    //   const response = await request(app.getServer())
-    //     .post("/api/v1/products")
-    //     .set("Cookie", authCookie)
-    //     .field("name", payload.name)
-    //     .field("description", payload.description)
-    //     .field("price", payload.price)
-    //     .attach("image", mockImageBuffer, {
-    //       filename: "test-image.jpg",
-    //       contentType: "image/jpeg"
-    //     });
+      const payload: CreateAuctionPayload = {
+        product_id: productResponse.body.data.id,
+        start_time: addDays(new Date(), 1),
+        duration_hours: 24,
+        starting_price: 1000
+      };
 
-    //   expect(response.status).toBe(201);
-    //   expect(response.body).toMatchObject({
-    //     data: {
-    //       id: 1,
-    //       ...payload,
-    //       image_url: "https://example.com/image.jpg"
-    //     }
-    //   });
-    // });
+      const response = await request(app.getServer())
+        .post("/api/v1/auctions")
+        .set("Cookie", authCookie)
+        .send(payload);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        data: {
+          id: 1,
+          ...payload
+        }
+      });
+    });
   });
 });

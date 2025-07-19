@@ -2,11 +2,12 @@ import App from "app";
 import { AuthHttpController } from "./auth.controller";
 import request from "supertest";
 import { AuthService } from "./auth.service";
-import { Client } from "pg";
+import { Client, PoolClient } from "pg";
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
 import { migrate } from "database/setup";
+import { DatabaseService } from "interfaces/database.interface";
 
 describe("AuthController", () => {
   jest.setTimeout(60000);
@@ -26,8 +27,13 @@ describe("AuthController", () => {
     // @dev Run migrations
     await migrate(client);
 
+    const DB: DatabaseService = {
+      query: client.query.bind(client),
+      getClient: async () => ({ ...client, release: client.end }) as unknown as PoolClient
+    };
+
     app = new App(
-      [new AuthHttpController(new AuthService(new UserService(new UsersRepository(client))))],
+      [new AuthHttpController(new AuthService(new UserService(new UsersRepository(DB))))],
       []
     );
   });

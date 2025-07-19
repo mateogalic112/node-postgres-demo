@@ -5,11 +5,12 @@ import { BadRequestError, NotFoundError, PgError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
 import { addHours, isBefore, isPast } from "date-fns";
-import { PostgresService } from "services/postgres.service";
+import { DatabaseService } from "interfaces/database.interface";
 
 export class AuctionService {
   constructor(
     private readonly auctionRepository: AuctionRepository,
+    private readonly databaseService: DatabaseService,
     private readonly mailService: MailService
   ) {}
 
@@ -27,7 +28,7 @@ export class AuctionService {
   }
 
   public async createAuction({ user, payload }: { user: User; payload: CreateAuctionPayload }) {
-    const client = await PostgresService.getInstance().connect();
+    const client = await this.databaseService.getClient();
 
     try {
       await client.query("BEGIN");
@@ -41,6 +42,8 @@ export class AuctionService {
 
       return auctionSchema.parse(newAuction);
     } catch (error) {
+      await client.query("ROLLBACK");
+
       if (PgError.isUniqueViolation(error)) {
         const errorMessage = "Product already auctioned. Please try again.";
         throw new PgError(errorMessage, 409);
@@ -56,7 +59,6 @@ export class AuctionService {
         throw new PgError(errorMessage, 404);
       }
 
-      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();

@@ -8,6 +8,7 @@ import {
   createMockMailService,
   mockAuction
 } from "./mocks/auction.service";
+import { DatabaseService } from "interfaces/database.interface";
 
 describe("AuctionService", () => {
   const user = { id: 1 } as User;
@@ -15,7 +16,12 @@ describe("AuctionService", () => {
   const mockedAuctionRepository = createMockAuctionRepository();
   const mockedMailService = createMockMailService();
 
-  const auctionService = new AuctionService(mockedAuctionRepository, mockedMailService);
+  const DB: DatabaseService = {
+    query: jest.fn(),
+    getClient: jest.fn()
+  };
+
+  const auctionService = new AuctionService(mockedAuctionRepository, DB, mockedMailService);
 
   describe("Cancel an auction", () => {
     it("should fail if the user is not the creator of the auction", async () => {

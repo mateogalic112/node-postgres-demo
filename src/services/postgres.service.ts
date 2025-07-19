@@ -31,11 +31,7 @@ export class PostgresService implements DatabaseService {
     return this.pool.query(queryTextOrConfig, values);
   }
 
-  public async connect() {
+  public async getClient() {
     return this.pool.connect();
-  }
-
-  public async end() {
-    return this.pool.end();
   }
 }

@@ -1,6 +1,6 @@
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import App from "app";
-import { Client } from "pg";
+import { Client, PoolClient } from "pg";
 import { ProductHttpController } from "./products.controller";
 import { ProductService } from "./products.service";
 import { ProductRepository } from "./products.repository";
@@ -14,6 +14,7 @@ import { FilesService } from "interfaces/files.interface";
 import { MailService } from "interfaces/mail.interface";
 import { UserService } from "users/users.service";
 import { migrate } from "database/setup";
+import { DatabaseService } from "interfaces/database.interface";
 
 describe("ProductsController", () => {
   let client: Client;
@@ -39,14 +40,15 @@ describe("ProductsController", () => {
       sendEmail: jest.fn().mockResolvedValue("123e4567-e89b-12d3-a456-426614174000")
     };
 
-    const authService = new AuthService(new UserService(new UsersRepository(client)));
+    const DB: DatabaseService = {
+      query: client.query.bind(client),
+      getClient: async () => ({ release: client.end }) as unknown as PoolClient
+    };
+
+    const authService = new AuthService(new UserService(new UsersRepository(DB)));
     const authController = new AuthHttpController(authService);
 
-    const productService = new ProductService(
-      new ProductRepository(client),
-      mailService,
-      filesService
-    );
+    const productService = new ProductService(new ProductRepository(DB), mailService, filesService);
 
     app = new App([authController, new ProductHttpController(productService, authService)], []);
   });
