@@ -1,11 +1,10 @@
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import App from "app";
-import { Client, PoolClient } from "pg";
+import { Client } from "pg";
 import request from "supertest";
 import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
-import { MailService } from "interfaces/mail.interface";
 import { UserService } from "users/users.service";
 import { migrate } from "database/setup";
 import { AuctionService } from "./auctions.service";
@@ -16,9 +15,8 @@ import { faker } from "@faker-js/faker/.";
 import { ProductHttpController } from "products/products.controller";
 import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
-import { FilesService } from "interfaces/files.interface";
 import { addDays } from "date-fns";
-import { DatabaseService } from "interfaces/database.interface";
+import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
 
 describe("AuctionsController", () => {
   let client: Client;
@@ -36,24 +34,7 @@ describe("AuctionsController", () => {
     // @dev Run migrations
     await migrate(client);
 
-    const mailService: MailService = {
-      sendEmail: jest.fn().mockResolvedValue("123e4567-e89b-12d3-a456-426614174000")
-    };
-
-    const filesService: FilesService = {
-      uploadFile: jest.fn().mockResolvedValue("https://example.com/image.jpg")
-    };
-
-    const DB: DatabaseService = {
-      query: client.query.bind(client),
-      getClient: async () =>
-        ({
-          ...client,
-          query: client.query.bind(client),
-          release: client.end
-        }) as unknown as PoolClient
-    };
-
+    const DB = createMockDatabaseService(client);
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
     const authController = new AuthHttpController(authService);
 
