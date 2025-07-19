@@ -6,6 +6,7 @@ import { Client } from "pg";
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
+import { migrate } from "database/setup";
 
 describe("AuthController", () => {
   jest.setTimeout(60000);
@@ -15,21 +16,15 @@ describe("AuthController", () => {
   let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
+    // @dev Start the postgres container
     postgresContainer = await new PostgreSqlContainer("postgres:15").start();
 
+    // @dev Connect to the database
     client = new Client({ connectionString: postgresContainer.getConnectionUri() });
     await client.connect();
 
-    await client.query(
-      `CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(100),
-        email VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`
-    );
+    // @dev Run migrations
+    await migrate(client);
 
     app = new App(
       [new AuthHttpController(new AuthService(new UserService(new UsersRepository(client))))],
