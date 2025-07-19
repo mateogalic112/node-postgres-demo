@@ -1,7 +1,7 @@
 import { PaginatedRequestParams } from "api/api.validations";
 import { AuctionRepository } from "./auctions.repository";
 import { Auction, auctionSchema, CreateAuctionPayload } from "./auctions.validation";
-import { BadRequestError, NotFoundError } from "api/api.errors";
+import { BadRequestError, NotFoundError, PgError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
 import { addHours, isBefore, isPast } from "date-fns";
@@ -41,6 +41,21 @@ export class AuctionService {
 
       return auctionSchema.parse(newAuction);
     } catch (error) {
+      if (PgError.isUniqueViolation(error)) {
+        const errorMessage = "Product already auctioned. Please try again.";
+        throw new PgError(errorMessage, 409);
+      }
+
+      if (PgError.isSerializationFailure(error)) {
+        const errorMessage = "High bidding activity detected. Please try again.";
+        throw new PgError(errorMessage, 409);
+      }
+
+      if (PgError.isViolatingForeignKeyConstraint(error)) {
+        const errorMessage = "Product not found. Please try again.";
+        throw new PgError(errorMessage, 404);
+      }
+
       await client.query("ROLLBACK");
       throw error;
     } finally {
