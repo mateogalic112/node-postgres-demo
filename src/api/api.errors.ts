@@ -64,6 +64,10 @@ export class PgError extends Error {
   static isUniqueViolation(error: unknown): boolean {
     return this.isPgError(error) && (error as { code: string }).code === "23505";
   }
+
+  static isViolatingForeignKeyConstraint(error: unknown): boolean {
+    return this.isPgError(error) && (error as { code: string }).code === "23503";
+  }
 }
 
 export const getErrorStatus = (error: unknown): number => {
