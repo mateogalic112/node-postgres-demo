@@ -10,13 +10,12 @@ import { AuctionService } from "./auctions.service";
 import { AuctionRepository } from "./auctions.repository";
 import { AuctionHttpController } from "./auctions.controller";
 import { CreateAuctionPayload } from "./auctions.validation";
-import { faker } from "@faker-js/faker/.";
 import { ProductHttpController } from "products/products.controller";
 import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
 import { addDays } from "date-fns";
 import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
-import { cleanUpDatabase, prepareDatabase } from "__tests__/setup";
+import { cleanUpDatabase, createProduct, getAuthCookie, prepareDatabase } from "__tests__/setup";
 
 describe("AuctionsController", () => {
   let client: Client;
@@ -24,7 +23,6 @@ describe("AuctionsController", () => {
   let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
-    // @dev Prepare the database
     const { client: freshClient, postgresContainer: freshContainer } = await prepareDatabase();
     client = freshClient;
     postgresContainer = freshContainer;
@@ -79,28 +77,11 @@ describe("AuctionsController", () => {
     });
 
     it("should create an auction when authenticated", async () => {
-      // First register a user
-      const userResponse = await request(app.getServer()).post("/api/v1/auth/register").send({
-        username: "testuser",
-        email: "test@example.com",
-        password: "password"
-      });
-
-      expect(userResponse.status).toBe(201);
-
-      // Get the authentication cookie
-      const authCookie = userResponse.headers["set-cookie"][0];
-
-      const productResponse = await request(app.getServer())
-        .post("/api/v1/products")
-        .set("Cookie", authCookie)
-        .field("name", faker.commerce.productName())
-        .field("description", faker.commerce.productDescription());
-
-      expect(productResponse.status).toBe(201);
+      const authCookie = await getAuthCookie(app);
+      const product = await createProduct(app, authCookie);
 
       const payload: CreateAuctionPayload = {
-        product_id: productResponse.body.data.id,
+        product_id: product.id,
         start_time: addDays(new Date(), 1),
         duration_hours: 24,
         starting_price: 1000
@@ -122,27 +103,11 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT create an auction when there is a race condition with products", async () => {
-      // First register a user
-      const userResponse = await request(app.getServer()).post("/api/v1/auth/register").send({
-        username: "testuser",
-        email: "test@example.com",
-        password: "password"
-      });
-
-      expect(userResponse.status).toBe(201);
-
-      const authCookie = userResponse.headers["set-cookie"][0];
-
-      const productResponse = await request(app.getServer())
-        .post("/api/v1/products")
-        .set("Cookie", authCookie)
-        .field("name", faker.commerce.productName())
-        .field("description", faker.commerce.productDescription());
-
-      expect(productResponse.status).toBe(201);
+      const authCookie = await getAuthCookie(app);
+      const product = await createProduct(app, authCookie);
 
       const payload: CreateAuctionPayload = {
-        product_id: productResponse.body.data.id,
+        product_id: product.id,
         start_time: addDays(new Date(), 1),
         duration_hours: 24,
         starting_price: 1000
