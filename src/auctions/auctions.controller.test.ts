@@ -46,7 +46,12 @@ describe("AuctionsController", () => {
 
     const DB: DatabaseService = {
       query: client.query.bind(client),
-      getClient: async () => ({ ...client, release: client.end }) as unknown as PoolClient
+      getClient: async () =>
+        ({
+          ...client,
+          query: client.query.bind(client),
+          release: client.end
+        }) as unknown as PoolClient
     };
 
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
@@ -137,7 +142,8 @@ describe("AuctionsController", () => {
       expect(response.body).toMatchObject({
         data: {
           id: 1,
-          ...payload
+          ...payload,
+          start_time: payload.start_time.toISOString()
         }
       });
     });
