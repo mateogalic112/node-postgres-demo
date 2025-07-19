@@ -44,10 +44,10 @@ export async function seedDatabase() {
 
     const user = await client.query("SELECT id FROM users WHERE email = $1", [users[0].email]);
 
-    for (const { name, description, price, image_url } of products) {
+    for (const { name, description, image_url } of products) {
       await client.query(
-        `INSERT INTO products (name, description, price, image_url, owner_id) VALUES ($1, $2, $3, $4, $5)`,
-        [name, description, price, image_url, user.rows[0].id]
+        `INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4)`,
+        [name, description, image_url, user.rows[0].id]
       );
     }
   } catch (error) {

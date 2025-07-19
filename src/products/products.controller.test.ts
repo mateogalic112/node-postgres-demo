@@ -74,14 +74,13 @@ describe("ProductsController", () => {
         Array.from({ length: 21 }, () => ({
           name: faker.commerce.productName(),
           description: faker.commerce.productDescription(),
-          price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
           image_url: faker.image.url()
         }));
 
-      for (const { name, description, price, image_url } of products) {
+      for (const { name, description, image_url } of products) {
         await client.query(
-          `INSERT INTO products (name, description, price, image_url, owner_id) VALUES ($1, $2, $3, $4, $5)`,
-          [name, description, price, image_url, user.rows[0].id]
+          `INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4)`,
+          [name, description, image_url, user.rows[0].id]
         );
       }
 
@@ -103,14 +102,13 @@ describe("ProductsController", () => {
         Array.from({ length: 8 }, () => ({
           name: faker.commerce.productName(),
           description: faker.commerce.productDescription(),
-          price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
           image_url: faker.image.url()
         }));
 
-      for (const { name, description, price, image_url } of products) {
+      for (const { name, description, image_url } of products) {
         await client.query(
-          `INSERT INTO products (name, description, price, image_url, owner_id) VALUES ($1, $2, $3, $4, $5)`,
-          [name, description, price, image_url, user.rows[0].id]
+          `INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4)`,
+          [name, description, image_url, user.rows[0].id]
         );
       }
 
@@ -138,7 +136,6 @@ describe("ProductsController", () => {
       const payload: CreateProductPayload["body"] & { image_url: string | null } = {
         name: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
-        price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
         image_url: null
       };
 
@@ -149,7 +146,6 @@ describe("ProductsController", () => {
         .set("Cookie", authCookie)
         .field("name", payload.name)
         .field("description", payload.description)
-        .field("price", payload.price)
         .attach("image", mockImageBuffer, {
           filename: "test-image.jpg",
           contentType: "image/jpeg"
@@ -169,7 +165,6 @@ describe("ProductsController", () => {
       const payload: CreateProductPayload["body"] & { image_url: string | null } = {
         name: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
-        price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
         image_url: faker.image.url()
       };
 
