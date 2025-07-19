@@ -20,10 +20,10 @@ export class CreateProductTemplate {
 }
 
 export class CreateAuctionTemplate {
-  public static getTemplate(auction: Auction, product: Product) {
+  public static getTemplate(auction: Auction) {
     return {
       subject: "New auction created",
-      html: `<strong>New auction created</strong> <p>Product: ${product.name}</p><p>Starting price: ${auction.starting_price}</p><p>Start time: ${auction.start_time}</p><p>Duration: ${auction.duration_hours} hours</p>`
+      html: `<strong>New auction created</strong> Starting price: ${auction.starting_price}</p><p>Start time: ${auction.start_time}</p><p>Duration: ${auction.duration_hours} hours</p>`
     };
   }
 }

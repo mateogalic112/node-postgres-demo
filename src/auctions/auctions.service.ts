@@ -31,25 +31,12 @@ export class AuctionService {
 
     try {
       await client.query("BEGIN");
-
-      const product = await this.auctionRepository.getAvailableProduct(
-        client,
-        payload.product_id,
-        user.id
-      );
-
-      const newAuction = await this.auctionRepository.createAuction(
-        client,
-        user,
-        payload,
-        product.price
-      );
-
+      const newAuction = await this.auctionRepository.createAuction(client, user, payload);
       await client.query("COMMIT");
 
       this.mailService.sendEmail({
         to: user.email,
-        template: CreateAuctionTemplate.getTemplate(newAuction, product)
+        template: CreateAuctionTemplate.getTemplate(newAuction)
       });
 
       return auctionSchema.parse(newAuction);
