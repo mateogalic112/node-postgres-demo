@@ -18,7 +18,7 @@ export const createMockDatabaseService = (client: Client): DatabaseService => {
       ({
         ...client,
         query: client.query.bind(client),
-        release: client.end
+        release: () => {}
       }) as unknown as PoolClient
   };
 };

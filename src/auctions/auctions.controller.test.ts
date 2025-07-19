@@ -1,4 +1,4 @@
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import App from "app";
 import { Client } from "pg";
 import request from "supertest";
@@ -6,7 +6,6 @@ import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
-import { migrate } from "database/setup";
 import { AuctionService } from "./auctions.service";
 import { AuctionRepository } from "./auctions.repository";
 import { AuctionHttpController } from "./auctions.controller";
@@ -17,6 +16,7 @@ import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
 import { addDays } from "date-fns";
 import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
+import { cleanUpDatabase, prepareDatabase } from "__tests__/setup";
 
 describe("AuctionsController", () => {
   let client: Client;
@@ -24,15 +24,10 @@ describe("AuctionsController", () => {
   let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
-    // @dev Start the postgres container
-    postgresContainer = await new PostgreSqlContainer("postgres:15").start();
-
-    // @dev Connect to the database
-    client = new Client({ connectionString: postgresContainer.getConnectionUri() });
-    await client.connect();
-
-    // @dev Run migrations
-    await migrate(client);
+    // @dev Prepare the database
+    const { client: freshClient, postgresContainer: freshContainer } = await prepareDatabase();
+    client = freshClient;
+    postgresContainer = freshContainer;
 
     const DB = createMockDatabaseService(client);
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
@@ -52,7 +47,14 @@ describe("AuctionsController", () => {
   });
 
   beforeEach(async () => {
-    await client.query("TRUNCATE TABLE users, auctions, products RESTART IDENTITY CASCADE");
+    await client.query(`
+      TRUNCATE TABLE
+        bids,
+        auctions,
+        products,
+        users
+      RESTART IDENTITY CASCADE
+    `);
   });
 
   afterEach(async () => {
@@ -60,17 +62,7 @@ describe("AuctionsController", () => {
   });
 
   afterAll(async () => {
-    try {
-      await client.end();
-    } catch (error) {
-      console.warn("Error ending client:", error);
-    }
-
-    try {
-      await postgresContainer.stop({ timeout: 1000 });
-    } catch (error) {
-      console.warn("Error stopping container:", error);
-    }
+    await cleanUpDatabase(client, postgresContainer);
   });
 
   describe("POST /api/v1/auctions", () => {
@@ -127,6 +119,49 @@ describe("AuctionsController", () => {
           start_time: payload.start_time.toISOString()
         }
       });
+    });
+
+    it("should NOT create an auction when there is a race condition with products", async () => {
+      // First register a user
+      const userResponse = await request(app.getServer()).post("/api/v1/auth/register").send({
+        username: "testuser",
+        email: "test@example.com",
+        password: "password"
+      });
+
+      expect(userResponse.status).toBe(201);
+
+      const authCookie = userResponse.headers["set-cookie"][0];
+
+      const productResponse = await request(app.getServer())
+        .post("/api/v1/products")
+        .set("Cookie", authCookie)
+        .field("name", faker.commerce.productName())
+        .field("description", faker.commerce.productDescription());
+
+      expect(productResponse.status).toBe(201);
+
+      const payload: CreateAuctionPayload = {
+        product_id: productResponse.body.data.id,
+        start_time: addDays(new Date(), 1),
+        duration_hours: 24,
+        starting_price: 1000
+      };
+
+      const response = await request(app.getServer())
+        .post("/api/v1/auctions")
+        .set("Cookie", authCookie)
+        .send(payload);
+
+      expect(response.status).toBe(201);
+
+      const response2 = await request(app.getServer())
+        .post("/api/v1/auctions")
+        .set("Cookie", authCookie)
+        .send(payload);
+
+      expect(response2.status).toBe(409);
+      expect(response2.body.message).toBe("Product already auctioned. Please try again.");
     });
   });
 });
