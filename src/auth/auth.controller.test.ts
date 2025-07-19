@@ -36,8 +36,22 @@ describe("AuthController", () => {
     await client.query("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
   });
 
+  afterEach(async () => {
+    jest.clearAllMocks();
+  });
+
   afterAll(async () => {
-    await client.end();
+    try {
+      await client.end();
+    } catch (error) {
+      console.warn("Error ending client:", error);
+    }
+
+    try {
+      await postgresContainer.stop({ timeout: 1000 });
+    } catch (error) {
+      console.warn("Error stopping container:", error);
+    }
   });
 
   describe("Register user -> /api/v1/auth/register", () => {
