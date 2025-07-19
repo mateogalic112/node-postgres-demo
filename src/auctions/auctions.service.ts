@@ -4,13 +4,12 @@ import { Auction, auctionSchema, CreateAuctionPayload } from "./auctions.validat
 import { BadRequestError, NotFoundError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
-import { ProductService } from "products/products.service";
 import { addHours, isBefore, isPast } from "date-fns";
+import { PostgresService } from "services/postgres.service";
 
 export class AuctionService {
   constructor(
     private readonly auctionRepository: AuctionRepository,
-    private readonly productService: ProductService,
     private readonly mailService: MailService
   ) {}
 
@@ -28,22 +27,38 @@ export class AuctionService {
   }
 
   public async createAuction({ user, payload }: { user: User; payload: CreateAuctionPayload }) {
-    const product = await this.productService.getProductById(payload.product_id);
+    const client = await PostgresService.getInstance().connect();
 
-    if (product.owner_id !== user.id) {
-      throw new BadRequestError("You are not the owner of this product");
+    try {
+      await client.query("BEGIN");
+
+      const product = await this.auctionRepository.getAvailableProduct(
+        client,
+        payload.product_id,
+        user.id
+      );
+
+      const newAuction = await this.auctionRepository.createAuction(
+        client,
+        user,
+        payload,
+        product.price
+      );
+
+      await client.query("COMMIT");
+
+      this.mailService.sendEmail({
+        to: user.email,
+        template: CreateAuctionTemplate.getTemplate(newAuction, product)
+      });
+
+      return auctionSchema.parse(newAuction);
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
     }
-
-    await this.assertProductIsAvailable(payload.product_id);
-
-    const newAuction = await this.auctionRepository.createAuction(user, payload, product.price);
-
-    this.mailService.sendEmail({
-      to: user.email,
-      template: CreateAuctionTemplate.getTemplate(newAuction, product)
-    });
-
-    return auctionSchema.parse(newAuction);
   }
 
   public async cancelAuction({ user, auctionId }: { user: User; auctionId: number }) {
@@ -93,12 +108,5 @@ export class AuctionService {
 
   private hasAuctionEnded(auction: Auction) {
     return isPast(addHours(auction.start_time, auction.duration_hours));
-  }
-
-  private async assertProductIsAvailable(productId: number) {
-    const productAuctions = await this.auctionRepository.getAuctionsByProductId(productId);
-    if (!productAuctions.every((auction) => auction.is_cancelled)) {
-      throw new BadRequestError("Product already attached to an auction");
-    }
   }
 }
