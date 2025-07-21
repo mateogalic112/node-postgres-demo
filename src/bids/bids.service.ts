@@ -21,11 +21,11 @@ export class BidService {
 
     const bidAmount = new Money(payload.amount_in_cents);
     // @dev Prevent duplicate bids for the same auction with the same amount from the same user
-    const IDEMPOTENCY_KEY = `bid_${user.id}_${payload.auction_id}_${bidAmount.getAmountInCents()}`;
+    const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${bidAmount.getAmountInCents()}`;
 
     const logger = LoggerService.getInstance();
     logger.log(
-      `[MONEY_BID_START] User ${user.id} bidding ${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} at ${START_TIME} [Key: ${IDEMPOTENCY_KEY}]`
+      `[MONEY_BID_START] User ${user.id} bidding ${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} at ${START_TIME} [Key: ${idempotencyKey}]`
     );
 
     // @dev We need to retry the transaction if it fails due to serialization failure or deadlock detected
@@ -40,7 +40,7 @@ export class BidService {
       try {
         timeoutHandle = setTimeout(() => {
           LoggerService.getInstance().error(
-            `[MONEY_BID_TIMEOUT] Transaction timeout after ${TRANSACTION_TIMEOUT_MS}ms [Key: ${IDEMPOTENCY_KEY}]`
+            `[MONEY_BID_TIMEOUT] Transaction timeout after ${TRANSACTION_TIMEOUT_MS}ms [Key: ${idempotencyKey}]`
           );
           client.query("ROLLBACK").catch(() => {});
           client.release();
@@ -49,33 +49,27 @@ export class BidService {
         // @dev SERIALIZABLE isolation for maximum consistency (required for real money)
         await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
-        const auction = await this.bidRepository.getBiddingAuction(
+        const biddingAuction = await this.bidRepository.getBiddingAuction(
           client,
           payload.auction_id,
           user.id
         );
 
-        const highestBid = new Money(
-          await this.bidRepository.getHighestBidAmountForAuction(client, auction.id)
-        );
-        logger.log(
-          `[MONEY_BID_VALIDATION] Auction ${payload.auction_id}: current_highest=$${highestBid.getFormattedAmount()}, attempt=$${bidAmount.getFormattedAmount()} [Key: ${IDEMPOTENCY_KEY}]`
-        );
+        this.assertMinimumBidIncrease({
+          auction: biddingAuction,
+          bidAmount,
+          highestBid: new Money(
+            await this.bidRepository.getHighestBidAmountForAuction(client, biddingAuction.id)
+          )
+        });
 
-        this.assertMinimumBidIncrease({ auction, bidAmount, highestBid });
-
-        const newBid = await this.bidRepository.createBid(
-          client,
-          user.id,
-          payload,
-          IDEMPOTENCY_KEY
-        );
+        const newBid = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
 
         await client.query("COMMIT");
         if (timeoutHandle) clearTimeout(timeoutHandle);
 
         logger.log(
-          `[MONEY_BID_SUCCESS] User ${user.id} successfully bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} in ${Date.now() - START_TIME}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${IDEMPOTENCY_KEY}]`
+          `[MONEY_BID_SUCCESS] User ${user.id} successfully bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} in ${Date.now() - START_TIME}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
         );
 
         return bidSchema.parse(newBid);
@@ -87,7 +81,7 @@ export class BidService {
           if (PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error)) {
             const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
             logger.log(
-              `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${IDEMPOTENCY_KEY}]`
+              `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
             );
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
@@ -97,21 +91,20 @@ export class BidService {
         if (PgError.isSerializationFailure(error)) {
           const errorMessage = "High bidding activity detected. Please try again.";
           logger.error(
-            `[MONEY_BID_SERIALIZATION_EXHAUSTED] ${errorMessage} [Key: ${IDEMPOTENCY_KEY}]`
+            `[MONEY_BID_SERIALIZATION_EXHAUSTED] ${errorMessage} [Key: ${idempotencyKey}]`
           );
           throw new PgError(errorMessage, 409);
         }
 
         if (PgError.isUniqueViolation(error)) {
           const errorMessage = "Bid already exists. Please try again.";
-          logger.error(`[MONEY_BID_DUPLICATE] ${errorMessage} [Key: ${IDEMPOTENCY_KEY}]`);
+          logger.error(`[MONEY_BID_DUPLICATE] ${errorMessage} [Key: ${idempotencyKey}]`);
           throw new PgError(errorMessage, 409);
         }
 
         logger.error(
-          `[MONEY_BID_ERROR] User ${user.id} failed to bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} after ${Date.now() - START_TIME}ms: ${error instanceof Error ? error.message : String(error)} [Key: ${IDEMPOTENCY_KEY}]`
+          `[MONEY_BID_ERROR] User ${user.id} failed to bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} after ${Date.now() - START_TIME}ms: ${error instanceof Error ? error.message : String(error)} [Key: ${idempotencyKey}]`
         );
-
         throw error;
       } finally {
         client.release();
@@ -119,7 +112,7 @@ export class BidService {
     }
 
     logger.error(
-      `[MONEY_BID_EXHAUSTED] All retry attempts exhausted for user ${user.id} bidding $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} [Key: ${IDEMPOTENCY_KEY}]`
+      `[MONEY_BID_EXHAUSTED] All retry attempts exhausted for user ${user.id} bidding $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} [Key: ${idempotencyKey}]`
     );
     throw new PgError("Unable to place bid due to high system load. Please try again.", 503);
   }
