@@ -75,7 +75,7 @@ export class PgError extends Error {
     if (this.isDeadlockDetected(error)) return 409;
     if (this.isUniqueViolation(error)) return 409;
     if (this.isViolatingForeignKeyConstraint(error)) return 404;
-    return null;
+    return 400;
   }
 
   static getErrorMessage(error: unknown) {
@@ -84,7 +84,7 @@ export class PgError extends Error {
     if (this.isDeadlockDetected(error)) return "Transaction deadlock detected";
     if (this.isUniqueViolation(error)) return "Unique violation";
     if (this.isViolatingForeignKeyConstraint(error)) return "Violating foreign key constraint";
-    return null;
+    return (error as { detail: string }).detail;
   }
 }
 
