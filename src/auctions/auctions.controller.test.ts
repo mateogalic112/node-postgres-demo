@@ -34,15 +34,14 @@ describe("AuctionsController", () => {
     postgresContainer = freshContainer;
 
     const DB = createMockDatabaseService(client);
-    const authService = new AuthService(new UserService(new UsersRepository(DB)));
-    const authController = new AuthHttpController(authService);
 
+    const authService = new AuthService(new UserService(new UsersRepository(DB)));
     const auctionService = new AuctionService(new AuctionRepository(DB), DB, mailService);
     const productService = new ProductService(new ProductRepository(DB), mailService, filesService);
 
     app = new App(
       [
-        authController,
+        new AuthHttpController(authService),
         new AuctionHttpController(auctionService, authService),
         new ProductHttpController(productService, authService)
       ],

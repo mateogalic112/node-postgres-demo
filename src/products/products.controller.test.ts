@@ -1,6 +1,6 @@
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import App from "app";
-import { Client, PoolClient } from "pg";
+import { Client } from "pg";
 import { ProductHttpController } from "./products.controller";
 import { ProductService } from "./products.service";
 import { ProductRepository } from "./products.repository";
@@ -10,11 +10,9 @@ import { faker } from "@faker-js/faker/.";
 import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
-import { FilesService } from "interfaces/files.interface";
-import { MailService } from "interfaces/mail.interface";
 import { UserService } from "users/users.service";
-import { migrate } from "database/setup";
-import { DatabaseService } from "interfaces/database.interface";
+import { closeDatabase, prepareDatabase, resetDatabase } from "__tests__/setup";
+import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
 
 describe("ProductsController", () => {
   let client: Client;
@@ -22,39 +20,23 @@ describe("ProductsController", () => {
   let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
-    // @dev Start the postgres container
-    postgresContainer = await new PostgreSqlContainer("postgres:15").start();
+    const { client: freshClient, postgresContainer: freshContainer } = await prepareDatabase();
+    client = freshClient;
+    postgresContainer = freshContainer;
 
-    // @dev Connect to the database
-    client = new Client({ connectionString: postgresContainer.getConnectionUri() });
-    await client.connect();
-
-    // @dev Run migrations
-    await migrate(client);
-
-    const filesService: FilesService = {
-      uploadFile: jest.fn().mockResolvedValue("https://example.com/image.jpg")
-    };
-
-    const mailService: MailService = {
-      sendEmail: jest.fn().mockResolvedValue("123e4567-e89b-12d3-a456-426614174000")
-    };
-
-    const DB: DatabaseService = {
-      query: client.query.bind(client),
-      getClient: async () => ({ release: client.end }) as unknown as PoolClient
-    };
+    const DB = createMockDatabaseService(client);
 
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
-    const authController = new AuthHttpController(authService);
-
     const productService = new ProductService(new ProductRepository(DB), mailService, filesService);
 
-    app = new App([authController, new ProductHttpController(productService, authService)], []);
+    app = new App(
+      [new AuthHttpController(authService), new ProductHttpController(productService, authService)],
+      []
+    );
   });
 
   beforeEach(async () => {
-    await client.query("TRUNCATE TABLE users, products RESTART IDENTITY CASCADE");
+    await resetDatabase(client);
   });
 
   afterEach(async () => {
@@ -62,17 +44,7 @@ describe("ProductsController", () => {
   });
 
   afterAll(async () => {
-    try {
-      await client.end();
-    } catch (error) {
-      console.warn("Error ending client:", error);
-    }
-
-    try {
-      await postgresContainer.stop({ timeout: 1000 });
-    } catch (error) {
-      console.warn("Error stopping container:", error);
-    }
+    await closeDatabase(client, postgresContainer);
   });
 
   describe("GET /api/v1/products", () => {

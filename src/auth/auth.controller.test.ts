@@ -20,10 +20,10 @@ describe("AuthController", () => {
     postgresContainer = freshContainer;
 
     const DB = createMockDatabaseService(client);
-    app = new App(
-      [new AuthHttpController(new AuthService(new UserService(new UsersRepository(DB))))],
-      []
-    );
+
+    const authService = new AuthService(new UserService(new UsersRepository(DB)));
+
+    app = new App([new AuthHttpController(authService)], []);
   });
 
   beforeEach(async () => {
