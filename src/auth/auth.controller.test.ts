@@ -2,12 +2,12 @@ import App from "app";
 import { AuthHttpController } from "./auth.controller";
 import request from "supertest";
 import { AuthService } from "./auth.service";
-import { Client, PoolClient } from "pg";
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import { Client } from "pg";
+import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
-import { migrate } from "database/setup";
-import { DatabaseService } from "interfaces/database.interface";
+import { closeDatabase, prepareDatabase, resetDatabase } from "__tests__/setup";
+import { createMockDatabaseService } from "__tests__/mocks";
 
 describe("AuthController", () => {
   jest.setTimeout(60000);
@@ -17,21 +17,11 @@ describe("AuthController", () => {
   let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
-    // @dev Start the postgres container
-    postgresContainer = await new PostgreSqlContainer("postgres:15").start();
+    const { client: freshClient, postgresContainer: freshContainer } = await prepareDatabase();
+    client = freshClient;
+    postgresContainer = freshContainer;
 
-    // @dev Connect to the database
-    client = new Client({ connectionString: postgresContainer.getConnectionUri() });
-    await client.connect();
-
-    // @dev Run migrations
-    await migrate(client);
-
-    const DB: DatabaseService = {
-      query: client.query.bind(client),
-      getClient: async () => ({ ...client, release: client.end }) as unknown as PoolClient
-    };
-
+    const DB = createMockDatabaseService(client);
     app = new App(
       [new AuthHttpController(new AuthService(new UserService(new UsersRepository(DB))))],
       []
@@ -39,7 +29,7 @@ describe("AuthController", () => {
   });
 
   beforeEach(async () => {
-    await client.query("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
+    await resetDatabase(client);
   });
 
   afterEach(async () => {
@@ -47,17 +37,7 @@ describe("AuthController", () => {
   });
 
   afterAll(async () => {
-    try {
-      await client.end();
-    } catch (error) {
-      console.warn("Error ending client:", error);
-    }
-
-    try {
-      await postgresContainer.stop({ timeout: 1000 });
-    } catch (error) {
-      console.warn("Error stopping container:", error);
-    }
+    await closeDatabase(client, postgresContainer);
   });
 
   describe("Register user -> /api/v1/auth/register", () => {

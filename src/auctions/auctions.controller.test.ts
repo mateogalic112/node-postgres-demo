@@ -15,7 +15,13 @@ import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
 import { addDays } from "date-fns";
 import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
-import { cleanUpDatabase, createProduct, getAuthCookie, prepareDatabase } from "__tests__/setup";
+import {
+  closeDatabase,
+  createProduct,
+  getAuthCookie,
+  prepareDatabase,
+  resetDatabase
+} from "__tests__/setup";
 
 describe("AuctionsController", () => {
   let client: Client;
@@ -45,14 +51,7 @@ describe("AuctionsController", () => {
   });
 
   beforeEach(async () => {
-    await client.query(`
-      TRUNCATE TABLE
-        bids,
-        auctions,
-        products,
-        users
-      RESTART IDENTITY CASCADE
-    `);
+    await resetDatabase(client);
   });
 
   afterEach(async () => {
@@ -60,7 +59,7 @@ describe("AuctionsController", () => {
   });
 
   afterAll(async () => {
-    await cleanUpDatabase(client, postgresContainer);
+    await closeDatabase(client, postgresContainer);
   });
 
   describe("POST /api/v1/auctions", () => {

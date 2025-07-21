@@ -20,7 +20,7 @@ export const prepareDatabase = async () => {
   return { client, postgresContainer };
 };
 
-export const cleanUpDatabase = async (
+export const closeDatabase = async (
   client: Client,
   postgresContainer: StartedPostgreSqlContainer
 ) => {
@@ -35,6 +35,17 @@ export const cleanUpDatabase = async (
   } catch (error) {
     console.warn("Error stopping container:", error);
   }
+};
+
+export const resetDatabase = async (client: Client) => {
+  await client.query(`
+    TRUNCATE TABLE
+      bids,
+      auctions,
+      products,
+      users
+    RESTART IDENTITY CASCADE
+  `);
 };
 
 export const getAuthCookie = async (app: App) => {
