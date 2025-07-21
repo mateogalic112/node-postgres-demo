@@ -65,7 +65,10 @@ export class BidService {
         const newBid = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
 
         await client.query("COMMIT");
-        if (timeoutHandle) clearTimeout(timeoutHandle);
+
+        if (timeoutHandle) {
+          clearTimeout(timeoutHandle);
+        }
 
         logger.log(
           `[MONEY_BID_SUCCESS] User ${user.id} successfully bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} in ${Date.now() - START_TIME}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
@@ -73,7 +76,10 @@ export class BidService {
 
         return bidSchema.parse(newBid);
       } catch (error) {
-        if (timeoutHandle) clearTimeout(timeoutHandle);
+        if (timeoutHandle) {
+          clearTimeout(timeoutHandle);
+        }
+
         await client.query("ROLLBACK");
 
         // @dev Handle business logic errors - fail early without retrying
@@ -89,17 +95,27 @@ export class BidService {
           throw new PgError(errorMessage, 409);
         }
 
-        if (attempt < MAX_RETRIES - 1) {
-          if (PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error)) {
+        // @dev Handle serialization failure or deadlock detected - retry
+        if (PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error)) {
+          if (attempt < MAX_RETRIES - 1) {
             const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
             logger.log(
               `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
             );
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
+          } else {
+            logger.error(
+              `[MONEY_BID_EXHAUSTED] All retry attempts exhausted for user ${user.id} bidding $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} [Key: ${idempotencyKey}]`
+            );
+            throw new PgError(
+              "Unable to place bid due to high system load. Please try again.",
+              503
+            );
           }
         }
 
+        // @dev Handle all other errors - fail and log
         logger.error(
           `[MONEY_BID_ERROR] User ${user.id} failed to bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} after ${Date.now() - START_TIME}ms: ${error instanceof Error ? error.message : String(error)} [Key: ${idempotencyKey}]`
         );
