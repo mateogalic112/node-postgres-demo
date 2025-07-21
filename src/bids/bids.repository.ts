@@ -19,13 +19,11 @@ export class BidRepository {
            RETURNING *`,
       [payload.auction_id, userId, payload.amount_in_cents, idempotencyKey]
     );
-
     if (result.rows.length === 0) {
       throw new InternalServerError(
         "Unable to place bid due to high system load. Please try again."
       );
     }
-
     return result.rows[0];
   }
 
@@ -38,11 +36,9 @@ export class BidRepository {
        FOR UPDATE NOWAIT`,
       [auctionId, userId]
     );
-
     if (result.rows.length === 0) {
       throw new NotFoundError("Auction not found");
     }
-
     return result.rows[0];
   }
 
@@ -58,11 +54,9 @@ export class BidRepository {
        FOR UPDATE NOWAIT`,
       [auctionId]
     );
-
     if (result.rows.length === 0) {
       return 0;
     }
-
     return result.rows[0].amount_in_cents;
   }
 
