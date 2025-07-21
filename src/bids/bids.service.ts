@@ -20,7 +20,6 @@ export class BidService {
     const START_TIME = Date.now();
 
     const bidAmount = new Money(payload.amount_in_cents);
-    // @dev Prevent duplicate bids for the same auction with the same amount from the same user
     const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${bidAmount.getAmountInCents()}`;
 
     const logger = LoggerService.getInstance();
@@ -28,9 +27,9 @@ export class BidService {
       `[MONEY_BID_START] User ${user.id} bidding ${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} at ${START_TIME} [Key: ${idempotencyKey}]`
     );
 
-    // @dev We need to retry the transaction if it fails due to serialization failure or deadlock detected
+    // @dev Retry the transaction if it fails due to serialization failure or deadlock detected
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      // @dev You must use the same client instance for all statements within a transaction!
+      // @dev MUST use the same client instance for all statements within a transaction!
       // @link https://node-postgres.com/features/transactions
       const client = await this.databaseService.getClient();
 
@@ -38,6 +37,7 @@ export class BidService {
       let timeoutHandle: NodeJS.Timeout | undefined;
 
       try {
+        // @dev Set transaction timeout to prevent indefinite blocking
         timeoutHandle = setTimeout(() => {
           LoggerService.getInstance().error(
             `[MONEY_BID_TIMEOUT] Transaction timeout after ${TRANSACTION_TIMEOUT_MS}ms [Key: ${idempotencyKey}]`
@@ -55,13 +55,11 @@ export class BidService {
           user.id
         );
 
-        this.assertMinimumBidIncrease({
-          auction: biddingAuction,
-          bidAmount,
-          highestBid: new Money(
-            await this.bidRepository.getHighestBidAmountForAuction(client, biddingAuction.id)
-          )
-        });
+        const highestBid = new Money(
+          await this.bidRepository.getHighestBidAmountForAuction(client, biddingAuction.id)
+        );
+
+        this.assertMinimumBidIncrease({ auction: biddingAuction, bidAmount, highestBid });
 
         const newBid = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
 
