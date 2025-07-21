@@ -82,14 +82,6 @@ export class BidService {
 
         await client.query("ROLLBACK");
 
-        // @dev Handle idempotency key violation - fail early without retrying
-        if (PgError.isUniqueViolation(error)) {
-          const errorMessage = "Bid already exists. Please try again.";
-          logger.error(`[MONEY_BID_DUPLICATE] ${errorMessage} [Key: ${idempotencyKey}]`);
-          throw new PgError(errorMessage, 409);
-        }
-
-        // @dev Handle serialization failure or deadlock detected - retry
         if (PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error)) {
           if (attempt < MAX_RETRIES - 1) {
             const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
