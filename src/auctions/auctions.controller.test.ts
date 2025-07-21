@@ -69,7 +69,7 @@ describe("AuctionsController", () => {
         product_id: 1,
         start_time: new Date(),
         duration_hours: 24,
-        starting_price: 1000
+        starting_price_in_cents: 1000
       };
 
       const response = await request(app.getServer()).post("/api/v1/auctions").send(payload);
@@ -84,7 +84,7 @@ describe("AuctionsController", () => {
         product_id: product.id,
         start_time: addDays(new Date(), 1),
         duration_hours: 24,
-        starting_price: 1000
+        starting_price_in_cents: 1000
       };
 
       const response = await request(app.getServer())
@@ -110,7 +110,7 @@ describe("AuctionsController", () => {
         product_id: product.id,
         start_time: addDays(new Date(), 1),
         duration_hours: 24,
-        starting_price: 1000
+        starting_price_in_cents: 1000
       };
 
       const response = await request(app.getServer())

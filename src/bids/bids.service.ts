@@ -134,7 +134,7 @@ export class BidService {
     bidAmount: Money;
     highestBid: Money;
   }) {
-    const MINIMUM_BID_INCREASE_AMOUNT = Math.round(auction.starting_price * 0.1); // 10% of starting price
+    const MINIMUM_BID_INCREASE_AMOUNT = Math.round(auction.starting_price_in_cents * 0.1); // 10% of starting price
     const minimumAcceptableBid = new Money(
       highestBid.getAmountInCents() + MINIMUM_BID_INCREASE_AMOUNT
     );

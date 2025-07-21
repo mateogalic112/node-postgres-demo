@@ -26,13 +26,13 @@ export class AuctionRepository {
 
   public async createAuction(client: PoolClient, user: User, payload: CreateAuctionPayload) {
     const result = await client.query<Auction>(
-      "INSERT INTO auctions (creator_id, product_id, start_time, duration_hours, starting_price) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      "INSERT INTO auctions (creator_id, product_id, start_time, duration_hours, starting_price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
       [
         user.id,
         payload.product_id,
         payload.start_time,
         payload.duration_hours,
-        payload.starting_price
+        payload.starting_price_in_cents
       ]
     );
 

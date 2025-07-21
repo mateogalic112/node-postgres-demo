@@ -37,5 +37,5 @@ export const mockAuction = (user: User) =>
     winner_id: null,
     created_at: new Date(),
     updated_at: new Date(),
-    starting_price: 100
+    starting_price_in_cents: 100
   }) as Auction;
