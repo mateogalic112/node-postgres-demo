@@ -77,6 +77,13 @@ export class BidService {
         if (timeoutHandle) clearTimeout(timeoutHandle);
         await client.query("ROLLBACK");
 
+        // @dev Handle business logic errors - fail early without retrying
+        if (error instanceof BadRequestError) {
+          logger.error(`[MONEY_BID_BAD_REQUEST] ${error.message} [Key: ${idempotencyKey}]`);
+          throw error;
+        }
+
+        // @dev Handle idempotency key violation - fail early without retrying
         if (PgError.isUniqueViolation(error)) {
           const errorMessage = "Bid already exists. Please try again.";
           logger.error(`[MONEY_BID_DUPLICATE] ${errorMessage} [Key: ${idempotencyKey}]`);
@@ -92,14 +99,6 @@ export class BidService {
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
           }
-        }
-
-        if (PgError.isSerializationFailure(error)) {
-          const errorMessage = "High bidding activity detected. Please try again.";
-          logger.error(
-            `[MONEY_BID_SERIALIZATION_EXHAUSTED] ${errorMessage} [Key: ${idempotencyKey}]`
-          );
-          throw new PgError(errorMessage, 409);
         }
 
         logger.error(
