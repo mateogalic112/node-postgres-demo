@@ -82,12 +82,6 @@ export class BidService {
 
         await client.query("ROLLBACK");
 
-        // @dev Handle business logic errors - fail early without retrying
-        if (error instanceof BadRequestError) {
-          logger.error(`[MONEY_BID_BAD_REQUEST] ${error.message} [Key: ${idempotencyKey}]`);
-          throw error;
-        }
-
         // @dev Handle idempotency key violation - fail early without retrying
         if (PgError.isUniqueViolation(error)) {
           const errorMessage = "Bid already exists. Please try again.";
