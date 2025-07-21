@@ -77,6 +77,12 @@ export class BidService {
         if (timeoutHandle) clearTimeout(timeoutHandle);
         await client.query("ROLLBACK");
 
+        if (PgError.isUniqueViolation(error)) {
+          const errorMessage = "Bid already exists. Please try again.";
+          logger.error(`[MONEY_BID_DUPLICATE] ${errorMessage} [Key: ${idempotencyKey}]`);
+          throw new PgError(errorMessage, 409);
+        }
+
         if (attempt < MAX_RETRIES - 1) {
           if (PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error)) {
             const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
@@ -93,12 +99,6 @@ export class BidService {
           logger.error(
             `[MONEY_BID_SERIALIZATION_EXHAUSTED] ${errorMessage} [Key: ${idempotencyKey}]`
           );
-          throw new PgError(errorMessage, 409);
-        }
-
-        if (PgError.isUniqueViolation(error)) {
-          const errorMessage = "Bid already exists. Please try again.";
-          logger.error(`[MONEY_BID_DUPLICATE] ${errorMessage} [Key: ${idempotencyKey}]`);
           throw new PgError(errorMessage, 409);
         }
 
