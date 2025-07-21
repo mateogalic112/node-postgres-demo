@@ -68,6 +68,24 @@ export class PgError extends Error {
   static isViolatingForeignKeyConstraint(error: unknown): boolean {
     return this.isPgError(error) && (error as { code: string }).code === "23503";
   }
+
+  static getErrorStatus(error: unknown) {
+    if (!this.isPgError(error)) return null;
+    if (this.isSerializationFailure(error)) return 409;
+    if (this.isDeadlockDetected(error)) return 409;
+    if (this.isUniqueViolation(error)) return 409;
+    if (this.isViolatingForeignKeyConstraint(error)) return 404;
+    return null;
+  }
+
+  static getErrorMessage(error: unknown) {
+    if (!this.isPgError(error)) return null;
+    if (this.isSerializationFailure(error)) return "Transaction serialization failure";
+    if (this.isDeadlockDetected(error)) return "Transaction deadlock detected";
+    if (this.isUniqueViolation(error)) return "Unique violation";
+    if (this.isViolatingForeignKeyConstraint(error)) return "Violating foreign key constraint";
+    return null;
+  }
 }
 
 export const getErrorStatus = (error: unknown): number => {
@@ -78,7 +96,11 @@ export const getErrorStatus = (error: unknown): number => {
     if (error.code === "LIMIT_FILE_SIZE") return 413;
     return 400;
   }
+
   if (error instanceof PgError) return error.status;
+  const status = PgError.getErrorStatus(error);
+  if (status) return status;
+
   return 500;
 };
 
@@ -90,6 +112,10 @@ export const getErrorMessage = (error: unknown): string => {
     if (error.code === "LIMIT_FILE_SIZE") return "File size too large";
     return error.message;
   }
+
   if (error instanceof PgError) return error.message;
+  const message = PgError.getErrorMessage(error);
+  if (message) return message;
+
   return "Something went wrong";
 };
