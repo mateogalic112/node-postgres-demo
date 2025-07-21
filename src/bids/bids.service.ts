@@ -35,11 +35,11 @@ export class BidService {
       const client = await this.databaseService.getClient();
 
       // @dev Set transaction timeout to prevent indefinite blocking
-      let timeoutHandle: NodeJS.Timeout | undefined;
+      let transactionTimeout: NodeJS.Timeout | undefined;
 
       try {
         // @dev Set transaction timeout to prevent indefinite blocking
-        timeoutHandle = setTimeout(() => {
+        transactionTimeout = setTimeout(() => {
           LoggerService.getInstance().error(
             `[MONEY_BID_TIMEOUT] Transaction timeout after ${TRANSACTION_TIMEOUT_MS}ms [Key: ${idempotencyKey}]`
           );
@@ -66,8 +66,8 @@ export class BidService {
 
         await client.query("COMMIT");
 
-        if (timeoutHandle) {
-          clearTimeout(timeoutHandle);
+        if (transactionTimeout) {
+          clearTimeout(transactionTimeout);
         }
 
         logger.log(
@@ -76,8 +76,8 @@ export class BidService {
 
         return bidSchema.parse(newBid);
       } catch (error) {
-        if (timeoutHandle) {
-          clearTimeout(timeoutHandle);
+        if (transactionTimeout) {
+          clearTimeout(transactionTimeout);
         }
 
         await client.query("ROLLBACK");
