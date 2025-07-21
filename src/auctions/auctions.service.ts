@@ -1,7 +1,7 @@
 import { PaginatedRequestParams } from "api/api.validations";
 import { AuctionRepository } from "./auctions.repository";
 import { Auction, auctionSchema, CreateAuctionPayload } from "./auctions.validation";
-import { BadRequestError, NotFoundError, PgError } from "api/api.errors";
+import { BadRequestError, NotFoundError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
 import { addHours, isBefore, isPast } from "date-fns";
@@ -28,41 +28,14 @@ export class AuctionService {
   }
 
   public async createAuction({ user, payload }: { user: User; payload: CreateAuctionPayload }) {
-    const client = await this.databaseService.getClient();
+    const newAuction = await this.auctionRepository.createAuction(user, payload);
 
-    try {
-      await client.query("BEGIN");
-      const newAuction = await this.auctionRepository.createAuction(client, user, payload);
-      await client.query("COMMIT");
+    this.mailService.sendEmail({
+      to: user.email,
+      template: CreateAuctionTemplate.getTemplate(newAuction)
+    });
 
-      this.mailService.sendEmail({
-        to: user.email,
-        template: CreateAuctionTemplate.getTemplate(newAuction)
-      });
-
-      return auctionSchema.parse(newAuction);
-    } catch (error) {
-      await client.query("ROLLBACK");
-
-      if (PgError.isUniqueViolation(error)) {
-        const errorMessage = "Product already auctioned. Please try again.";
-        throw new PgError(errorMessage, 409);
-      }
-
-      if (PgError.isSerializationFailure(error)) {
-        const errorMessage = "High bidding activity detected. Please try again.";
-        throw new PgError(errorMessage, 409);
-      }
-
-      if (PgError.isViolatingForeignKeyConstraint(error)) {
-        const errorMessage = "Product not found. Please try again.";
-        throw new PgError(errorMessage, 404);
-      }
-
-      throw error;
-    } finally {
-      client.release();
-    }
+    return auctionSchema.parse(newAuction);
   }
 
   public async cancelAuction({ user, auctionId }: { user: User; auctionId: number }) {

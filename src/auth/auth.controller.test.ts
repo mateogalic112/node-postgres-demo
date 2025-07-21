@@ -10,8 +10,6 @@ import { closeDatabase, prepareDatabase, resetDatabase } from "__tests__/setup";
 import { createMockDatabaseService } from "__tests__/mocks";
 
 describe("AuthController", () => {
-  jest.setTimeout(60000);
-
   let client: Client;
   let app: App;
   let postgresContainer: StartedPostgreSqlContainer;

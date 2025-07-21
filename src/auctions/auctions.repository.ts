@@ -2,8 +2,7 @@ import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
 import { Auction, CreateAuctionPayload } from "./auctions.validation";
 import { User } from "users/users.validation";
-import { PoolClient } from "pg";
-import { InternalServerError } from "api/api.errors";
+import { PgError } from "api/api.errors";
 
 export class AuctionRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -24,23 +23,32 @@ export class AuctionRepository {
     return result.rows[0];
   }
 
-  public async createAuction(client: PoolClient, user: User, payload: CreateAuctionPayload) {
-    const result = await client.query<Auction>(
-      "INSERT INTO auctions (creator_id, product_id, start_time, duration_hours, starting_price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [
-        user.id,
-        payload.product_id,
-        payload.start_time,
-        payload.duration_hours,
-        payload.starting_price_in_cents
-      ]
-    );
+  public async createAuction(user: User, payload: CreateAuctionPayload) {
+    try {
+      const result = await this.DB.query<Auction>(
+        "INSERT INTO auctions (creator_id, product_id, start_time, duration_hours, starting_price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+        [
+          user.id,
+          payload.product_id,
+          payload.start_time,
+          payload.duration_hours,
+          payload.starting_price_in_cents
+        ]
+      );
+      return result.rows[0];
+    } catch (error) {
+      if (PgError.isUniqueViolation(error)) {
+        const errorMessage = "Product already auctioned. Please try again.";
+        throw new PgError(errorMessage, 409);
+      }
 
-    if (result.rows.length === 0) {
-      throw new InternalServerError("Failed to create auction");
+      if (PgError.isViolatingForeignKeyConstraint(error)) {
+        const errorMessage = "Product not found. Please try again.";
+        throw new PgError(errorMessage, 404);
+      }
+
+      throw error;
     }
-
-    return result.rows[0];
   }
 
   public async cancelAuction(userId: number, auctionId: number) {
