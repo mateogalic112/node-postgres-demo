@@ -1,1 +1,1 @@
-CREATE INDEX CONCURRENTLY idx_bids_auction_id ON bids (auction_id); 
+CREATE INDEX idx_bids_auction_id ON bids (auction_id); 

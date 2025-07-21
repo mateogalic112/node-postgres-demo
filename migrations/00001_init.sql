@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS auctions (
   winner_id INTEGER REFERENCES users(id) ON DELETE CASCADE DEFAULT NULL,
   start_time TIMESTAMP,
   duration_hours INT,
-  starting_price INT,
+  starting_price_in_cents INT,
   is_cancelled BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
