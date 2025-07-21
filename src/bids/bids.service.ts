@@ -18,11 +18,11 @@ export class BidService {
     const RETRY_DELAY_MS = 100;
     const TRANSACTION_TIMEOUT_MS = 10_000;
 
-    const bidAmount = new Money(payload.amount_in_cents);
-    const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${bidAmount.getAmountInCents()}`;
-
     const START_TIME = Date.now();
     const logger = LoggerService.getInstance();
+
+    const bidAmount = new Money(payload.amount_in_cents);
+    const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${bidAmount.getAmountInCents()}`;
 
     logger.log(
       `[MONEY_BID_START] User ${user.id} bidding ${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} at ${START_TIME} [Key: ${idempotencyKey}]`
