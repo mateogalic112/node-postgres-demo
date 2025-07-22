@@ -17,7 +17,7 @@ import { addDays } from "date-fns";
 import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
 import {
   closeDatabase,
-  createProduct,
+  createProductRequest,
   getAuthCookie,
   prepareDatabase,
   resetDatabase
@@ -76,7 +76,7 @@ describe("AuctionsController", () => {
 
     it("should create an auction when authenticated", async () => {
       const authCookie = await getAuthCookie(app);
-      const product = await createProduct(app, authCookie);
+      const product = await createProductRequest(app, authCookie);
 
       const payload: CreateAuctionPayload = {
         product_id: product.id,
@@ -102,7 +102,7 @@ describe("AuctionsController", () => {
 
     it("should NOT create an auction when there is a race condition with products", async () => {
       const authCookie = await getAuthCookie(app);
-      const product = await createProduct(app, authCookie);
+      const product = await createProductRequest(app, authCookie);
 
       const payload: CreateAuctionPayload = {
         product_id: product.id,

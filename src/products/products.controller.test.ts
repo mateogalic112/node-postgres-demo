@@ -5,13 +5,19 @@ import { ProductHttpController } from "./products.controller";
 import { ProductService } from "./products.service";
 import { ProductRepository } from "./products.repository";
 import request from "supertest";
-import { CreateProductPayload } from "./products.validation";
 import { faker } from "@faker-js/faker/.";
 import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
-import { closeDatabase, prepareDatabase, resetDatabase } from "__tests__/setup";
+import {
+  closeDatabase,
+  createProduct,
+  createUser,
+  getAuthCookie,
+  prepareDatabase,
+  resetDatabase
+} from "__tests__/setup";
 import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
 
 describe("ProductsController", () => {
@@ -49,24 +55,10 @@ describe("ProductsController", () => {
 
   describe("GET /api/v1/products", () => {
     it("should return paginated products WITH next cursor", async () => {
-      const user = await client.query(
-        "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
-        ["testuser", "test@example.com", "password"]
-      );
+      const user = await createUser(client);
 
-      const products: Array<CreateProductPayload["body"] & { image_url: string | null }> =
-        Array.from({ length: 21 }, () => ({
-          name: faker.commerce.productName(),
-          description: faker.commerce.productDescription(),
-          image_url: faker.image.url()
-        }));
-
-      for (const { name, description, image_url } of products) {
-        await client.query(
-          `INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4)`,
-          [name, description, image_url, user.rows[0].id]
-        );
-      }
+      const productPromises = Array.from({ length: 21 }, () => createProduct(client, user));
+      await Promise.all(productPromises);
 
       const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
       expect(response.status).toBe(200);
@@ -77,24 +69,10 @@ describe("ProductsController", () => {
     });
 
     it("should return paginated products WITHOUT next cursor", async () => {
-      const user = await client.query(
-        "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
-        ["testuser", "test@example.com", "password"]
-      );
+      const user = await createUser(client);
 
-      const products: Array<CreateProductPayload["body"] & { image_url: string | null }> =
-        Array.from({ length: 8 }, () => ({
-          name: faker.commerce.productName(),
-          description: faker.commerce.productDescription(),
-          image_url: faker.image.url()
-        }));
-
-      for (const { name, description, image_url } of products) {
-        await client.query(
-          `INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4)`,
-          [name, description, image_url, user.rows[0].id]
-        );
-      }
+      const productPromises = Array.from({ length: 8 }, () => createProduct(client, user));
+      await Promise.all(productPromises);
 
       const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
       expect(response.status).toBe(200);
@@ -104,33 +82,32 @@ describe("ProductsController", () => {
   });
 
   describe("POST /api/v1/products", () => {
+    const productName = faker.commerce.productName();
+    const productDescription = faker.commerce.productDescription();
+
+    it("should NOT create a product when NOT authenticated", async () => {
+      const response = await request(app.getServer())
+        .post("/api/v1/products")
+        .field("name", productName)
+        .field("description", productDescription)
+        .attach("image", Buffer.from("fake-image-data"), {
+          filename: "test-image.jpg",
+          contentType: "image/jpeg"
+        });
+
+      expect(response.status).toBe(401);
+    });
+
     it("should create a product when authenticated", async () => {
-      // First register a user
-      const userResponse = await request(app.getServer()).post("/api/v1/auth/register").send({
-        username: "testuser",
-        email: "test@example.com",
-        password: "password"
-      });
-
-      expect(userResponse.status).toBe(201);
-
       // Get the authentication cookie
-      const authCookie = userResponse.headers["set-cookie"][0];
-
-      const payload: CreateProductPayload["body"] & { image_url: string | null } = {
-        name: faker.commerce.productName(),
-        description: faker.commerce.productDescription(),
-        image_url: null
-      };
-
-      const mockImageBuffer = Buffer.from("fake-image-data");
+      const authCookie = await getAuthCookie(app);
 
       const response = await request(app.getServer())
         .post("/api/v1/products")
         .set("Cookie", authCookie)
-        .field("name", payload.name)
-        .field("description", payload.description)
-        .attach("image", mockImageBuffer, {
+        .field("name", productName)
+        .field("description", productDescription)
+        .attach("image", Buffer.from("fake-image-data"), {
           filename: "test-image.jpg",
           contentType: "image/jpeg"
         });
@@ -139,21 +116,11 @@ describe("ProductsController", () => {
       expect(response.body).toMatchObject({
         data: {
           id: 1,
-          ...payload,
+          name: productName,
+          description: productDescription,
           image_url: "https://example.com/image.jpg"
         }
       });
-    });
-
-    it("should NOT create a product when NOT authenticated", async () => {
-      const payload: CreateProductPayload["body"] & { image_url: string | null } = {
-        name: faker.commerce.productName(),
-        description: faker.commerce.productDescription(),
-        image_url: faker.image.url()
-      };
-
-      const response = await request(app.getServer()).post("/api/v1/products").send(payload);
-      expect(response.status).toBe(401);
     });
   });
 });

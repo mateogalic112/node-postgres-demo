@@ -5,6 +5,7 @@ import { migrate } from "database/setup";
 import { Client } from "pg";
 import { Product } from "products/products.validation";
 import request from "supertest";
+import { User } from "users/users.validation";
 
 export const prepareDatabase = async () => {
   // @dev Start the postgres container
@@ -48,6 +49,22 @@ export const resetDatabase = async (client: Client) => {
   `);
 };
 
+export const createUser = async (client: Client) => {
+  const user = await client.query(
+    "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
+    ["testuser", "test@example.com", "password"]
+  );
+  return user.rows[0];
+};
+
+export const createProduct = async (client: Client, user: User) => {
+  const product = await client.query(
+    "INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4) RETURNING *",
+    [faker.commerce.productName(), faker.commerce.productDescription(), faker.image.url(), user.id]
+  );
+  return product.rows[0];
+};
+
 export const getAuthCookie = async (app: App) => {
   const userResponse = await request(app.getServer()).post("/api/v1/auth/register").send({
     username: "testuser",
@@ -58,7 +75,7 @@ export const getAuthCookie = async (app: App) => {
   return userResponse.headers["set-cookie"][0];
 };
 
-export const createProduct = async (app: App, authCookie: string): Promise<Product> => {
+export const createProductRequest = async (app: App, authCookie: string): Promise<Product> => {
   const productResponse = await request(app.getServer())
     .post("/api/v1/products")
     .set("Cookie", authCookie)
