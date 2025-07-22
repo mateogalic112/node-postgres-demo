@@ -64,11 +64,4 @@ export class AuctionRepository {
     );
     return result.rows[0];
   }
-
-  public async getAuctionsByProductId(productId: number) {
-    const result = await this.DB.query<Auction>("SELECT * FROM auctions WHERE product_id = $1", [
-      productId
-    ]);
-    return result.rows;
-  }
 }
