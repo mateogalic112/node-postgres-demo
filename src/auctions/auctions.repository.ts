@@ -53,7 +53,13 @@ export class AuctionRepository {
 
   public async cancelAuction(userId: number, auctionId: number) {
     const result = await this.DB.query<Auction>(
-      "UPDATE auctions SET is_cancelled = TRUE, updated_at = NOW() WHERE id = $1 AND creator_id = $2 RETURNING *",
+      `UPDATE auctions 
+       SET is_cancelled = TRUE, updated_at = NOW() 
+       WHERE id = $1 
+         AND creator_id = $2 
+         AND is_cancelled = FALSE 
+         AND NOW() < start_time + INTERVAL '1 hour' * duration_hours
+       RETURNING *`,
       [auctionId, userId]
     );
     return result.rows[0];
