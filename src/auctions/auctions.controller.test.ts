@@ -36,7 +36,7 @@ describe("AuctionsController", () => {
     const DB = createMockDatabaseService(client);
 
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
-    const auctionService = new AuctionService(new AuctionRepository(DB), DB, mailService);
+    const auctionService = new AuctionService(new AuctionRepository(DB), mailService);
     const productService = new ProductService(new ProductRepository(DB), mailService, filesService);
 
     app = new App(
