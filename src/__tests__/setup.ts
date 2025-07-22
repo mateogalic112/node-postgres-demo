@@ -67,35 +67,11 @@ export const createProduct = async (client: Client, user: User) => {
   return product.rows[0];
 };
 
-export const createAuction = async (
-  client: Client,
-  user: User,
-  product: Product,
-  startDate: Date
-) => {
-  const auction = await client.query(
-    "INSERT INTO auctions (product_id, creator_id, start_time, duration_hours, starting_price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-    [product.id, user.id, startDate, 24, 1000]
-  );
-  return auction.rows[0];
-};
-
-export const getRegisterAuthCookie = async (app: App, username: string) => {
+export const getAuthCookie = async (app: App, username: string) => {
   const userResponse = await request(app.getServer())
     .post("/api/v1/auth/register")
     .send({
       username,
-      email: `${username}@example.com`,
-      password: "password"
-    });
-
-  return userResponse.headers["set-cookie"][0];
-};
-
-export const getLoginAuthCookie = async (app: App, username: string) => {
-  const userResponse = await request(app.getServer())
-    .post("/api/v1/auth/login")
-    .send({
       email: `${username}@example.com`,
       password: "password"
     });

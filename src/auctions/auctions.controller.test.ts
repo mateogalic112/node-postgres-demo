@@ -19,7 +19,7 @@ import {
   closeDatabase,
   createAuctionRequest,
   createProductRequest,
-  getRegisterAuthCookie,
+  getAuthCookie,
   prepareDatabase,
   resetDatabase
 } from "__tests__/setup";
@@ -76,7 +76,7 @@ describe("AuctionsController", () => {
     });
 
     it("should create an auction when authenticated", async () => {
-      const authCookie = await getRegisterAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookie(app, "testuser");
       const product = await createProductRequest(app, authCookie);
 
       const payload: CreateAuctionPayload = {
@@ -102,7 +102,7 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT create an auction when there is a race condition with products", async () => {
-      const authCookie = await getRegisterAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookie(app, "testuser");
       const product = await createProductRequest(app, authCookie);
 
       const payload: CreateAuctionPayload = {
@@ -136,7 +136,7 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when auction is not found", async () => {
-      const authCookie = await getRegisterAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookie(app, "testuser");
       const auctionId = 1;
 
       const response = await request(app.getServer())
@@ -148,16 +148,12 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when authenticated but not the creator", async () => {
-      // Create a user to be the creator
-      const authCookie = await getRegisterAuthCookie(app, "testuser");
-
-      // Create a product to be auctioned
+      const authCookie = await getAuthCookie(app, "testuser");
       const product = await createProductRequest(app, authCookie);
-      // Create an auction
       const auction = await createAuctionRequest(app, authCookie, product.id);
 
       // Create a user to try to cancel the auction
-      const authCookie2 = await getRegisterAuthCookie(app, "testuser2");
+      const authCookie2 = await getAuthCookie(app, "testuser2");
 
       const response = await request(app.getServer())
         .patch(`/api/v1/auctions/${auction.id}/cancel`)
@@ -168,7 +164,7 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when auction has ended", async () => {
-      const authCookie = await getRegisterAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookie(app, "testuser");
       const product = await createProductRequest(app, authCookie);
 
       const auction = await client.query(
@@ -185,7 +181,7 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when auction has been cancelled", async () => {
-      const authCookie = await getRegisterAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookie(app, "testuser");
       const product = await createProductRequest(app, authCookie);
       const auction = await createAuctionRequest(app, authCookie, product.id);
 

@@ -14,7 +14,7 @@ import {
   closeDatabase,
   createProduct,
   createUser,
-  getRegisterAuthCookie,
+  getAuthCookie,
   prepareDatabase,
   resetDatabase
 } from "__tests__/setup";
@@ -100,7 +100,7 @@ describe("ProductsController", () => {
 
     it("should create a product when authenticated", async () => {
       // Get the authentication cookie
-      const authCookie = await getRegisterAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookie(app, "testuser");
 
       const response = await request(app.getServer())
         .post("/api/v1/products")
