@@ -28,11 +28,7 @@ const productService = new ProductService(
   AWSService.getInstance()
 );
 
-const auctionService = new AuctionService(
-  new AuctionRepository(DB),
-  DB,
-  ResendService.getInstance()
-);
+const auctionService = new AuctionService(new AuctionRepository(DB), ResendService.getInstance());
 
 const bidService = new BidService(new BidRepository(DB), DB);
 

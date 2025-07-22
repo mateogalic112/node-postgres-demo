@@ -100,7 +100,7 @@ describe("ProductsController", () => {
 
     it("should create a product when authenticated", async () => {
       // Get the authentication cookie
-      const authCookie = await getAuthCookie(app);
+      const authCookie = await getAuthCookie(app, "testuser");
 
       const response = await request(app.getServer())
         .post("/api/v1/products")

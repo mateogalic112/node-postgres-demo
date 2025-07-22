@@ -1,7 +1,7 @@
 import { PaginatedRequestParams } from "api/api.validations";
 import { AuctionRepository } from "./auctions.repository";
 import { auctionSchema, CreateAuctionPayload } from "./auctions.validation";
-import { BadRequestError, NotFoundError } from "api/api.errors";
+import { BadRequestError, ForbiddenError, NotFoundError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
 import { addHours, isPast } from "date-fns";
@@ -49,7 +49,7 @@ export class AuctionService {
 
     switch (true) {
       case foundAuction.creator_id !== user.id:
-        throw new BadRequestError("You are not the creator of this auction");
+        throw new ForbiddenError("You are not the creator of this auction");
       case foundAuction.is_cancelled:
         throw new BadRequestError("Auction has been cancelled");
       case isPast(addHours(foundAuction.start_time, foundAuction.duration_hours)):

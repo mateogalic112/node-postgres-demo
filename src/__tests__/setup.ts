@@ -1,7 +1,9 @@
 import { faker } from "@faker-js/faker/.";
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import App from "app";
+import { Auction, CreateAuctionPayload } from "auctions/auctions.validation";
 import { migrate } from "database/setup";
+import { addDays } from "date-fns";
 import { Client } from "pg";
 import { Product } from "products/products.validation";
 import request from "supertest";
@@ -65,12 +67,14 @@ export const createProduct = async (client: Client, user: User) => {
   return product.rows[0];
 };
 
-export const getAuthCookie = async (app: App) => {
-  const userResponse = await request(app.getServer()).post("/api/v1/auth/register").send({
-    username: "testuser",
-    email: "test@example.com",
-    password: "password"
-  });
+export const getAuthCookie = async (app: App, username: string) => {
+  const userResponse = await request(app.getServer())
+    .post("/api/v1/auth/register")
+    .send({
+      username,
+      email: `${username}@example.com`,
+      password: "password"
+    });
 
   return userResponse.headers["set-cookie"][0];
 };
@@ -83,4 +87,18 @@ export const createProductRequest = async (app: App, authCookie: string): Promis
     .field("description", faker.commerce.productDescription());
 
   return productResponse.body.data;
+};
+
+export const createAuctionRequest = async (app: App, authCookie: string): Promise<Auction> => {
+  const auctionResponse = await request(app.getServer())
+    .post("/api/v1/auctions")
+    .set("Cookie", authCookie)
+    .send({
+      product_id: 1,
+      start_time: addDays(new Date(), 1),
+      duration_hours: 24,
+      starting_price_in_cents: 1000
+    } as CreateAuctionPayload);
+
+  return auctionResponse.body.data;
 };
