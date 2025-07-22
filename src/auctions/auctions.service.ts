@@ -4,12 +4,10 @@ import { auctionSchema, CreateAuctionPayload } from "./auctions.validation";
 import { NotFoundError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
-import { DatabaseService } from "interfaces/database.interface";
 
 export class AuctionService {
   constructor(
     private readonly auctionRepository: AuctionRepository,
-    private readonly databaseService: DatabaseService,
     private readonly mailService: MailService
   ) {}
 
