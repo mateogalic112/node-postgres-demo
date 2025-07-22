@@ -57,7 +57,10 @@ export class BidService {
         );
 
         const highestBid = new Money(
-          await this.bidRepository.getHighestBidAmountForAuction(client, biddingAuction.id)
+          Math.max(
+            biddingAuction.starting_price_in_cents,
+            await this.bidRepository.getHighestBidAmountForAuction(client, biddingAuction.id)
+          )
         );
 
         this.assertMinimumBidIncrease({ auction: biddingAuction, bidAmount, highestBid });
