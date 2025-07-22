@@ -47,29 +47,31 @@ describe("AuthController", () => {
       });
 
       expect(response.status).toBe(201);
+      expect(response.headers["set-cookie"]).toBeDefined();
       expect(response.body.data).toMatchObject({
-        id: expect.any(Number),
+        id: 1,
         username: "testuser",
         email: "test@example.com"
       });
-      expect(response.headers["set-cookie"]).toBeDefined();
     });
 
     it("should return 400 if user already exists", async () => {
-      await request(app.getServer()).post("/api/v1/auth/register").send({
-        username: "testuser",
-        email: "test@example.com",
-        password: "password"
-      });
-
       const response = await request(app.getServer()).post("/api/v1/auth/register").send({
         username: "testuser",
         email: "test@example.com",
         password: "password"
       });
 
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty("message", "User with that email already exists");
+      expect(response.status).toBe(201);
+
+      const response2 = await request(app.getServer()).post("/api/v1/auth/register").send({
+        username: "testuser",
+        email: "test@example.com",
+        password: "password"
+      });
+
+      expect(response2.status).toBe(400);
+      expect(response2.body).toHaveProperty("message", "User with that email already exists");
     });
   });
 });
