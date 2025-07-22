@@ -1,9 +1,10 @@
 import { PaginatedRequestParams } from "api/api.validations";
 import { AuctionRepository } from "./auctions.repository";
 import { auctionSchema, CreateAuctionPayload } from "./auctions.validation";
-import { NotFoundError } from "api/api.errors";
+import { BadRequestError, NotFoundError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
+import { addHours, isPast } from "date-fns";
 
 export class AuctionService {
   constructor(
@@ -37,7 +38,25 @@ export class AuctionService {
 
   public async cancelAuction({ user, auctionId }: { user: User; auctionId: number }) {
     const updatedAuction = await this.auctionRepository.cancelAuction(user.id, auctionId);
-    return auctionSchema.parse(updatedAuction);
+    if (updatedAuction) {
+      return auctionSchema.parse(updatedAuction);
+    }
+
+    const foundAuction = await this.auctionRepository.findAuctionById(auctionId);
+    if (!foundAuction) {
+      throw new NotFoundError(`Auction with id ${auctionId} not found`);
+    }
+
+    switch (true) {
+      case foundAuction.creator_id !== user.id:
+        throw new BadRequestError("You are not the creator of this auction");
+      case foundAuction.is_cancelled:
+        throw new BadRequestError("Auction has been cancelled");
+      case isPast(addHours(foundAuction.start_time, foundAuction.duration_hours)):
+        throw new BadRequestError("Auction has ended");
+      default:
+        throw new BadRequestError("Auction not cancelled");
+    }
   }
 
   public getAuctionRoomName(namespace: string, auctionId: number) {
