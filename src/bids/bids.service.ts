@@ -8,6 +8,8 @@ import { Auction } from "auctions/auctions.validation";
 import { DatabaseService } from "interfaces/database.interface";
 
 export class BidService {
+  private readonly MINIMUM_BID_INCREASE_PERCENTAGE = 10;
+
   constructor(
     private readonly bidRepository: BidRepository,
     private readonly databaseService: DatabaseService,
@@ -99,7 +101,9 @@ export class BidService {
     bidAmount: Money;
     highestBid: Money;
   }) {
-    const MINIMUM_BID_INCREASE_AMOUNT = Math.round(auction.starting_price_in_cents * 0.1); // 10% of starting price
+    const MINIMUM_BID_INCREASE_AMOUNT = Math.round(
+      auction.starting_price_in_cents * (this.MINIMUM_BID_INCREASE_PERCENTAGE / 100)
+    );
     const minimumAcceptableBid = new Money(
       highestBid.getAmountInCents() + MINIMUM_BID_INCREASE_AMOUNT
     );
