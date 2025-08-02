@@ -17,6 +17,7 @@ import { BidSocketController } from "bids/bids.socket";
 import { BidHttpController } from "bids/bids.controller";
 import { AuctionSocketController } from "auctions/auctions.socket";
 import { PostgresService } from "services/postgres.service";
+import { LoggerService } from "services/logger.service";
 
 const DB = PostgresService.getInstance();
 
@@ -30,7 +31,7 @@ const productService = new ProductService(
 
 const auctionService = new AuctionService(new AuctionRepository(DB), ResendService.getInstance());
 
-const bidService = new BidService(new BidRepository(DB), DB);
+const bidService = new BidService(new BidRepository(DB), DB, LoggerService.getInstance());
 
 const authService = new AuthService(usersService);
 

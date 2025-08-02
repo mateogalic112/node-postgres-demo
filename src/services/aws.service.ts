@@ -6,6 +6,7 @@ import { FilesService } from "interfaces/files.interface";
 export class AWSService implements FilesService {
   private static instance: AWSService;
   private readonly s3Client: S3Client;
+  private readonly logger: LoggerService;
 
   private constructor() {
     this.s3Client = new S3Client({
@@ -15,6 +16,7 @@ export class AWSService implements FilesService {
         secretAccessKey: env.AWS_SECRET_ACCESS_KEY
       }
     });
+    this.logger = LoggerService.getInstance();
   }
 
   public static getInstance(): AWSService {
@@ -43,7 +45,7 @@ export class AWSService implements FilesService {
 
       return `https://${env.AWS_S3_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
     } catch (error) {
-      LoggerService.getInstance().error(String(error));
+      this.logger.error(String(error));
       return null;
     }
   }

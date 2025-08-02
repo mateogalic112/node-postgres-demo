@@ -1,14 +1,16 @@
 import { env } from "config/env";
 import { Resend } from "resend";
-import { LoggerService } from "./logger.service";
 import { MailService, MailTemplate } from "interfaces/mail.interface";
+import { LoggerService } from "./logger.service";
 
 export class ResendService implements MailService {
   private static instance: ResendService;
+  private readonly logger: LoggerService;
   private resend: Resend;
 
   private constructor() {
     this.resend = new Resend(env.RESEND_API_KEY);
+    this.logger = LoggerService.getInstance();
   }
 
   public static getInstance() {
@@ -36,7 +38,7 @@ export class ResendService implements MailService {
       });
 
       if (error) {
-        LoggerService.getInstance().error(error.message);
+        this.logger.error(error.message);
         return null;
       }
 

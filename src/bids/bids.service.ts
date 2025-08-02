@@ -10,7 +10,8 @@ import { DatabaseService } from "interfaces/database.interface";
 export class BidService {
   constructor(
     private readonly bidRepository: BidRepository,
-    private readonly databaseService: DatabaseService
+    private readonly databaseService: DatabaseService,
+    private readonly logger: LoggerService
   ) {}
 
   public async createBid(user: User, payload: CreateBidPayload) {
@@ -19,12 +20,11 @@ export class BidService {
     const TRANSACTION_TIMEOUT_MS = 10_000;
 
     const START_TIME = Date.now();
-    const logger = LoggerService.getInstance();
 
     const bidAmount = new Money(payload.amount_in_cents);
     const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${bidAmount.getAmountInCents()}`;
 
-    logger.log(
+    this.logger.log(
       `[MONEY_BID_START] User ${user.id} bidding ${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} at ${START_TIME} [Key: ${idempotencyKey}]`
     );
 
@@ -67,7 +67,7 @@ export class BidService {
         if (PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error)) {
           if (attempt < MAX_RETRIES - 1) {
             const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
-            logger.log(
+            this.logger.log(
               `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
             );
             await new Promise((resolve) => setTimeout(resolve, delay));
@@ -75,7 +75,7 @@ export class BidService {
           }
         }
 
-        logger.error(
+        this.logger.error(
           `[MONEY_BID_ERROR] User ${user.id} failed to bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} after ${Date.now() - START_TIME}ms: ${error instanceof Error ? error.message : String(error)} [Key: ${idempotencyKey}]`
         );
         throw error;
@@ -84,7 +84,7 @@ export class BidService {
       }
     }
 
-    logger.error(
+    this.logger.error(
       `[MONEY_BID_EXHAUSTED] All retry attempts exhausted for user ${user.id} bidding $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} [Key: ${idempotencyKey}]`
     );
     throw new PgError("Unable to place bid due to high system load. Please try again.", 503);
