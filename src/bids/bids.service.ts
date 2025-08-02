@@ -21,14 +21,8 @@ export class BidService {
     const RETRY_DELAY_MS = 100;
     const TRANSACTION_TIMEOUT_MS = 10_000;
 
-    const START_TIME = Date.now();
-
     const bidAmount = new Money(payload.amount_in_cents);
     const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${bidAmount.getAmountInCents()}`;
-
-    this.logger.log(
-      `[MONEY_BID_START] User ${user.id} bidding ${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} at ${START_TIME} [Key: ${idempotencyKey}]`
-    );
 
     // @dev Retry the transaction if it fails due to serialization failure or deadlock detected
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -70,25 +64,21 @@ export class BidService {
           if (attempt < MAX_RETRIES - 1) {
             const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
             this.logger.log(
-              `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
+              `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms 
+              (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
             );
+
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
           }
         }
 
-        this.logger.error(
-          `[MONEY_BID_ERROR] User ${user.id} failed to bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} after ${Date.now() - START_TIME}ms: ${error instanceof Error ? error.message : String(error)} [Key: ${idempotencyKey}]`
-        );
         throw error;
       } finally {
         client.release();
       }
     }
 
-    this.logger.error(
-      `[MONEY_BID_EXHAUSTED] All retry attempts exhausted for user ${user.id} bidding $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} [Key: ${idempotencyKey}]`
-    );
     throw new PgError("Unable to place bid due to high system load. Please try again.", 503);
   }
 
