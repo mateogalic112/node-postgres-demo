@@ -34,26 +34,14 @@ export class BidService {
       // @link https://node-postgres.com/features/transactions
       const client = await this.databaseService.getClient();
 
-      // @dev Set transaction timeout to prevent blocking
-      let transactionTimeout: NodeJS.Timeout | undefined;
-
       try {
-        transactionTimeout = setTimeout(() => {
-          try {
-            logger.error(
-              `[MONEY_BID_TIMEOUT] Transaction timeout after ${TRANSACTION_TIMEOUT_MS}ms [Key: ${idempotencyKey}]`
-            );
-            client.query("ROLLBACK").catch(() => {});
-            client.release();
-          } catch (error) {
-            console.error("[TIMEOUT_CALLBACK_ERROR]", error);
-          }
-        }, TRANSACTION_TIMEOUT_MS);
+        // @dev Set transaction timeout to prevent blocking
+        await client.query(`SET statement_timeout = ${TRANSACTION_TIMEOUT_MS}`);
 
         // @dev SERIALIZABLE isolation for maximum consistency (required for real money)
         await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
-        const biddingAuction = await this.bidRepository.getBiddingAuction(
+        const auction = await this.bidRepository.getBiddingAuction(
           client,
           payload.auction_id,
           user.id
@@ -61,27 +49,19 @@ export class BidService {
 
         const highestBid = new Money(
           Math.max(
-            biddingAuction.starting_price_in_cents,
-            await this.bidRepository.getHighestBidAmountForAuction(client, biddingAuction.id)
+            auction.starting_price_in_cents,
+            await this.bidRepository.getHighestBidAmountForAuction(client, auction.id)
           )
         );
 
-        this.assertMinimumBidIncrease({ auction: biddingAuction, bidAmount, highestBid });
+        this.assertMinimumBidIncrease({ auction, bidAmount, highestBid });
 
         const newBid = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
 
         await client.query("COMMIT");
 
-        if (transactionTimeout) {
-          clearTimeout(transactionTimeout);
-        }
-
         return bidSchema.parse(newBid);
       } catch (error) {
-        if (transactionTimeout) {
-          clearTimeout(transactionTimeout);
-        }
-
         await client.query("ROLLBACK");
 
         if (PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error)) {
