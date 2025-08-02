@@ -168,7 +168,11 @@ describe("AuctionsController", () => {
       const product = await createProductRequest(app, authCookie);
 
       const auction = await client.query(
-        "INSERT INTO auctions (product_id, creator_id, start_time, duration_hours, starting_price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+        `INSERT INTO auctions 
+          (product_id, creator_id, start_time, duration_hours, starting_price_in_cents) 
+          VALUES ($1, $2, $3, $4, $5) 
+          RETURNING *
+        `,
         [product.id, 1, subDays(new Date(), 10), 24, 1000]
       );
 
