@@ -34,17 +34,20 @@ export class BidService {
       // @link https://node-postgres.com/features/transactions
       const client = await this.databaseService.getClient();
 
-      // @dev Set transaction timeout to prevent indefinite blocking
+      // @dev Set transaction timeout to prevent blocking
       let transactionTimeout: NodeJS.Timeout | undefined;
 
       try {
-        // @dev Set transaction timeout to prevent indefinite blocking
         transactionTimeout = setTimeout(() => {
-          LoggerService.getInstance().error(
-            `[MONEY_BID_TIMEOUT] Transaction timeout after ${TRANSACTION_TIMEOUT_MS}ms [Key: ${idempotencyKey}]`
-          );
-          client.query("ROLLBACK").catch(() => {});
-          client.release();
+          try {
+            logger.error(
+              `[MONEY_BID_TIMEOUT] Transaction timeout after ${TRANSACTION_TIMEOUT_MS}ms [Key: ${idempotencyKey}]`
+            );
+            client.query("ROLLBACK").catch(() => {});
+            client.release();
+          } catch (error) {
+            console.error("[TIMEOUT_CALLBACK_ERROR]", error);
+          }
         }, TRANSACTION_TIMEOUT_MS);
 
         // @dev SERIALIZABLE isolation for maximum consistency (required for real money)
@@ -73,10 +76,6 @@ export class BidService {
           clearTimeout(transactionTimeout);
         }
 
-        logger.log(
-          `[MONEY_BID_SUCCESS] User ${user.id} successfully bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} in ${Date.now() - START_TIME}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
-        );
-
         return bidSchema.parse(newBid);
       } catch (error) {
         if (transactionTimeout) {
@@ -93,18 +92,9 @@ export class BidService {
             );
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
-          } else {
-            logger.error(
-              `[MONEY_BID_EXHAUSTED] All retry attempts exhausted for user ${user.id} bidding $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} [Key: ${idempotencyKey}]`
-            );
-            throw new PgError(
-              "Unable to place bid due to high system load. Please try again.",
-              503
-            );
           }
         }
 
-        // @dev Handle all other errors - fail and log
         logger.error(
           `[MONEY_BID_ERROR] User ${user.id} failed to bid $${bidAmount.getFormattedAmount()} on auction ${payload.auction_id} after ${Date.now() - START_TIME}ms: ${error instanceof Error ? error.message : String(error)} [Key: ${idempotencyKey}]`
         );
