@@ -35,7 +35,7 @@ export class BidService {
       const client = await this.databaseService.getClient();
 
       try {
-        // @dev Set transaction timeout to prevent blocking
+        // @dev Set client query timeout to prevent indefinite blocking
         await client.query(`SET statement_timeout = ${TRANSACTION_TIMEOUT_MS}`);
 
         // @dev SERIALIZABLE isolation for maximum consistency (required for real money)
