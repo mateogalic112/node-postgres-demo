@@ -37,7 +37,7 @@ export class BidRepository {
       [auctionId, userId]
     );
     if (result.rows.length === 0) {
-      throw new NotFoundError("Auction not found");
+      throw new NotFoundError("Auction not active");
     }
     return result.rows[0];
   }
