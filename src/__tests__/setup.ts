@@ -52,7 +52,7 @@ export const resetDatabase = async (client: Client) => {
 };
 
 export const createUser = async (client: Client) => {
-  const user = await client.query(
+  const user = await client.query<User>(
     "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
     ["testuser", "test@example.com", "password"]
   );
@@ -60,7 +60,7 @@ export const createUser = async (client: Client) => {
 };
 
 export const createProduct = async (client: Client, user: User) => {
-  const product = await client.query(
+  const product = await client.query<Product>(
     "INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4) RETURNING *",
     [faker.commerce.productName(), faker.commerce.productDescription(), faker.image.url(), user.id]
   );
@@ -72,15 +72,18 @@ export const bulkInsertProducts = async ({ client, count }: { client: Client; co
   return Promise.all(Array.from({ length: count }, () => createProduct(client, user)));
 };
 
-export const getAuthCookieAfterRegister = async (app: App, username: string) => {
-  const userResponse = await request(app.getServer())
+export const registerUserRequest = async (app: App, username: string, password: string) => {
+  return request(app.getServer())
     .post("/api/v1/auth/register")
     .send({
       username,
       email: `${username}@example.com`,
-      password: "password"
+      password
     });
+};
 
+export const getAuthCookieAfterRegister = async (app: App, username: string) => {
+  const userResponse = await registerUserRequest(app, username, "password");
   return userResponse.headers["set-cookie"][0];
 };
 
