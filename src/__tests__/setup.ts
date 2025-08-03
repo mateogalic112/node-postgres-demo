@@ -67,6 +67,11 @@ export const createProduct = async (client: Client, user: User) => {
   return product.rows[0];
 };
 
+export const bulkInsertProducts = async ({ client, count }: { client: Client; count: number }) => {
+  const user = await createUser(client);
+  return Promise.all(Array.from({ length: count }, () => createProduct(client, user)));
+};
+
 export const getAuthCookieAfterRegister = async (app: App, username: string) => {
   const userResponse = await request(app.getServer())
     .post("/api/v1/auth/register")
