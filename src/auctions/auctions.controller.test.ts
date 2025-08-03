@@ -13,10 +13,11 @@ import { CreateAuctionPayload } from "./auctions.validation";
 import { ProductHttpController } from "products/products.controller";
 import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
-import { addDays, subDays } from "date-fns";
+import { addDays } from "date-fns";
 import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
 import {
   closeDatabase,
+  createAuctionInThePast,
   createAuctionRequest,
   createProductRequest,
   getAuthCookieAfterRegister,
@@ -65,6 +66,7 @@ describe("AuctionsController", () => {
   describe("POST /api/v1/auctions", () => {
     it("should NOT create an auction when NOT authenticated", async () => {
       const response = await request(app.getServer()).post("/api/v1/auctions");
+
       expect(response.status).toBe(401);
     });
 
@@ -125,6 +127,7 @@ describe("AuctionsController", () => {
   describe("PATCH /api/v1/auctions/:id/cancel", () => {
     it("should NOT cancel an auction when NOT authenticated", async () => {
       const response = await request(app.getServer()).patch("/api/v1/auctions/1/cancel");
+
       expect(response.status).toBe(401);
     });
 
@@ -164,14 +167,7 @@ describe("AuctionsController", () => {
       // Temporarily drop the check constraint to allow creating an auction in the past
       await client.query("ALTER TABLE auctions DROP CONSTRAINT auctions_start_time_check");
 
-      const auction = await client.query(
-        `INSERT INTO auctions 
-          (product_id, creator_id, start_time, duration_hours, starting_price_in_cents) 
-          VALUES ($1, $2, $3, $4, $5) 
-          RETURNING *
-        `,
-        [product.id, 1, subDays(new Date(), 10), 24, 1000]
-      );
+      const auction = await createAuctionInThePast(client, 1, product.id);
 
       // Restore the constraint (but don't validate existing rows)
       await client.query(
@@ -179,7 +175,7 @@ describe("AuctionsController", () => {
       );
 
       const response = await request(app.getServer())
-        .patch(`/api/v1/auctions/${auction.rows[0].id}/cancel`)
+        .patch(`/api/v1/auctions/${auction.id}/cancel`)
         .set("Cookie", authCookie);
 
       expect(response.status).toBe(400);

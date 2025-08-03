@@ -86,7 +86,7 @@ describe("AuthController", () => {
     });
 
     it("should NOT login a user if password is incorrect", async () => {
-      await registerUserRequest(app, "testuser", "password");
+      await registerUserRequest(app, "testuser");
 
       const payload: LoginPayload = {
         email: "testuser@example.com",
@@ -100,10 +100,11 @@ describe("AuthController", () => {
     });
 
     it("should login an existing user with correct credentials", async () => {
-      await registerUserRequest(app, "testuser", "password");
+      const username = "testuser";
+      await registerUserRequest(app, username);
 
       const payload: LoginPayload = {
-        email: "testuser@example.com",
+        email: `${username}@example.com`,
         password: "password"
       };
 
@@ -112,8 +113,8 @@ describe("AuthController", () => {
       expect(response.status).toBe(200);
       expect(response.body.data).toMatchObject({
         id: 1,
-        username: "testuser",
-        email: "testuser@example.com"
+        username,
+        email: `${username}@example.com`
       });
     });
   });

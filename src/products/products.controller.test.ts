@@ -54,7 +54,7 @@ describe("ProductsController", () => {
 
   describe("GET /api/v1/products", () => {
     it("should return paginated products WITH next cursor", async () => {
-      await bulkInsertProducts({ client, count: 21 });
+      await bulkInsertProducts(app, 21);
 
       const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
 
@@ -64,7 +64,7 @@ describe("ProductsController", () => {
     });
 
     it("should return paginated products WITHOUT next cursor", async () => {
-      await bulkInsertProducts({ client, count: 8 });
+      await bulkInsertProducts(app, 8);
 
       const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
 

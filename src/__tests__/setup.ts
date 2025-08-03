@@ -3,11 +3,10 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers
 import App from "app";
 import { Auction, CreateAuctionPayload } from "auctions/auctions.validation";
 import { migrate } from "database/setup";
-import { addDays } from "date-fns";
+import { addDays, subDays } from "date-fns";
 import { Client } from "pg";
 import { Product } from "products/products.validation";
 import request from "supertest";
-import { User } from "users/users.validation";
 
 export const prepareDatabase = async () => {
   // @dev Start the postgres container
@@ -51,40 +50,27 @@ export const resetDatabase = async (client: Client) => {
   `);
 };
 
-export const createUser = async (client: Client) => {
-  const user = await client.query<User>(
-    "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
-    ["testuser", "test@example.com", "password"]
-  );
-  return user.rows[0];
-};
-
-export const createProduct = async (client: Client, user: User) => {
-  const product = await client.query<Product>(
-    "INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4) RETURNING *",
-    [faker.commerce.productName(), faker.commerce.productDescription(), faker.image.url(), user.id]
-  );
-  return product.rows[0];
-};
-
-export const bulkInsertProducts = async ({ client, count }: { client: Client; count: number }) => {
-  const user = await createUser(client);
-  return Promise.all(Array.from({ length: count }, () => createProduct(client, user)));
-};
-
-export const registerUserRequest = async (app: App, username: string, password: string) => {
+export const registerUserRequest = async (app: App, username: string) => {
   return request(app.getServer())
     .post("/api/v1/auth/register")
     .send({
       username,
       email: `${username}@example.com`,
-      password
+      password: "password"
     });
 };
 
 export const getAuthCookieAfterRegister = async (app: App, username: string) => {
-  const userResponse = await registerUserRequest(app, username, "password");
+  const userResponse = await registerUserRequest(app, username);
   return userResponse.headers["set-cookie"][0];
+};
+
+export const createAuctionInThePast = async (client: Client, userId: number, productId: number) => {
+  const auction = await client.query<Auction>(
+    "INSERT INTO auctions (product_id, creator_id, start_time, duration_hours, starting_price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+    [productId, userId, subDays(new Date(), 10), 24, 1000]
+  );
+  return auction.rows[0];
 };
 
 export const createProductRequest = async (app: App, authCookie: string): Promise<Product> => {
@@ -95,6 +81,13 @@ export const createProductRequest = async (app: App, authCookie: string): Promis
     .field("description", faker.commerce.productDescription());
 
   return productResponse.body.data;
+};
+
+export const bulkInsertProducts = async (app: App, count: number) => {
+  const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+  for (let i = 0; i < count; i++) {
+    await createProductRequest(app, authCookie);
+  }
 };
 
 export const createAuctionRequest = async (
