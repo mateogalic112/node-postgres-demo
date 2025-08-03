@@ -19,10 +19,11 @@ import {
   closeDatabase,
   createAuctionRequest,
   createProductRequest,
-  getAuthCookie,
+  getAuthCookieAfterRegister,
   prepareDatabase,
   resetDatabase
 } from "__tests__/setup";
+import { formatResponse } from "api/api.formats";
 
 describe("AuctionsController", () => {
   let client: Client;
@@ -54,7 +55,7 @@ describe("AuctionsController", () => {
     await resetDatabase(client);
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
@@ -64,19 +65,13 @@ describe("AuctionsController", () => {
 
   describe("POST /api/v1/auctions", () => {
     it("should NOT create an auction when NOT authenticated", async () => {
-      const payload: CreateAuctionPayload = {
-        product_id: 1,
-        start_time: new Date(),
-        duration_hours: 24,
-        starting_price_in_cents: 1000
-      };
-
-      const response = await request(app.getServer()).post("/api/v1/auctions").send(payload);
+      const response = await request(app.getServer()).post("/api/v1/auctions");
       expect(response.status).toBe(401);
     });
 
     it("should create an auction when authenticated", async () => {
-      const authCookie = await getAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const product = await createProductRequest(app, authCookie);
 
       const payload: CreateAuctionPayload = {
@@ -92,17 +87,18 @@ describe("AuctionsController", () => {
         .send(payload);
 
       expect(response.status).toBe(201);
-      expect(response.body).toMatchObject({
-        data: {
+      expect(response.body).toMatchObject(
+        formatResponse({
           id: 1,
           ...payload,
           start_time: payload.start_time.toISOString()
-        }
-      });
+        })
+      );
     });
 
     it("should NOT create an auction when there is a race condition with products", async () => {
-      const authCookie = await getAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const product = await createProductRequest(app, authCookie);
 
       const payload: CreateAuctionPayload = {
@@ -136,11 +132,10 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when auction is not found", async () => {
-      const authCookie = await getAuthCookie(app, "testuser");
-      const auctionId = 1;
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
 
       const response = await request(app.getServer())
-        .patch(`/api/v1/auctions/${auctionId}/cancel`)
+        .patch("/api/v1/auctions/12345/cancel")
         .set("Cookie", authCookie);
 
       expect(response.status).toBe(404);
@@ -148,12 +143,13 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when authenticated but not the creator", async () => {
-      const authCookie = await getAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const product = await createProductRequest(app, authCookie);
       const auction = await createAuctionRequest(app, authCookie, product.id);
 
       // Create a user to try to cancel the auction
-      const authCookie2 = await getAuthCookie(app, "testuser2");
+      const authCookie2 = await getAuthCookieAfterRegister(app, "testuser2");
 
       const response = await request(app.getServer())
         .patch(`/api/v1/auctions/${auction.id}/cancel`)
@@ -164,7 +160,8 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when auction has ended", async () => {
-      const authCookie = await getAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const product = await createProductRequest(app, authCookie);
 
       // Temporarily drop the check constraint to allow creating an auction in the past
@@ -193,7 +190,8 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when auction has been cancelled", async () => {
-      const authCookie = await getAuthCookie(app, "testuser");
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const product = await createProductRequest(app, authCookie);
       const auction = await createAuctionRequest(app, authCookie, product.id);
 

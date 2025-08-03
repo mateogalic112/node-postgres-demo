@@ -67,7 +67,7 @@ export const createProduct = async (client: Client, user: User) => {
   return product.rows[0];
 };
 
-export const getAuthCookie = async (app: App, username: string) => {
+export const getAuthCookieAfterRegister = async (app: App, username: string) => {
   const userResponse = await request(app.getServer())
     .post("/api/v1/auth/register")
     .send({
