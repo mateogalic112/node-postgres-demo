@@ -14,8 +14,8 @@ export class BidRepository {
     idempotencyKey: string
   ) {
     const result = await client.query<Bid>(
-      `INSERT INTO bids (auction_id, user_id, amount_in_cents, idempotency_key, created_at) 
-           VALUES ($1, $2, $3, $4, NOW()) 
+      `INSERT INTO bids (auction_id, user_id, amount_in_cents, idempotency_key) 
+           VALUES ($1, $2, $3, $4) 
            RETURNING *`,
       [payload.auction_id, userId, payload.amount_in_cents, idempotencyKey]
     );
