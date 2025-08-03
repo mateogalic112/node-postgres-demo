@@ -8,6 +8,7 @@ import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
 import { closeDatabase, prepareDatabase, resetDatabase } from "__tests__/setup";
 import { createMockDatabaseService } from "__tests__/mocks";
+import { RegisterPayload } from "./auth.validation";
 
 describe("AuthController", () => {
   let client: Client;
@@ -20,17 +21,16 @@ describe("AuthController", () => {
     postgresContainer = freshContainer;
 
     const DB = createMockDatabaseService(client);
+    const usersService = new UserService(new UsersRepository(DB));
 
-    const authService = new AuthService(new UserService(new UsersRepository(DB)));
-
-    app = new App([new AuthHttpController(authService)], []);
+    app = new App([new AuthHttpController(new AuthService(usersService))], []);
   });
 
   beforeEach(async () => {
     await resetDatabase(client);
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
@@ -38,38 +38,30 @@ describe("AuthController", () => {
     await closeDatabase(client, postgresContainer);
   });
 
-  describe("Register user -> /api/v1/auth/register", () => {
+  describe("POST /api/v1/auth/register", () => {
+    const payload: RegisterPayload = {
+      username: "testuser",
+      email: "test@example.com",
+      password: "password"
+    };
+
     it("should register a new user", async () => {
-      const response = await request(app.getServer()).post("/api/v1/auth/register").send({
-        username: "testuser",
-        email: "test@example.com",
-        password: "password"
-      });
+      const response = await request(app.getServer()).post("/api/v1/auth/register").send(payload);
 
       expect(response.status).toBe(201);
       expect(response.headers["set-cookie"]).toBeDefined();
       expect(response.body.data).toMatchObject({
         id: 1,
-        username: "testuser",
-        email: "test@example.com"
+        username: payload.username,
+        email: payload.email
       });
     });
 
     it("should return 400 if user already exists", async () => {
-      const response = await request(app.getServer()).post("/api/v1/auth/register").send({
-        username: "testuser",
-        email: "test@example.com",
-        password: "password"
-      });
+      const response = await request(app.getServer()).post("/api/v1/auth/register").send(payload);
+      const response2 = await request(app.getServer()).post("/api/v1/auth/register").send(payload);
 
       expect(response.status).toBe(201);
-
-      const response2 = await request(app.getServer()).post("/api/v1/auth/register").send({
-        username: "testuser",
-        email: "test@example.com",
-        password: "password"
-      });
-
       expect(response2.status).toBe(400);
       expect(response2.body).toHaveProperty("message", "User with that email already exists");
     });
