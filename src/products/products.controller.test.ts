@@ -79,6 +79,7 @@ describe("ProductsController", () => {
       const response = await request(app.getServer()).post("/api/v1/products");
 
       expect(response.status).toBe(401);
+      expect(response.body.message).toBe("Token not found");
     });
 
     it("should create a product when authenticated", async () => {

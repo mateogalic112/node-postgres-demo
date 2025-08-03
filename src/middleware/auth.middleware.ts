@@ -4,10 +4,7 @@ import { AuthService } from "auth/auth.service";
 export const authMiddleware =
   (authService: AuthService): RequestHandler =>
   async (request, response, next) => {
-    const token = request.cookies.Authentication;
-
-    response.locals.user = await authService.extractUserFromToken(token);
-
+    response.locals.user = await authService.extractUserFromToken(request.cookies.Authentication);
     next();
   };
 

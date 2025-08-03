@@ -42,27 +42,27 @@ export class AuthService {
   }
 
   public async extractUserFromToken(token: string | undefined) {
-    if (!token) throw new UnauthorizedError();
+    if (!token) throw new UnauthorizedError("Token not found");
 
     const decoded = jwt.verify(token, env.JWT_SECRET) as { _id: number };
-    if (!decoded._id) throw new UnauthorizedError();
+    if (!decoded._id) throw new UnauthorizedError("Invalid token");
 
     const user = await this.usersService.findUserById(decoded._id);
-    if (!user) throw new UnauthorizedError();
+    if (!user) throw new UnauthorizedError("User not found");
 
     const { success, data: parsedUser } = userSchema.safeParse(user);
     if (!success) {
-      throw new UnauthorizedError();
+      throw new UnauthorizedError("Invalid user");
     }
 
     return parsedUser;
   }
 
   public async extractUserFromCookie(cookieHeader: string | undefined) {
-    if (!cookieHeader) throw new UnauthorizedError();
+    if (!cookieHeader) throw new UnauthorizedError("Cookie header not found");
 
     const token = cookieHeader.split("Authentication=")[1];
-    if (!token) throw new UnauthorizedError();
+    if (!token) throw new UnauthorizedError("Token not found");
 
     return this.extractUserFromToken(token);
   }
