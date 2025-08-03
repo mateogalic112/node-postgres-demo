@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL CHECK (char_length(username) BETWEEN 3 AND 100),
+  username TEXT UNIQUE NOT NULL,
   email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL CHECK (char_length(password) >= 8),
+  password TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
@@ -10,9 +10,9 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS products (
   id SERIAL PRIMARY KEY,
   owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL CHECK (char_length(name) BETWEEN 3 AND 100),
-  description TEXT NOT NULL CHECK (char_length(description) > 20),
-  image_url TEXT CHECK (char_length(image_url) <= 2048) DEFAULT NULL,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  image_url TEXT DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS auctions (
   creator_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
   winner_id INTEGER REFERENCES users(id) ON DELETE SET DEFAULT DEFAULT NULL,
-  start_time TIMESTAMPTZ NOT NULL,
-  duration_hours INTEGER NOT NULL CHECK (duration_hours > 6),
+  start_time TIMESTAMPTZ NOT NULL CHECK (start_time > NOW()),
+  duration_hours INTEGER NOT NULL CHECK (duration_hours > 0),
   starting_price_in_cents INTEGER NOT NULL CHECK (starting_price_in_cents > 0),
   is_cancelled BOOLEAN DEFAULT FALSE NOT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
