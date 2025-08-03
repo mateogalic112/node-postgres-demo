@@ -18,7 +18,6 @@ import {
   resetDatabase
 } from "__tests__/setup";
 import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
-import { formatResponse } from "api/api.formats";
 
 describe("ProductsController", () => {
   let client: Client;
@@ -99,14 +98,12 @@ describe("ProductsController", () => {
         });
 
       expect(response.status).toBe(201);
-      expect(response.body).toMatchObject(
-        formatResponse({
-          id: 1,
-          name: productName,
-          description: productDescription,
-          image_url: "https://example.com/image.jpg"
-        })
-      );
+      expect(response.body.data).toMatchObject({
+        id: 1,
+        name: productName,
+        description: productDescription,
+        image_url: "https://example.com/image.jpg"
+      });
     });
   });
 });

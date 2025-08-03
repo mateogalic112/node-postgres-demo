@@ -23,7 +23,6 @@ import {
   prepareDatabase,
   resetDatabase
 } from "__tests__/setup";
-import { formatResponse } from "api/api.formats";
 
 describe("AuctionsController", () => {
   let client: Client;
@@ -87,13 +86,11 @@ describe("AuctionsController", () => {
         .send(payload);
 
       expect(response.status).toBe(201);
-      expect(response.body).toMatchObject(
-        formatResponse({
-          id: 1,
-          ...payload,
-          start_time: payload.start_time.toISOString()
-        })
-      );
+      expect(response.body.data).toMatchObject({
+        id: 1,
+        ...payload,
+        start_time: payload.start_time.toISOString()
+      });
     });
 
     it("should NOT create an auction when there is a race condition with products", async () => {
