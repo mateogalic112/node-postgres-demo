@@ -167,6 +167,9 @@ describe("AuctionsController", () => {
       const authCookie = await getAuthCookie(app, "testuser");
       const product = await createProductRequest(app, authCookie);
 
+      // Temporarily drop the check constraint to allow creating an auction in the past
+      await client.query("ALTER TABLE auctions DROP CONSTRAINT auctions_start_time_check");
+
       const auction = await client.query(
         `INSERT INTO auctions 
           (product_id, creator_id, start_time, duration_hours, starting_price_in_cents) 
@@ -174,6 +177,11 @@ describe("AuctionsController", () => {
           RETURNING *
         `,
         [product.id, 1, subDays(new Date(), 10), 24, 1000]
+      );
+
+      // Restore the constraint (but don't validate existing rows)
+      await client.query(
+        "ALTER TABLE auctions ADD CONSTRAINT auctions_start_time_check CHECK (start_time > NOW()) NOT VALID"
       );
 
       const response = await request(app.getServer())
