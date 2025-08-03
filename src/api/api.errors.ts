@@ -1,5 +1,6 @@
 import { TokenExpiredError } from "jsonwebtoken";
 import { MulterError } from "multer";
+import { DatabaseError } from "pg";
 import { ZodError } from "zod";
 
 export abstract class HttpError extends Error {
@@ -43,66 +44,15 @@ export class InternalServerError extends HttpError {
   }
 }
 
-export class PgError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.status = status;
-  }
-
-  static isPgError(error: unknown): boolean {
-    return !!error && typeof error === "object" && "code" in error;
-  }
-
-  static isSerializationFailure(error: unknown): boolean {
-    return this.isPgError(error) && (error as { code: string }).code === "40001";
-  }
-
-  static isDeadlockDetected(error: unknown): boolean {
-    return this.isPgError(error) && (error as { code: string }).code === "40P01";
-  }
-
-  static isUniqueViolation(error: unknown): boolean {
-    return this.isPgError(error) && (error as { code: string }).code === "23505";
-  }
-
-  static isViolatingForeignKeyConstraint(error: unknown): boolean {
-    return this.isPgError(error) && (error as { code: string }).code === "23503";
-  }
-
-  static getErrorStatus(error: unknown) {
-    if (!this.isPgError(error)) return null;
-    if (this.isSerializationFailure(error)) return 409;
-    if (this.isDeadlockDetected(error)) return 409;
-    if (this.isUniqueViolation(error)) return 409;
-    if (this.isViolatingForeignKeyConstraint(error)) return 404;
-    return 400;
-  }
-
-  static getErrorMessage(error: unknown) {
-    if (!this.isPgError(error)) return null;
-    if (this.isSerializationFailure(error)) return "Transaction serialization failure";
-    if (this.isDeadlockDetected(error)) return "Transaction deadlock detected";
-    if (this.isUniqueViolation(error)) return "Unique violation";
-    if (this.isViolatingForeignKeyConstraint(error)) return "Violating foreign key constraint";
-    return (error as { detail: string }).detail;
-  }
-}
-
 export const getErrorStatus = (error: unknown): number => {
   if (error instanceof TokenExpiredError) return 401;
   if (error instanceof ZodError) return 400;
   if (error instanceof HttpError) return error.status;
+  if (error instanceof DatabaseError) return 400;
   if (error instanceof MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") return 413;
     return 400;
   }
-
-  if (error instanceof PgError) return error.status;
-  const status = PgError.getErrorStatus(error);
-  if (status) return status;
-
   return 500;
 };
 
@@ -110,14 +60,10 @@ export const getErrorMessage = (error: unknown): string => {
   if (error instanceof TokenExpiredError) return error.message;
   if (error instanceof ZodError) return error.errors.map((e) => e.message).join(", ");
   if (error instanceof HttpError) return error.message;
+  if (error instanceof DatabaseError) return error.detail || error.message;
   if (error instanceof MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") return "File size too large";
     return error.message;
   }
-
-  if (error instanceof PgError) return error.message;
-  const message = PgError.getErrorMessage(error);
-  if (message) return message;
-
   return "Something went wrong";
 };

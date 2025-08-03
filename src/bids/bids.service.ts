@@ -3,9 +3,10 @@ import { BidRepository } from "./bids.repository";
 import { bidSchema, CreateBidPayload } from "./bids.validation";
 import { User } from "users/users.validation";
 import { Money } from "money/money.model";
-import { BadRequestError, PgError } from "api/api.errors";
+import { BadRequestError, InternalServerError } from "api/api.errors";
 import { Auction } from "auctions/auctions.validation";
 import { DatabaseService } from "interfaces/database.interface";
+import { PgError } from "database/errors";
 
 export class BidService {
   private readonly MINIMUM_BID_INCREASE_PERCENTAGE = 10;
@@ -49,7 +50,6 @@ export class BidService {
             await this.bidRepository.getHighestBidAmountForAuction(client, auction.id)
           )
         );
-
         this.assertMinimumBidIncrease({ auction, bidAmount, highestBid });
 
         const newBid = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
@@ -67,7 +67,6 @@ export class BidService {
               `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms 
               (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
             );
-
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
           }
@@ -79,7 +78,7 @@ export class BidService {
       }
     }
 
-    throw new PgError("Unable to place bid due to high system load. Please try again.", 503);
+    throw new InternalServerError("Unable to place bid due to high system load. Please try again.");
   }
 
   private assertMinimumBidIncrease({

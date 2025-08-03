@@ -2,7 +2,8 @@ import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
 import { Auction, CreateAuctionPayload } from "./auctions.validation";
 import { User } from "users/users.validation";
-import { PgError } from "api/api.errors";
+import { PgError } from "database/errors";
+import { BadRequestError } from "api/api.errors";
 
 export class AuctionRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -38,15 +39,11 @@ export class AuctionRepository {
       return result.rows[0];
     } catch (error) {
       if (PgError.isUniqueViolation(error)) {
-        const errorMessage = "Product already auctioned. Please try again.";
-        throw new PgError(errorMessage, 409);
+        throw new BadRequestError("Product already auctioned. Please try again.");
       }
-
       if (PgError.isViolatingForeignKeyConstraint(error)) {
-        const errorMessage = "Product not found. Please try again.";
-        throw new PgError(errorMessage, 404);
+        throw new BadRequestError("Product not found. Please try again.");
       }
-
       throw error;
     }
   }

@@ -124,7 +124,7 @@ describe("AuctionsController", () => {
         .set("Cookie", authCookie)
         .send(payload);
 
-      expect(response2.status).toBe(409);
+      expect(response2.status).toBe(400);
       expect(response2.body.message).toBe("Product already auctioned. Please try again.");
     });
   });
@@ -144,7 +144,7 @@ describe("AuctionsController", () => {
         .set("Cookie", authCookie);
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toBe(`Auction with id ${auctionId} not found`);
+      expect(response.body.message).toBe("Auction not found");
     });
 
     it("should NOT cancel an auction when authenticated but not the creator", async () => {
