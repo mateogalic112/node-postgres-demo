@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 export abstract class HttpError extends Error {
   status: number;
   message: string;
+
   constructor(status: number, message: string) {
     super(message);
     this.status = status;
@@ -44,6 +45,7 @@ export class InternalServerError extends HttpError {
 
 export class PgError extends Error {
   status: number;
+
   constructor(message: string, status: number) {
     super(message);
     this.status = status;

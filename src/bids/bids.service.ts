@@ -12,14 +12,14 @@ export class BidService {
 
   constructor(
     private readonly bidRepository: BidRepository,
-    private readonly databaseService: DatabaseService,
+    private readonly DB: DatabaseService,
     private readonly logger: LoggerService
   ) {}
 
   public async createBid(user: User, payload: CreateBidPayload) {
     const MAX_RETRIES = 5;
     const RETRY_DELAY_MS = 100;
-    const TRANSACTION_TIMEOUT_MS = 10_000;
+    const QUERY_STATEMENT_TIMEOUT_MS = 10_000;
 
     const bidAmount = new Money(payload.amount_in_cents);
     const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${bidAmount.getAmountInCents()}`;
@@ -28,11 +28,11 @@ export class BidService {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       // @dev MUST use the same client instance for all statements within a transaction!
       // @link https://node-postgres.com/features/transactions
-      const client = await this.databaseService.getClient();
+      const client = await this.DB.getClient();
 
       try {
         // @dev Set client query timeout to prevent indefinite blocking
-        await client.query(`SET statement_timeout = ${TRANSACTION_TIMEOUT_MS}`);
+        await client.query(`SET statement_timeout = ${QUERY_STATEMENT_TIMEOUT_MS}`);
 
         // @dev SERIALIZABLE isolation for maximum consistency (required for real money)
         await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");

@@ -1,7 +1,7 @@
 import { DatabaseService } from "interfaces/database.interface";
 import { Bid, CreateBidPayload } from "./bids.validation";
 import { Auction } from "auctions/auctions.validation";
-import { InternalServerError, NotFoundError } from "api/api.errors";
+import { NotFoundError } from "api/api.errors";
 import { PoolClient } from "pg";
 
 export class BidRepository {
@@ -19,11 +19,6 @@ export class BidRepository {
            RETURNING *`,
       [payload.auction_id, userId, payload.amount_in_cents, idempotencyKey]
     );
-    if (result.rows.length === 0) {
-      throw new InternalServerError(
-        "Unable to place bid due to high system load. Please try again."
-      );
-    }
     return result.rows[0];
   }
 

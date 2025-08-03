@@ -44,9 +44,8 @@ export class AuctionService {
 
     const foundAuction = await this.auctionRepository.findAuctionById(auctionId);
     if (!foundAuction) {
-      throw new NotFoundError(`Auction with id ${auctionId} not found`);
+      throw new NotFoundError("Auction not found");
     }
-
     switch (true) {
       case foundAuction.creator_id !== user.id:
         throw new ForbiddenError("You are not the creator of this auction");
