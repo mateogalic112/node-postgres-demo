@@ -19,6 +19,7 @@ import {
   createProductRequest,
   getAuthCookieAfterRegister,
   prepareDatabase,
+  registerUserRequest,
   resetDatabase
 } from "__tests__/setup";
 import { createMockedAuctionPayload, createFinishedAuction } from "./mocks/auction.mocks";
@@ -35,7 +36,6 @@ describe("AuctionsController", () => {
     postgresContainer = freshContainer;
 
     const DB = createMockDatabaseService(client);
-
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
     const auctionService = new AuctionService(new AuctionRepository(DB), mailService);
     const productService = new ProductService(new ProductRepository(DB), mailService, filesService);
@@ -71,7 +71,8 @@ describe("AuctionsController", () => {
 
     it("should NOT create an auction when product is not found or deleted", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
-      const mockedAuctionPayload = createMockedAuctionPayload(1);
+      const nonExistentProductId = 12345;
+      const mockedAuctionPayload = createMockedAuctionPayload(nonExistentProductId);
 
       const response = await request(app.getServer())
         .post("/api/v1/auctions")
@@ -135,9 +136,7 @@ describe("AuctionsController", () => {
         .send(mockedAuctionPayload);
 
       expect(response.status).toBe(201);
-      expect(response.body.data).toMatchObject({
-        id: 1
-      });
+      expect(response.body.data).toMatchObject({ id: 1 });
     });
 
     it("should NOT create an auction when there is a race condition with products", async () => {
@@ -156,9 +155,7 @@ describe("AuctionsController", () => {
         .send(mockedAuctionPayload);
 
       expect(response.status).toBe(201);
-      expect(response.body.data).toMatchObject({
-        id: 1
-      });
+      expect(response.body.data).toMatchObject({ id: 1 });
 
       expect(response2.status).toBe(400);
       expect(response2.body.message).toBe("Product already auctioned. Please try again.");
@@ -190,7 +187,6 @@ describe("AuctionsController", () => {
       const auction = await createAuctionRequest(app, creatorCookie, product.id);
 
       const unauthorizedUserCookie = await getAuthCookieAfterRegister(app, "unauthorizedUser");
-
       const response = await request(app.getServer())
         .patch(`/api/v1/auctions/${auction.id}/cancel`)
         .set("Cookie", unauthorizedUserCookie);
@@ -200,9 +196,14 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when auction has finished", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const userResponse = await registerUserRequest(app, "testuser");
+      const authCookie = userResponse.headers["set-cookie"][0];
       const product = await createProductRequest(app, authCookie);
-      const finishedAuction = await createFinishedAuction(client, 1, product.id);
+      const finishedAuction = await createFinishedAuction(
+        client,
+        userResponse.body.data.id,
+        product.id
+      );
 
       const response = await request(app.getServer())
         .patch(`/api/v1/auctions/${finishedAuction.id}/cancel`)
