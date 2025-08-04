@@ -1,11 +1,9 @@
 import { faker } from "@faker-js/faker/.";
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import App from "app";
-import { Auction, CreateAuctionPayload } from "auctions/auctions.validation";
+import { createMockedAuctionPayload } from "auctions/mocks/auction.mocks";
 import { migrate } from "database/setup";
-import { addDays } from "date-fns";
 import { Client } from "pg";
-import { Product } from "products/products.validation";
 import request from "supertest";
 
 export const prepareDatabase = async () => {
@@ -65,37 +63,19 @@ export const getAuthCookieAfterRegister = async (app: App, username: string) => 
   return userResponse.headers["set-cookie"][0];
 };
 
-export const createProductRequest = async (app: App, authCookie: string): Promise<Product> => {
-  const productResponse = await request(app.getServer())
+export const createProductRequest = async (app: App, authCookie: string) => {
+  return request(app.getServer())
     .post("/api/v1/products")
     .set("Cookie", authCookie)
     .field("name", faker.commerce.productName())
     .field("description", faker.commerce.productDescription());
-
-  return productResponse.body.data;
 };
 
-export const bulkInsertProducts = async (app: App, count: number) => {
-  const authCookie = await getAuthCookieAfterRegister(app, "testuser");
-  for (let i = 0; i < count; i++) {
-    await createProductRequest(app, authCookie);
-  }
-};
+export const createAuctionRequest = async (app: App, authCookie: string, productId: number) => {
+  const mockedAuctionPayload = createMockedAuctionPayload(productId);
 
-export const createAuctionRequest = async (
-  app: App,
-  authCookie: string,
-  productId: number
-): Promise<Auction> => {
-  const auctionResponse = await request(app.getServer())
+  return request(app.getServer())
     .post("/api/v1/auctions")
     .set("Cookie", authCookie)
-    .send({
-      product_id: productId,
-      start_time: addDays(new Date(), 1),
-      duration_hours: 24,
-      starting_price_in_cents: 1000
-    } as CreateAuctionPayload);
-
-  return auctionResponse.body.data;
+    .send(mockedAuctionPayload);
 };

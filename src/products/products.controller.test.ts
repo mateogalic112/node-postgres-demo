@@ -11,13 +11,13 @@ import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
 import {
-  bulkInsertProducts,
   closeDatabase,
   getAuthCookieAfterRegister,
   prepareDatabase,
   resetDatabase
 } from "__tests__/setup";
 import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
+import { bulkInsertProducts } from "./mocks/products.mock";
 
 describe("ProductsController", () => {
   let client: Client;
