@@ -17,13 +17,13 @@ import { addDays } from "date-fns";
 import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
 import {
   closeDatabase,
-  createAuctionInThePast,
   createAuctionRequest,
   createProductRequest,
   getAuthCookieAfterRegister,
   prepareDatabase,
   resetDatabase
 } from "__tests__/setup";
+import { createFinishedAuction } from "./mocks/auction.mocks";
 
 describe("AuctionsController", () => {
   let client: Client;
@@ -159,23 +159,15 @@ describe("AuctionsController", () => {
       expect(response.body.message).toBe("You are not the creator of this auction");
     });
 
-    it("should NOT cancel an auction when auction has ended", async () => {
+    it("should NOT cancel an auction when auction has finished", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
 
       const product = await createProductRequest(app, authCookie);
 
-      // Temporarily drop the check constraint to allow creating an auction in the past
-      await client.query("ALTER TABLE auctions DROP CONSTRAINT auctions_start_time_check");
-
-      const auction = await createAuctionInThePast(client, 1, product.id);
-
-      // Restore the constraint (but don't validate existing rows)
-      await client.query(
-        "ALTER TABLE auctions ADD CONSTRAINT auctions_start_time_check CHECK (start_time > NOW()) NOT VALID"
-      );
+      const finishedAuction = await createFinishedAuction(client, 1, product.id);
 
       const response = await request(app.getServer())
-        .patch(`/api/v1/auctions/${auction.id}/cancel`)
+        .patch(`/api/v1/auctions/${finishedAuction.id}/cancel`)
         .set("Cookie", authCookie);
 
       expect(response.status).toBe(400);

@@ -3,7 +3,7 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers
 import App from "app";
 import { Auction, CreateAuctionPayload } from "auctions/auctions.validation";
 import { migrate } from "database/setup";
-import { addDays, subDays } from "date-fns";
+import { addDays } from "date-fns";
 import { Client } from "pg";
 import { Product } from "products/products.validation";
 import request from "supertest";
@@ -63,14 +63,6 @@ export const registerUserRequest = async (app: App, username: string) => {
 export const getAuthCookieAfterRegister = async (app: App, username: string) => {
   const userResponse = await registerUserRequest(app, username);
   return userResponse.headers["set-cookie"][0];
-};
-
-export const createAuctionInThePast = async (client: Client, userId: number, productId: number) => {
-  const auction = await client.query<Auction>(
-    "INSERT INTO auctions (product_id, creator_id, start_time, duration_hours, starting_price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-    [productId, userId, subDays(new Date(), 10), 24, 1000]
-  );
-  return auction.rows[0];
 };
 
 export const createProductRequest = async (app: App, authCookie: string): Promise<Product> => {
