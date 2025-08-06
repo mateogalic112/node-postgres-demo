@@ -38,13 +38,16 @@ export class BidService {
         // @dev SERIALIZABLE isolation for maximum consistency (required for real money)
         await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
-        this.assertMinimumBidIncrease({
-          currentBid,
-          minimumAcceptableBid: this.getMinimumAcceptableBid(
-            await this.bidRepository.getBiddingAuction(client, payload.auction_id, user.id),
-            await this.bidRepository.getHighestBidAmountForAuction(client, payload.auction_id)
-          )
-        });
+        const auction = await this.bidRepository.getBiddingAuction(
+          client,
+          payload.auction_id,
+          user.id
+        );
+        const highestBidInCents = await this.bidRepository.getHighestBidAmountForAuction(
+          client,
+          auction.id
+        );
+        this.assertMinimumBidIncrease({ currentBid, auction, highestBidInCents });
 
         const newBid = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
 
@@ -74,22 +77,22 @@ export class BidService {
     throw new InternalServerError("Unable to place bid due to high system load. Please try again.");
   }
 
-  private getMinimumAcceptableBid(auction: Auction, highestBidInCents: number) {
+  private assertMinimumBidIncrease({
+    currentBid,
+    auction,
+    highestBidInCents
+  }: {
+    currentBid: Money;
+    auction: Auction;
+    highestBidInCents: number;
+  }) {
     const minimumBidIncreaseAmount = Math.round(
       auction.starting_price_in_cents * (this.MINIMUM_BID_INCREASE_PERCENTAGE / 100)
     );
-    return new Money(
+    const minimumAcceptableBid = new Money(
       Math.max(highestBidInCents, auction.starting_price_in_cents) + minimumBidIncreaseAmount
     );
-  }
 
-  private assertMinimumBidIncrease({
-    currentBid,
-    minimumAcceptableBid
-  }: {
-    currentBid: Money;
-    minimumAcceptableBid: Money;
-  }) {
     if (currentBid.getAmountInCents() < minimumAcceptableBid.getAmountInCents()) {
       throw new BadRequestError(
         `Bid must be at least ${minimumAcceptableBid.getFormattedAmount()}`
