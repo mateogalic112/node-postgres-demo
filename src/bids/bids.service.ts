@@ -44,13 +44,15 @@ export class BidService {
           user.id
         );
 
-        const highestBid = new Money(
-          Math.max(
-            auction.starting_price_in_cents,
-            await this.bidRepository.getHighestBidAmountForAuction(client, auction.id)
-          )
+        const highestBidInCents = await this.bidRepository.getHighestBidAmountForAuction(
+          client,
+          payload.auction_id
         );
-        this.assertMinimumBidIncrease({ auction, bidAmount, highestBid });
+
+        this.assertMinimumBidIncrease({
+          bidAmount,
+          minimumAcceptableBid: this.getMinimumAcceptableBid(auction, highestBidInCents)
+        });
 
         const newBid = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
 
@@ -80,22 +82,23 @@ export class BidService {
     throw new InternalServerError("Unable to place bid due to high system load. Please try again.");
   }
 
-  private assertMinimumBidIncrease({
-    auction,
-    bidAmount,
-    highestBid
-  }: {
-    auction: Auction;
-    bidAmount: Money;
-    highestBid: Money;
-  }) {
-    const MINIMUM_BID_INCREASE_AMOUNT = Math.round(
+  private getMinimumAcceptableBid(auction: Auction, highestBidInCents: number) {
+    const minimumBidIncreaseAmount = Math.round(
       auction.starting_price_in_cents * (this.MINIMUM_BID_INCREASE_PERCENTAGE / 100)
     );
-    const minimumAcceptableBid = new Money(
-      highestBid.getAmountInCents() + MINIMUM_BID_INCREASE_AMOUNT
-    );
 
+    return new Money(
+      Math.max(highestBidInCents, auction.starting_price_in_cents) + minimumBidIncreaseAmount
+    );
+  }
+
+  private assertMinimumBidIncrease({
+    bidAmount,
+    minimumAcceptableBid
+  }: {
+    bidAmount: Money;
+    minimumAcceptableBid: Money;
+  }) {
     if (bidAmount.getAmountInCents() < minimumAcceptableBid.getAmountInCents()) {
       throw new BadRequestError(
         `Bid must be at least ${minimumAcceptableBid.getFormattedAmount()}`
