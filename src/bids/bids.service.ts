@@ -43,12 +43,10 @@ export class BidService {
           payload.auction_id,
           user.id
         );
-
         const highestBidInCents = await this.bidRepository.getHighestBidAmountForAuction(
           client,
           payload.auction_id
         );
-
         this.assertMinimumBidIncrease({
           bidAmount,
           minimumAcceptableBid: this.getMinimumAcceptableBid(auction, highestBidInCents)
@@ -86,7 +84,6 @@ export class BidService {
     const minimumBidIncreaseAmount = Math.round(
       auction.starting_price_in_cents * (this.MINIMUM_BID_INCREASE_PERCENTAGE / 100)
     );
-
     return new Money(
       Math.max(highestBidInCents, auction.starting_price_in_cents) + minimumBidIncreaseAmount
     );
