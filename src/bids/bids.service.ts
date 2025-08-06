@@ -38,18 +38,12 @@ export class BidService {
         // @dev SERIALIZABLE isolation for maximum consistency (required for real money)
         await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
-        const auction = await this.bidRepository.getBiddingAuction(
-          client,
-          payload.auction_id,
-          user.id
-        );
-        const highestBidInCents = await this.bidRepository.getHighestBidAmountForAuction(
-          client,
-          payload.auction_id
-        );
         this.assertMinimumBidIncrease({
           bidAmount,
-          minimumAcceptableBid: this.getMinimumAcceptableBid(auction, highestBidInCents)
+          minimumAcceptableBid: this.getMinimumAcceptableBid(
+            await this.bidRepository.getBiddingAuction(client, payload.auction_id, user.id),
+            await this.bidRepository.getHighestBidAmountForAuction(client, payload.auction_id)
+          )
         });
 
         const newBid = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
