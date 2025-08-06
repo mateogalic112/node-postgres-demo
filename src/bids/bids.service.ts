@@ -4,7 +4,6 @@ import { bidSchema, CreateBidPayload } from "./bids.validation";
 import { User } from "users/users.validation";
 import { Money } from "money/money.model";
 import { BadRequestError, InternalServerError } from "api/api.errors";
-import { Auction } from "auctions/auctions.validation";
 import { DatabaseService } from "interfaces/database.interface";
 import { PgError } from "database/errors";
 
@@ -22,8 +21,7 @@ export class BidService {
     const RETRY_DELAY_MS = 100;
     const QUERY_STATEMENT_TIMEOUT_MS = 10_000;
 
-    const currentBid = new Money(payload.amount_in_cents);
-    const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${currentBid.getAmountInCents()}`;
+    const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${payload.amount_in_cents}`;
 
     // @dev Retry the transaction if it fails due to serialization failure or deadlock detected
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -47,7 +45,11 @@ export class BidService {
           client,
           auction.id
         );
-        this.assertMinimumBidIncrease({ currentBid, auction, highestBidInCents });
+        this.assertAuctionMinimumBidIncrease({
+          currentBidInCents: payload.amount_in_cents,
+          startingPriceInCents: auction.starting_price_in_cents,
+          highestBidInCents
+        });
 
         const newBid = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
 
@@ -77,23 +79,23 @@ export class BidService {
     throw new InternalServerError("Unable to place bid due to high system load. Please try again.");
   }
 
-  private assertMinimumBidIncrease({
-    currentBid,
-    auction,
+  private assertAuctionMinimumBidIncrease({
+    currentBidInCents,
+    startingPriceInCents,
     highestBidInCents
   }: {
-    currentBid: Money;
-    auction: Auction;
+    currentBidInCents: number;
+    startingPriceInCents: number;
     highestBidInCents: number;
   }) {
     const minimumBidIncreaseAmount = Math.round(
-      auction.starting_price_in_cents * (this.MINIMUM_BID_INCREASE_PERCENTAGE / 100)
+      startingPriceInCents * (this.MINIMUM_BID_INCREASE_PERCENTAGE / 100)
     );
     const minimumAcceptableBid = new Money(
-      Math.max(highestBidInCents, auction.starting_price_in_cents) + minimumBidIncreaseAmount
+      Math.max(highestBidInCents, startingPriceInCents) + minimumBidIncreaseAmount
     );
 
-    if (currentBid.getAmountInCents() < minimumAcceptableBid.getAmountInCents()) {
+    if (currentBidInCents < minimumAcceptableBid.getAmountInCents()) {
       throw new BadRequestError(
         `Bid must be at least ${minimumAcceptableBid.getFormattedAmount()}`
       );
