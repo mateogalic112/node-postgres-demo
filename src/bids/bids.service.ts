@@ -22,8 +22,8 @@ export class BidService {
     const RETRY_DELAY_MS = 100;
     const QUERY_STATEMENT_TIMEOUT_MS = 10_000;
 
-    const bidAmount = new Money(payload.amount_in_cents);
-    const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${bidAmount.getAmountInCents()}`;
+    const currentBid = new Money(payload.amount_in_cents);
+    const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${currentBid.getAmountInCents()}`;
 
     // @dev Retry the transaction if it fails due to serialization failure or deadlock detected
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -39,7 +39,7 @@ export class BidService {
         await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
         this.assertMinimumBidIncrease({
-          bidAmount,
+          currentBid,
           minimumAcceptableBid: this.getMinimumAcceptableBid(
             await this.bidRepository.getBiddingAuction(client, payload.auction_id, user.id),
             await this.bidRepository.getHighestBidAmountForAuction(client, payload.auction_id)
@@ -84,13 +84,13 @@ export class BidService {
   }
 
   private assertMinimumBidIncrease({
-    bidAmount,
+    currentBid,
     minimumAcceptableBid
   }: {
-    bidAmount: Money;
+    currentBid: Money;
     minimumAcceptableBid: Money;
   }) {
-    if (bidAmount.getAmountInCents() < minimumAcceptableBid.getAmountInCents()) {
+    if (currentBid.getAmountInCents() < minimumAcceptableBid.getAmountInCents()) {
       throw new BadRequestError(
         `Bid must be at least ${minimumAcceptableBid.getFormattedAmount()}`
       );
