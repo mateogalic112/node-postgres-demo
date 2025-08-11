@@ -59,15 +59,16 @@ export class BidService {
       } catch (error) {
         await client.query("ROLLBACK");
 
-        if (PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error)) {
-          if (attempt < MAX_RETRIES - 1) {
-            const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
-            this.logger.log(
-              `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
-            );
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            continue;
-          }
+        const shouldRetryError =
+          PgError.isSerializationFailure(error) || PgError.isDeadlockDetected(error);
+
+        if (shouldRetryError && attempt < MAX_RETRIES - 1) {
+          const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
+          this.logger.log(
+            `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
         }
 
         throw error;
