@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS auctions (
   creator_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
   winner_id INTEGER REFERENCES users(id) ON DELETE SET DEFAULT DEFAULT NULL,
-  start_time TIMESTAMPTZ NOT NULL CHECK (start_time > NOW()),
+  start_time TIMESTAMPTZ NOT NULL,
   duration_hours INTEGER NOT NULL CHECK (duration_hours > 0),
   starting_price_in_cents INTEGER NOT NULL CHECK (starting_price_in_cents > 0),
   is_cancelled BOOLEAN DEFAULT FALSE NOT NULL,

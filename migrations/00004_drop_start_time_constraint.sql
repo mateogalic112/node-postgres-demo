@@ -1,1 +1,0 @@
-ALTER TABLE auctions DROP CONSTRAINT IF EXISTS auctions_start_time_check;
