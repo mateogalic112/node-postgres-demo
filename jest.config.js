@@ -16,6 +16,7 @@ module.exports = {
     "^products/(.*)$": "<rootDir>/src/products/$1",
     "^auctions/(.*)$": "<rootDir>/src/auctions/$1",
     "^bids/(.*)$": "<rootDir>/src/bids/$1",
+    "^roles/(.*)$": "<rootDir>/src/roles/$1",
     "^__tests__/(.*)$": "<rootDir>/src/__tests__/$1"
   }
 };
