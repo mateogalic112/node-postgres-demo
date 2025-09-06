@@ -4,7 +4,34 @@ import App from "app";
 import { createMockedAuctionPayload } from "auctions/mocks/auction.mocks";
 import { migrate } from "database/setup";
 import { Client } from "pg";
+import { Role } from "roles/roles.validation";
 import request from "supertest";
+import { User } from "users/users.validation";
+import bcrypt from "bcrypt";
+
+const createDbInitialState = async (client: Client) => {
+  // Insert default roles
+  const rolesResult = await client.query<Role>(
+    `INSERT INTO roles (name, description) VALUES ('admin', 'Admin role'), ('user', 'User role') RETURNING *`
+  );
+
+  // Insert default admin user with hashed password
+  const adminUserResult = await client.query<User>(
+    `INSERT INTO users (username, email, password) VALUES ('admin', 'admin@example.com', $1) RETURNING *`,
+    [await bcrypt.hash("password", 10)]
+  );
+
+  // Insert default admin user role
+  await client.query(`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`, [
+    adminUserResult.rows[0].id,
+    rolesResult.rows[0].id
+  ]);
+
+  return {
+    adminUser: { ...adminUserResult.rows[0], password: "password" }, // Return plain text password for tests
+    roles: rolesResult.rows
+  };
+};
 
 export const prepareDatabase = async () => {
   // @dev Start the postgres container
@@ -17,7 +44,14 @@ export const prepareDatabase = async () => {
   // @dev Run migrations
   await migrate(client);
 
-  return { client, postgresContainer };
+  const { adminUser, roles } = await createDbInitialState(client);
+
+  return {
+    client,
+    postgresContainer,
+    adminUser,
+    roles
+  };
 };
 
 export const closeDatabase = async (
@@ -43,9 +77,13 @@ export const resetDatabase = async (client: Client) => {
       bids,
       auctions,
       products,
-      users
+      users,
+      user_roles,
+      roles
     RESTART IDENTITY CASCADE
   `);
+
+  await createDbInitialState(client);
 };
 
 export const registerUserRequest = async (app: App, username: string) => {
@@ -56,6 +94,13 @@ export const registerUserRequest = async (app: App, username: string) => {
       email: `${username}@example.com`,
       password: "password"
     });
+};
+
+export const loginUserRequest = async (app: App, email: string, password: string) => {
+  return request(app.getServer()).post("/api/v1/auth/login").send({
+    email,
+    password
+  });
 };
 
 export const getAuthCookieAfterRegister = async (app: App, username: string) => {

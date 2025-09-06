@@ -53,7 +53,7 @@ describe("AuthController", () => {
 
       expect(response.status).toBe(201);
       expect(response.headers["set-cookie"]).toBeDefined();
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.username).toBe(mockedRegisterPayload.username);
     });
 
     it("should return 400 if user already exists", async () => {
@@ -69,7 +69,7 @@ describe("AuthController", () => {
 
       expect(response.status).toBe(201);
       expect(response.headers["set-cookie"]).toBeDefined();
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.username).toBe(mockedRegisterPayload.username);
 
       expect(response2.status).toBe(400);
       expect(response2.body).toHaveProperty("message", "User with that email already exists");
@@ -111,7 +111,7 @@ describe("AuthController", () => {
         .send(mockedLoginPayload);
 
       expect(response.status).toBe(200);
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.username).toBe(username);
     });
   });
 });

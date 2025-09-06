@@ -20,7 +20,7 @@ describe("AuthService", () => {
   let mockUsersRepository: jest.Mocked<UsersRepository>;
 
   const mockUser: User = {
-    id: 1,
+    id: 123,
     username: "testuser",
     email: "test@example.com",
     password: "hashedPassword",

@@ -82,11 +82,12 @@ describe("ProductsController", () => {
 
     it("should create a product when authenticated", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const productName = faker.commerce.productName();
 
       const response = await request(app.getServer())
         .post("/api/v1/products")
         .set("Cookie", authCookie)
-        .field("name", faker.commerce.productName())
+        .field("name", productName)
         .field("description", faker.commerce.productDescription())
         .attach("image", Buffer.from("fake-image-data"), {
           filename: "test-image.jpg",
@@ -94,7 +95,7 @@ describe("ProductsController", () => {
         });
 
       expect(response.status).toBe(201);
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.name).toBe(productName);
     });
   });
 });

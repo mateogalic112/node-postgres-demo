@@ -140,7 +140,7 @@ describe("AuctionsController", () => {
         .send(mockedAuctionPayload);
 
       expect(response.status).toBe(201);
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.product_id).toBe(productId);
     });
 
     it("should NOT create an auction when there is a race condition with products", async () => {
@@ -160,7 +160,7 @@ describe("AuctionsController", () => {
         .send(mockedAuctionPayload);
 
       expect(response.status).toBe(201);
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.product_id).toBe(productId);
 
       expect(response2.status).toBe(400);
       expect(response2.body.message).toBe("Product already auctioned. Please try again.");

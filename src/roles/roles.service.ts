@@ -1,6 +1,6 @@
 import { User } from "users/users.validation";
 import { RolesRepository } from "./roles.repository";
-import { Role } from "./roles.validation";
+import { RoleName } from "./roles.validation";
 
 export class RolesService {
   constructor(private readonly rolesRepository: RolesRepository) {}
@@ -10,7 +10,7 @@ export class RolesService {
     allowedRoles
   }: {
     user: User;
-    allowedRoles: Array<Role["name"]>;
+    allowedRoles: Array<RoleName>;
   }) {
     if (allowedRoles.length === 0) {
       return false;
