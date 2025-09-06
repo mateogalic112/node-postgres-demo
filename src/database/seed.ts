@@ -4,6 +4,7 @@ import { RegisterPayload } from "auth/auth.validation";
 import { CreateProductPayload } from "products/products.validation";
 import { faker } from "@faker-js/faker";
 import { env } from "config/env";
+import { CreateRolePayload } from "roles/roles.validation";
 
 const users: RegisterPayload[] = Array.from({ length: 2 }, () => ({
   username: faker.internet.displayName(),
@@ -20,6 +21,17 @@ const products: Array<CreateProductPayload["body"] & { image_url: string | null 
     image_url: faker.image.url()
   })
 );
+
+const roles: Array<CreateRolePayload["body"]> = [
+  {
+    name: "admin",
+    description: "Administrator with full system access"
+  },
+  {
+    name: "user",
+    description: "Regular user with standard permissions"
+  }
+];
 
 export async function seedDatabase() {
   const client = new Client({
@@ -49,6 +61,13 @@ export async function seedDatabase() {
         `INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4)`,
         [name, description, image_url, user.rows[0].id]
       );
+    }
+
+    for (const { name, description } of roles) {
+      await client.query(`INSERT INTO roles (name, description) VALUES ($1, $2)`, [
+        name,
+        description
+      ]);
     }
   } catch (error) {
     console.error("Database seeding failed:", error);

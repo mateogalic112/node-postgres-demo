@@ -1,4 +1,3 @@
-import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import App from "app";
 import { Client } from "pg";
 import request from "supertest";
@@ -28,12 +27,10 @@ import { subDays } from "date-fns";
 describe("AuctionsController", () => {
   let client: Client;
   let app: App;
-  let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
-    const { client: freshClient, postgresContainer: freshContainer } = await prepareDatabase();
+    const { client: freshClient } = await prepareDatabase();
     client = freshClient;
-    postgresContainer = freshContainer;
 
     const DB = createMockDatabaseService(client);
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
@@ -59,7 +56,7 @@ describe("AuctionsController", () => {
   });
 
   afterAll(async () => {
-    await closeDatabase(client, postgresContainer);
+    await closeDatabase(client);
   });
 
   describe("POST /api/v1/auctions", () => {
@@ -140,7 +137,7 @@ describe("AuctionsController", () => {
         .send(mockedAuctionPayload);
 
       expect(response.status).toBe(201);
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.product_id).toBe(productId);
     });
 
     it("should NOT create an auction when there is a race condition with products", async () => {
@@ -160,7 +157,7 @@ describe("AuctionsController", () => {
         .send(mockedAuctionPayload);
 
       expect(response.status).toBe(201);
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.product_id).toBe(productId);
 
       expect(response2.status).toBe(400);
       expect(response2.body.message).toBe("Product already auctioned. Please try again.");

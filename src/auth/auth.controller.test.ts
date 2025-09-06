@@ -3,7 +3,6 @@ import { AuthHttpController } from "./auth.controller";
 import request from "supertest";
 import { AuthService } from "./auth.service";
 import { Client } from "pg";
-import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
 import {
@@ -18,12 +17,10 @@ import { createMockedLoginPayload, createMockedRegisterPayload } from "./mocks/a
 describe("AuthController", () => {
   let client: Client;
   let app: App;
-  let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
-    const { client: freshClient, postgresContainer: freshContainer } = await prepareDatabase();
+    const { client: freshClient } = await prepareDatabase();
     client = freshClient;
-    postgresContainer = freshContainer;
 
     const DB = createMockDatabaseService(client);
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
@@ -40,7 +37,7 @@ describe("AuthController", () => {
   });
 
   afterAll(async () => {
-    await closeDatabase(client, postgresContainer);
+    await closeDatabase(client);
   });
 
   describe("POST /api/v1/auth/register", () => {
@@ -53,7 +50,7 @@ describe("AuthController", () => {
 
       expect(response.status).toBe(201);
       expect(response.headers["set-cookie"]).toBeDefined();
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.username).toBe(mockedRegisterPayload.username);
     });
 
     it("should return 400 if user already exists", async () => {
@@ -69,7 +66,7 @@ describe("AuthController", () => {
 
       expect(response.status).toBe(201);
       expect(response.headers["set-cookie"]).toBeDefined();
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.username).toBe(mockedRegisterPayload.username);
 
       expect(response2.status).toBe(400);
       expect(response2.body).toHaveProperty("message", "User with that email already exists");
@@ -111,7 +108,7 @@ describe("AuthController", () => {
         .send(mockedLoginPayload);
 
       expect(response.status).toBe(200);
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.username).toBe(username);
     });
   });
 });

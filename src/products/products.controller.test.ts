@@ -1,4 +1,3 @@
-import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import App from "app";
 import { Client } from "pg";
 import { ProductHttpController } from "./products.controller";
@@ -22,12 +21,10 @@ import { bulkInsertProducts } from "./mocks/products.mock";
 describe("ProductsController", () => {
   let client: Client;
   let app: App;
-  let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
-    const { client: freshClient, postgresContainer: freshContainer } = await prepareDatabase();
+    const { client: freshClient } = await prepareDatabase();
     client = freshClient;
-    postgresContainer = freshContainer;
 
     const DB = createMockDatabaseService(client);
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
@@ -48,7 +45,7 @@ describe("ProductsController", () => {
   });
 
   afterAll(async () => {
-    await closeDatabase(client, postgresContainer);
+    await closeDatabase(client);
   });
 
   describe("GET /api/v1/products", () => {
@@ -82,11 +79,12 @@ describe("ProductsController", () => {
 
     it("should create a product when authenticated", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const productName = faker.commerce.productName();
 
       const response = await request(app.getServer())
         .post("/api/v1/products")
         .set("Cookie", authCookie)
-        .field("name", faker.commerce.productName())
+        .field("name", productName)
         .field("description", faker.commerce.productDescription())
         .attach("image", Buffer.from("fake-image-data"), {
           filename: "test-image.jpg",
@@ -94,7 +92,7 @@ describe("ProductsController", () => {
         });
 
       expect(response.status).toBe(201);
-      expect(response.body.data).toMatchObject({ id: 1 });
+      expect(response.body.data.name).toBe(productName);
     });
   });
 });

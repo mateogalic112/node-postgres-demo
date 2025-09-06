@@ -1,9 +1,18 @@
 import { DatabaseService } from "interfaces/database.interface";
 import { User } from "./users.validation";
 import { RegisterPayload } from "auth/auth.validation";
+import { PaginatedRequestParams } from "api/api.validations";
 
 export class UsersRepository {
   constructor(private readonly DB: DatabaseService) {}
+
+  public async getUsers(params: PaginatedRequestParams) {
+    const result = await this.DB.query<User>(
+      "SELECT * FROM users WHERE id > $1 ORDER BY id ASC LIMIT $2",
+      [params.cursor ?? 0, params.limit]
+    );
+    return result.rows;
+  }
 
   public async findUserById(id: number) {
     const result = await this.DB.query<User>("SELECT * FROM users WHERE id = $1", [id]);
