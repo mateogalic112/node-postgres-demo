@@ -1,7 +1,7 @@
 import { AuthService } from "./auth.service";
 import { UsersRepository } from "users/users.repository";
 import * as bcrypt from "bcrypt";
-import { BadRequestError, UnauthorizedError } from "api/api.errors";
+import { BadRequestError, UnauthenticatedError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { DatabaseService } from "interfaces/database.interface";
 import { UserService } from "users/users.service";
@@ -118,12 +118,12 @@ describe("AuthService", () => {
     });
 
     it("should throw an error if no userId provided", async () => {
-      await expect(authService.isLoggedIn(undefined)).rejects.toThrow(UnauthorizedError);
+      await expect(authService.isLoggedIn(undefined)).rejects.toThrow(UnauthenticatedError);
     });
 
     it("should throw an error if user not found", async () => {
       mockUsersRepository.findUserById.mockResolvedValue(null);
-      await expect(authService.isLoggedIn()).rejects.toThrow(UnauthorizedError);
+      await expect(authService.isLoggedIn()).rejects.toThrow(UnauthenticatedError);
     });
   });
 });

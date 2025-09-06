@@ -18,6 +18,9 @@ import { BidHttpController } from "bids/bids.controller";
 import { AuctionSocketController } from "auctions/auctions.socket";
 import { PostgresService } from "services/postgres.service";
 import { LoggerService } from "services/logger.service";
+import { RolesService } from "roles/roles.service";
+import { RolesRepository } from "roles/roles.repository";
+import { UsersHttpController } from "users/users.controller";
 
 const DB = PostgresService.getInstance();
 
@@ -35,12 +38,15 @@ const bidService = new BidService(new BidRepository(DB), DB, LoggerService.getIn
 
 const authService = new AuthService(usersService);
 
+const rolesService = new RolesService(new RolesRepository(DB));
+
 const app = new App(
   [
     new AuthHttpController(authService),
     new ProductHttpController(productService, authService),
     new AuctionHttpController(auctionService, authService),
-    new BidHttpController(bidService)
+    new BidHttpController(bidService),
+    new UsersHttpController(authService, rolesService, usersService)
   ],
   [
     new AuctionSocketController(auctionService),

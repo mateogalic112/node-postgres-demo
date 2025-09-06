@@ -20,15 +20,15 @@ export class BadRequestError extends HttpError {
   }
 }
 
-export class UnauthorizedError extends HttpError {
+export class UnauthenticatedError extends HttpError {
   constructor(message?: string) {
-    super(401, message || "Unauthorized");
+    super(401, message || "Unauthenticated");
   }
 }
 
 export class ForbiddenError extends HttpError {
   constructor(message?: string) {
-    super(403, message || "Forbidden");
+    super(403, message || "Lacking access");
   }
 }
 
