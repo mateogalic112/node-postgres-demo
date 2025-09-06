@@ -1,4 +1,3 @@
-import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { createMockDatabaseService } from "__tests__/mocks";
 import App from "app";
 import { Client } from "pg";
@@ -23,18 +22,12 @@ import { User } from "./users.validation";
 describe("UsersController", () => {
   let client: Client;
   let app: App;
-  let postgresContainer: StartedPostgreSqlContainer;
   let adminUser: User;
 
   beforeAll(async () => {
-    const {
-      client: freshClient,
-      postgresContainer: freshContainer,
-      adminUser: freshAdminUser
-    } = await prepareDatabase();
+    const { client: freshClient, adminUser: freshAdminUser } = await prepareDatabase();
 
     client = freshClient;
-    postgresContainer = freshContainer;
     adminUser = freshAdminUser;
 
     const DB = createMockDatabaseService(client);
@@ -60,7 +53,7 @@ describe("UsersController", () => {
   });
 
   afterAll(async () => {
-    await closeDatabase(client, postgresContainer);
+    await closeDatabase(client);
   });
 
   describe("GET /api/v1/users", () => {
@@ -92,7 +85,9 @@ describe("UsersController", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.length).toBe(10);
-      expect(response.body.nextCursor).toMatchObject({ id: 10 });
+      // The nextCursor should be the ID of the 10th user in the response
+      const expectedNextCursorId = response.body.data[9].id; // 0-indexed, so 9th element is 10th user
+      expect(response.body.nextCursor).toMatchObject({ id: expectedNextCursorId });
     });
 
     it("should return paginated users without next cursor", async () => {

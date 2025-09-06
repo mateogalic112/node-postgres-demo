@@ -3,7 +3,6 @@ import { AuthHttpController } from "./auth.controller";
 import request from "supertest";
 import { AuthService } from "./auth.service";
 import { Client } from "pg";
-import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
 import {
@@ -18,12 +17,10 @@ import { createMockedLoginPayload, createMockedRegisterPayload } from "./mocks/a
 describe("AuthController", () => {
   let client: Client;
   let app: App;
-  let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
-    const { client: freshClient, postgresContainer: freshContainer } = await prepareDatabase();
+    const { client: freshClient } = await prepareDatabase();
     client = freshClient;
-    postgresContainer = freshContainer;
 
     const DB = createMockDatabaseService(client);
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
@@ -40,7 +37,7 @@ describe("AuthController", () => {
   });
 
   afterAll(async () => {
-    await closeDatabase(client, postgresContainer);
+    await closeDatabase(client);
   });
 
   describe("POST /api/v1/auth/register", () => {
