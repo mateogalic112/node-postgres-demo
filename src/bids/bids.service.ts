@@ -2,10 +2,10 @@ import { LoggerService } from "services/logger.service";
 import { BidRepository } from "./bids.repository";
 import { bidSchema, CreateBidPayload } from "./bids.validation";
 import { User } from "users/users.validation";
-import { Money } from "money/money.model";
 import { BadRequestError, InternalServerError } from "api/api.errors";
 import { DatabaseService } from "interfaces/database.interface";
 import { PgError } from "database/errors";
+import { getFormattedAmount } from "utils/currency";
 
 export class BidService {
   private readonly MINIMUM_BID_INCREASE_PERCENTAGE = 10;
@@ -92,14 +92,11 @@ export class BidService {
     const minimumBidIncreaseAmount = Math.round(
       startingPriceInCents * (this.MINIMUM_BID_INCREASE_PERCENTAGE / 100)
     );
-    const minimumAcceptableBid = new Money(
-      Math.max(highestBidInCents, startingPriceInCents) + minimumBidIncreaseAmount
-    );
+    const minimumAcceptableBid =
+      Math.max(highestBidInCents, startingPriceInCents) + minimumBidIncreaseAmount;
 
-    if (currentBidInCents < minimumAcceptableBid.getAmountInCents()) {
-      throw new BadRequestError(
-        `Bid must be at least ${minimumAcceptableBid.getFormattedAmount()}`
-      );
+    if (currentBidInCents < minimumAcceptableBid) {
+      throw new BadRequestError(`Bid must be at least ${getFormattedAmount(minimumAcceptableBid)}`);
     }
   }
 
