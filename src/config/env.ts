@@ -23,5 +23,7 @@ export const env = cleanEnv(process.env, {
   AWS_S3_BUCKET: str(),
 
   ADMIN_EMAIL: str(),
-  RESEND_API_KEY: str()
+  RESEND_API_KEY: str(),
+
+  OPENAI_API_KEY: str()
 });
