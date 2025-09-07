@@ -21,6 +21,7 @@ import { LoggerService } from "services/logger.service";
 import { RolesService } from "roles/roles.service";
 import { RolesRepository } from "roles/roles.repository";
 import { UsersHttpController } from "users/users.controller";
+import { BotHttpController } from "bot/bot.controller";
 
 const DB = PostgresService.getInstance();
 
@@ -46,7 +47,8 @@ const app = new App(
     new ProductHttpController(productService, authService),
     new AuctionHttpController(auctionService, authService),
     new BidHttpController(bidService),
-    new UsersHttpController(authService, rolesService, usersService)
+    new UsersHttpController(authService, rolesService, usersService),
+    new BotHttpController(productService)
   ],
   [
     new AuctionSocketController(auctionService),
