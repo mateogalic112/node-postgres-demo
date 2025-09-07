@@ -3,12 +3,16 @@ import { ModelMessage, stepCountIs, streamText, tool } from "ai";
 import { HttpController } from "api/api.controllers";
 import asyncMiddleware from "middleware/async.middleware";
 import { ProductService } from "products/products.service";
+import { LoggerService } from "services/logger.service";
 import z from "zod";
 
 const messages: ModelMessage[] = [];
 
 export class BotHttpController extends HttpController {
-  constructor(private readonly productsService: ProductService) {
+  constructor(
+    private readonly productsService: ProductService,
+    private readonly logger: LoggerService
+  ) {
     super("/chat");
     this.initializeRoutes();
   }
@@ -28,7 +32,7 @@ export class BotHttpController extends HttpController {
       tools: {
         get_products: tool({
           description:
-            "Access to all products in the platform. Use bigger limits to get more products.",
+            "Access to all products in the platform. Use bigger limits to get more products like 100 or more.",
           inputSchema: z.object({
             limit: z.number().describe("The limit of products to get"),
             cursor: z.number().describe("The cursor to get the next products")
@@ -52,6 +56,11 @@ export class BotHttpController extends HttpController {
             };
           }
         })
+      },
+      onStepFinish: async ({ toolResults }) => {
+        if (toolResults.length) {
+          this.logger.log(JSON.stringify(toolResults, null, 2));
+        }
       }
     });
 

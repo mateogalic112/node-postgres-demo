@@ -48,7 +48,7 @@ const app = new App(
     new AuctionHttpController(auctionService, authService),
     new BidHttpController(bidService),
     new UsersHttpController(authService, rolesService, usersService),
-    new BotHttpController(productService)
+    new BotHttpController(productService, LoggerService.getInstance())
   ],
   [
     new AuctionSocketController(auctionService),
