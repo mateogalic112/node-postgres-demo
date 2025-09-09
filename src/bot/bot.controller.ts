@@ -1,12 +1,10 @@
 import { openai } from "@ai-sdk/openai";
-import { ModelMessage, stepCountIs, streamText, tool } from "ai";
+import { stepCountIs, streamText, tool, convertToModelMessages } from "ai";
 import { HttpController } from "api/api.controllers";
 import asyncMiddleware from "middleware/async.middleware";
 import { ProductService } from "products/products.service";
 import { LoggerService } from "services/logger.service";
 import z from "zod";
-
-const messages: ModelMessage[] = [];
 
 export class BotHttpController extends HttpController {
   constructor(
@@ -22,13 +20,14 @@ export class BotHttpController extends HttpController {
   }
 
   private sendMessage = asyncMiddleware(async (request, response) => {
-    const { message } = request.body;
-    messages.push({ role: "user", content: message });
+    const { messages } = request.body;
 
     const result = streamText({
       model: openai("gpt-4o"),
-      messages,
+      messages: convertToModelMessages(messages),
       stopWhen: stepCountIs(5),
+      system:
+        "You are a helpful assistant that can recommend products to the user. Before giving a recommendation, you must ask the user if they want to see the products. When returning product options, you must return maximum of 3 products.",
       tools: {
         get_products: tool({
           description:
@@ -45,7 +44,8 @@ export class BotHttpController extends HttpController {
           }
         }),
         recommend_product: tool({
-          description: "Recommend a product for the user from the products in the platform.",
+          description:
+            "Recommend a product for the user from the products in the platform. Recommend only 1 product.",
           inputSchema: z.object({
             productId: z.number().describe("The product id to recommend")
           }),
