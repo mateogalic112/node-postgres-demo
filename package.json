@@ -36,6 +36,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.0",
     "pg": "^8.13.0",
+    "pgvector": "^0.2.1",
     "resend": "^4.5.1",
     "socket.io": "^4.8.1",
     "tsx": "^4.19.2",
