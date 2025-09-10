@@ -1,7 +1,9 @@
-import { CreateProductPayload, Product } from "./products.validation";
+import { Embedding } from "ai";
+import { CreateProductPayload, Product, ProductEmbedding } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
 import { User } from "users/users.validation";
+import { LoggerService } from "services/logger.service";
 
 export class ProductRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -31,5 +33,22 @@ export class ProductRepository {
       [payload.name, payload.description, payload.imageUrl, user.id]
     );
     return result.rows[0];
+  }
+
+  public async createEmbedding(productId: number, embeddings: Embedding[]) {
+    // Create placeholders for batch insert - each embedding needs its own parameter
+    const values = embeddings.map((_, index) => `($1, $${index + 2}::vector)`).join(", ");
+
+    // Format each embedding as a vector string for PostgreSQL
+    const vectorStrings = embeddings.map((embedding) => `[${embedding.join(",")}]`);
+
+    await this.DB.query<ProductEmbedding>(
+      `INSERT INTO products_embeddings (product_id, embedding) VALUES ${values}`,
+      [productId, ...vectorStrings]
+    );
+
+    LoggerService.getInstance().log(
+      `Created ${embeddings.length} embeddings for product ${productId}`
+    );
   }
 }
