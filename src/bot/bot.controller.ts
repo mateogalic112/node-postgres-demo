@@ -26,8 +26,8 @@ export class BotHttpController extends HttpController {
       model: openai("gpt-4o"),
       messages: convertToModelMessages(messages),
       stopWhen: stepCountIs(5),
-      system:
-        "You are a helpful assistant that can recommend products to the user. Before giving a recommendation, you must ask the user if they want to see the products. When returning product options, you must return maximum of 3 products.",
+      system: `You are a helpful assistant that can recommend products to the user. Before giving a recommendation, 
+        you must ask the user if they want to see the products. When returning product options, you must return maximum of 3 products.`,
       tools: {
         get_products: tool({
           description:
