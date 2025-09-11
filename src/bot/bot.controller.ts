@@ -28,20 +28,23 @@ export class BotHttpController extends HttpController {
       stopWhen: stepCountIs(5),
       system: `You are a helpful assistant that can recommend products to the user. Check your knowledge base before answering any questions. 
       Only respond to questions using information from tool calls. When returning products, you must return maximum of 3.
-      If no relevant information is found in the tool calls, respond, "Sorry, I don't know, try to use website filters."`,
+      Every time you return information about a product, you must use the recommend_product tool. After calling this tool, explain in one sentence 
+      why you have chosen the product based on how user can benefit from it in real life, how can it improve their life. Use pure text, without any markdown, images or links.`,
       tools: {
         find_relevant_products: tool({
           description:
-            "Get information from your knowledge base about products to answer questions.",
+            "Get information from your knowledge base about products to answer questions. Every time explain why you have chosen the products.",
           inputSchema: z.object({
             query: z.string().describe("The query to find relevant products")
           }),
-          execute: async ({ query }) => {
-            const products = await this.productsService.findRelevantProducts(query);
-            return {
-              products
-            };
-          }
+          execute: async ({ query }) => this.productsService.findRelevantProducts(query)
+        }),
+        recommend_product: tool({
+          description: "Recommend product to the user.",
+          inputSchema: z.object({
+            productId: z.number().describe("The product id to recommend")
+          }),
+          execute: async ({ productId }) => this.productsService.getProductById(productId)
         })
       },
       onStepFinish: async ({ toolResults }) => {

@@ -31,23 +31,18 @@ export class ProductService {
   }
 
   public async findRelevantProducts(query: string) {
-    try {
-      const embeddedQuery = await this.embeddingService.generateEmbedding(query);
-      if (!embeddedQuery || !embeddedQuery.embedding) {
-        return [];
-      }
-      const relevantProductIds = await this.productRepository.findRelevantProducts(
-        embeddedQuery.embedding,
-        this.MAX_RELEVANT_PRODUCTS
-      );
-      const products = await this.productRepository.findProductByIds(
-        relevantProductIds.map((product) => product.product_id)
-      );
-      return products.map((product) => productSchema.parse(product));
-    } catch (error) {
-      console.log({ error });
+    const embeddedQuery = await this.embeddingService.generateEmbedding(query);
+    if (!embeddedQuery || !embeddedQuery.embedding) {
       return [];
     }
+    const relevantProductIds = await this.productRepository.findRelevantProducts(
+      embeddedQuery.embedding,
+      this.MAX_RELEVANT_PRODUCTS
+    );
+    const products = await this.productRepository.findProductByIds(
+      relevantProductIds.map((product) => product.product_id)
+    );
+    return products.map((product) => productSchema.parse(product));
   }
 
   public async createProduct({ user, payload }: { user: User; payload: CreateProductPayload }) {
