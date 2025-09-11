@@ -22,6 +22,7 @@ import { RolesService } from "roles/roles.service";
 import { RolesRepository } from "roles/roles.repository";
 import { UsersHttpController } from "users/users.controller";
 import { BotHttpController } from "bot/bot.controller";
+import { EmbeddingService } from "services/embedding.service";
 
 const DB = PostgresService.getInstance();
 
@@ -30,7 +31,8 @@ const usersService = new UserService(new UsersRepository(DB));
 const productService = new ProductService(
   new ProductRepository(DB),
   ResendService.getInstance(),
-  AWSService.getInstance()
+  AWSService.getInstance(),
+  EmbeddingService.getInstance()
 );
 
 const auctionService = new AuctionService(new AuctionRepository(DB), ResendService.getInstance());

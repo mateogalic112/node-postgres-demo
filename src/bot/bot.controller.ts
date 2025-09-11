@@ -1,5 +1,5 @@
 import { openai } from "@ai-sdk/openai";
-import { stepCountIs, streamText, tool, convertToModelMessages } from "ai";
+import { stepCountIs, streamText, tool, convertToModelMessages, UIMessage } from "ai";
 import { HttpController } from "api/api.controllers";
 import asyncMiddleware from "middleware/async.middleware";
 import { ProductService } from "products/products.service";
@@ -20,39 +20,26 @@ export class BotHttpController extends HttpController {
   }
 
   private sendMessage = asyncMiddleware(async (request, response) => {
-    const { messages } = request.body;
+    const { messages }: { messages: UIMessage[] } = request.body;
 
     const result = streamText({
       model: openai("gpt-4o"),
       messages: convertToModelMessages(messages),
       stopWhen: stepCountIs(5),
-      system: `You are a helpful assistant that can recommend products to the user. Before giving a recommendation, 
-        you must ask the user if they want to see the products. When returning product options, you must return maximum of 3 products.`,
+      system: `You are a helpful assistant that can recommend products to the user. Check your knowledge base before answering any questions. 
+      Only respond to questions using information from tool calls. When returning products, you must return maximum of 3.
+      If no relevant information is found in the tool calls, respond, "Sorry, I don't know, try to use website filters."`,
       tools: {
-        get_products: tool({
+        find_relevant_products: tool({
           description:
-            "Access to all products in the platform. Use bigger limits to get more products like 100 or more.",
+            "Get information from your knowledge base about products to answer questions.",
           inputSchema: z.object({
-            limit: z.number().describe("The limit of products to get"),
-            cursor: z.number().describe("The cursor to get the next products")
+            query: z.string().describe("The query to find relevant products")
           }),
-          execute: async ({ limit, cursor }) => {
-            const products = await this.productsService.getProducts({ limit, cursor });
+          execute: async ({ query }) => {
+            const products = await this.productsService.findRelevantProducts(query);
             return {
               products
-            };
-          }
-        }),
-        recommend_product: tool({
-          description:
-            "Recommend a product for the user from the products in the platform. Recommend only 1 product.",
-          inputSchema: z.object({
-            productId: z.number().describe("The product id to recommend")
-          }),
-          execute: async ({ productId }) => {
-            const product = await this.productsService.getProductById(productId);
-            return {
-              product
             };
           }
         })

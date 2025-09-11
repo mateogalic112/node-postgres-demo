@@ -24,6 +24,11 @@ export class ProductRepository {
     return result.rows[0];
   }
 
+  public async findProductByIds(ids: number[]) {
+    const result = await this.DB.query<Product>("SELECT * FROM products WHERE id IN ($1)", [ids]);
+    return result.rows;
+  }
+
   public async createProduct(
     user: User,
     payload: CreateProductPayload["body"] & { imageUrl: string | null }
@@ -33,6 +38,18 @@ export class ProductRepository {
       [payload.name, payload.description, payload.imageUrl, user.id]
     );
     return result.rows[0];
+  }
+
+  public async findRelevantProducts(embeddedQuery: Embedding, limit: number) {
+    const result = await this.DB.query<Pick<ProductEmbedding, "id" | "product_id">>(
+      `SELECT 
+        e.id, e.product_id, 1 - (e.embedding <=> $1::vector) AS cosine_similarity FROM products_embeddings e
+        WHERE 1 - (e.embedding <=> $1::vector) > 0.5
+        ORDER BY cosine_similarity DESC
+        LIMIT ${limit}`,
+      [embeddedQuery]
+    );
+    return result.rows;
   }
 
   public async createEmbedding(productId: number, embeddings: Embedding[]) {

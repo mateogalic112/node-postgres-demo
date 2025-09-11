@@ -8,10 +8,13 @@ import { NotFoundError } from "api/api.errors";
 import { EmbeddingService } from "services/embedding.service";
 
 export class ProductService {
+  private readonly MAX_RELEVANT_PRODUCTS = 3;
+
   constructor(
     private readonly productRepository: ProductRepository,
     private readonly mailService: MailService,
-    private readonly filesService: FilesService
+    private readonly filesService: FilesService,
+    private readonly embeddingService: EmbeddingService
   ) {}
 
   public async getProducts(params: PaginatedRequestParams) {
@@ -25,6 +28,21 @@ export class ProductService {
       throw new NotFoundError(`Product with id ${id} not found`);
     }
     return productSchema.parse(product);
+  }
+
+  public async findRelevantProducts(query: string) {
+    const embeddedQuery = await this.embeddingService.generateEmbedding(query);
+    if (!embeddedQuery) {
+      return [];
+    }
+    const relevantProductIds = await this.productRepository.findRelevantProducts(
+      embeddedQuery.embedding,
+      this.MAX_RELEVANT_PRODUCTS
+    );
+    const products = await this.productRepository.findProductByIds(
+      relevantProductIds.map((product) => product.product_id)
+    );
+    return products.map((product) => productSchema.parse(product));
   }
 
   public async createProduct({ user, payload }: { user: User; payload: CreateProductPayload }) {
