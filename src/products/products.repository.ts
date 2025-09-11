@@ -25,7 +25,7 @@ export class ProductRepository {
   }
 
   public async findProductByIds(ids: number[]) {
-    const result = await this.DB.query<Product>("SELECT * FROM products WHERE id IN ($1)", [ids]);
+    const result = await this.DB.query<Product>("SELECT * FROM products WHERE id = ANY($1)", [ids]);
     return result.rows;
   }
 
@@ -47,7 +47,7 @@ export class ProductRepository {
         WHERE 1 - (e.embedding <=> $1::vector) > 0.5
         ORDER BY cosine_similarity DESC
         LIMIT ${limit}`,
-      [embeddedQuery]
+      [`[${embeddedQuery.join(",")}]`]
     );
     return result.rows;
   }
