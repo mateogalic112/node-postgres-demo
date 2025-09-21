@@ -1,9 +1,10 @@
 import { embed, EmbeddingModel, embedMany } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { LoggerService } from "./logger.service";
+import { EmbeddingService } from "interfaces/embeddings.interface";
 
-export class EmbeddingService {
-  private static instance: EmbeddingService;
+export class OpenAIService implements EmbeddingService {
+  private static instance: OpenAIService;
   private readonly embeddingModel: EmbeddingModel<string>;
 
   private constructor() {
@@ -11,10 +12,10 @@ export class EmbeddingService {
   }
 
   public static getInstance() {
-    if (!EmbeddingService.instance) {
-      EmbeddingService.instance = new EmbeddingService();
+    if (!OpenAIService.instance) {
+      OpenAIService.instance = new OpenAIService();
     }
-    return EmbeddingService.instance;
+    return OpenAIService.instance;
   }
 
   public async generateEmbeddings(value: string) {

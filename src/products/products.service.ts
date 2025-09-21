@@ -5,7 +5,7 @@ import { PaginatedRequestParams } from "api/api.validations";
 import { User } from "users/users.validation";
 import { FilesService } from "interfaces/files.interface";
 import { NotFoundError } from "api/api.errors";
-import { EmbeddingService } from "services/embedding.service";
+import { EmbeddingService } from "interfaces/embeddings.interface";
 
 export class ProductService {
   private readonly MAX_RELEVANT_PRODUCTS = 3;
@@ -55,9 +55,7 @@ export class ProductService {
       imageUrl
     });
 
-    const embeddings = await EmbeddingService.getInstance().generateEmbeddings(
-      newProduct.description
-    );
+    const embeddings = await this.embeddingService.generateEmbeddings(newProduct.description);
 
     await this.productRepository.createEmbedding(newProduct.id, embeddings);
 

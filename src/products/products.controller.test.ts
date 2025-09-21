@@ -15,7 +15,12 @@ import {
   prepareDatabase,
   resetDatabase
 } from "__tests__/setup";
-import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
+import {
+  createMockDatabaseService,
+  embeddingService,
+  filesService,
+  mailService
+} from "__tests__/mocks";
 import { bulkInsertProducts } from "./mocks/products.mock";
 
 describe("ProductsController", () => {
@@ -28,7 +33,12 @@ describe("ProductsController", () => {
 
     const DB = createMockDatabaseService(client);
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
-    const productService = new ProductService(new ProductRepository(DB), mailService, filesService);
+    const productService = new ProductService(
+      new ProductRepository(DB),
+      mailService,
+      filesService,
+      embeddingService
+    );
 
     app = new App(
       [new AuthHttpController(authService), new ProductHttpController(productService, authService)],

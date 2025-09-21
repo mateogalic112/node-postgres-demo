@@ -58,7 +58,7 @@ export const getErrorStatus = (error: unknown): number => {
 
 export const getErrorMessage = (error: unknown): string => {
   if (error instanceof TokenExpiredError) return error.message;
-  if (error instanceof ZodError) return error.errors.map((e) => e.message).join(", ");
+  if (error instanceof ZodError) return error.issues.map((e) => e.message).join(", ");
   if (error instanceof HttpError) return error.message;
   if (error instanceof DatabaseError) return error.detail || error.message;
   if (error instanceof MulterError) {

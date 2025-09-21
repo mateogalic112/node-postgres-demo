@@ -11,7 +11,12 @@ import { AuctionHttpController } from "./auctions.controller";
 import { ProductHttpController } from "products/products.controller";
 import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
-import { createMockDatabaseService, filesService, mailService } from "__tests__/mocks";
+import {
+  createMockDatabaseService,
+  embeddingService,
+  filesService,
+  mailService
+} from "__tests__/mocks";
 import {
   closeDatabase,
   createAuctionRequest,
@@ -35,7 +40,12 @@ describe("AuctionsController", () => {
     const DB = createMockDatabaseService(client);
     const authService = new AuthService(new UserService(new UsersRepository(DB)));
     const auctionService = new AuctionService(new AuctionRepository(DB), mailService);
-    const productService = new ProductService(new ProductRepository(DB), mailService, filesService);
+    const productService = new ProductService(
+      new ProductRepository(DB),
+      mailService,
+      filesService,
+      embeddingService
+    );
 
     app = new App(
       [
