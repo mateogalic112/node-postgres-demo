@@ -23,7 +23,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.0-beta.16",
     "@aws-sdk/client-s3": "^3.821.0",
+    "ai": "^5.0.0-beta.34",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -34,11 +36,12 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.0",
     "pg": "^8.13.0",
+    "pgvector": "^0.2.1",
     "resend": "^4.5.1",
     "socket.io": "^4.8.1",
     "tsx": "^4.19.2",
     "winston": "^3.17.0",
-    "zod": "^3.23.8"
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.3.0",

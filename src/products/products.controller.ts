@@ -1,6 +1,10 @@
 import { HttpController } from "api/api.controllers";
 import { ProductService } from "./products.service";
-import { createProductSchema, productImageSchema } from "./products.validation";
+import {
+  createProductSchema,
+  getRelevantProductsSchema,
+  productImageSchema
+} from "./products.validation";
 import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
 import { idSchema, paginatedRequestSchema } from "api/api.validations";
@@ -20,6 +24,7 @@ export class ProductHttpController extends HttpController {
 
   protected initializeRoutes() {
     this.router.get(`${this.path}`, this.getProducts);
+    this.router.get(`${this.path}/relevant-products`, this.findRelevantProducts);
     this.router.get(`${this.path}/:id`, this.getProductById);
     this.router.post(
       `${this.path}`,
@@ -42,6 +47,12 @@ export class ProductHttpController extends HttpController {
     const { id } = idSchema.parse(request.params);
     const product = await this.productService.getProductById(id);
     response.json(formatResponse(product));
+  });
+
+  private findRelevantProducts = asyncMiddleware(async (request, response) => {
+    const { query } = getRelevantProductsSchema.parse(request.query);
+    const products = await this.productService.findRelevantProducts(query);
+    response.json(formatResponse(products));
   });
 
   private createProduct = asyncMiddleware(async (request, response) => {

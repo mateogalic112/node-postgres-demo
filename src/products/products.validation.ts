@@ -27,3 +27,19 @@ export const productImageSchema = {
   maxSizeMB: 5,
   allowedFormats: ".jpg|.jpeg|.png|.webp"
 };
+
+export const productEmbeddingSchema = z.object({
+  id: z.number().int().positive(),
+  product_id: z.number().int().positive(),
+  embedding: z.array(z.number()).length(1536),
+  created_at: z.date(),
+  updated_at: z.date()
+});
+
+export type ProductEmbedding = z.infer<typeof productEmbeddingSchema>;
+
+export const getRelevantProductsSchema = z.object({
+  query: z.string().min(3)
+});
+
+export type GetRelevantProductsPayload = z.infer<typeof getRelevantProductsSchema>;

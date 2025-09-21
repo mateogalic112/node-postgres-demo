@@ -45,7 +45,7 @@ else
     -e POSTGRES_USER=${POSTGRES_USER_NAME} \
     -e POSTGRES_DB=${POSTGRES_DB_NAME} \
     -p 5432:5432 \
-    postgres > /dev/null
+    pgvector/pgvector:pg17 > /dev/null
 
   echo "Waiting for PostgreSQL to be ready..."
   until docker exec ${CONTAINER_NAME} pg_isready -U postgres >/dev/null 2>&1; do
