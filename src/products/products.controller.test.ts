@@ -96,6 +96,7 @@ describe("ProductsController", () => {
         .set("Cookie", authCookie)
         .field("name", productName)
         .field("description", faker.commerce.productDescription())
+        .field("price_in_cents", faker.number.int({ min: 100, max: 100000 }))
         .attach("image", Buffer.from("fake-image-data"), {
           filename: "test-image.jpg",
           contentType: "image/jpeg"

@@ -34,8 +34,8 @@ export class ProductRepository {
     payload: CreateProductPayload["body"] & { imageUrl: string | null }
   ) {
     const result = await this.DB.query<Product>(
-      "INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4) RETURNING *",
-      [payload.name, payload.description, payload.imageUrl, user.id]
+      "INSERT INTO products (name, description, image_url, owner_id, price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [payload.name, payload.description, payload.imageUrl, user.id, payload.price_in_cents]
     );
     return result.rows[0];
   }
