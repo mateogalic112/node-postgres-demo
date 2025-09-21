@@ -4,7 +4,7 @@ import { RegisterPayload } from "auth/auth.validation";
 import { CreateProductPayload } from "products/products.validation";
 import { faker } from "@faker-js/faker";
 import { env } from "config/env";
-import { CreateRolePayload } from "roles/roles.validation";
+import { CreateRolePayload, RoleName } from "roles/roles.validation";
 
 const users: RegisterPayload[] = Array.from({ length: 2 }, () => ({
   username: faker.internet.displayName(),
@@ -24,11 +24,11 @@ const products: Array<CreateProductPayload["body"] & { image_url: string | null 
 
 const roles: Array<CreateRolePayload["body"]> = [
   {
-    name: "admin",
+    name: RoleName.ADMIN,
     description: "Administrator with full system access"
   },
   {
-    name: "user",
+    name: RoleName.USER,
     description: "Regular user with standard permissions"
   }
 ];
