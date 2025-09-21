@@ -12,11 +12,14 @@ export const filesService: FilesService = {
   uploadFile: jest.fn().mockResolvedValue("https://example.com/image.jpg")
 };
 
+// Create a mock embedding vector with 1536 dimensions
+const mockEmbedding = Array.from({ length: 1536 }, (_) => Math.random());
+
 export const embeddingService: EmbeddingService = {
-  generateEmbeddings: jest.fn().mockResolvedValue([1, 2, 3]),
+  generateEmbeddings: jest.fn().mockResolvedValue([mockEmbedding]),
   generateEmbedding: jest
     .fn()
-    .mockResolvedValue({ embedding: [1, 2, 3], usage: { promptTokens: 10, totalTokens: 10 } })
+    .mockResolvedValue({ embedding: mockEmbedding, usage: { promptTokens: 10, totalTokens: 10 } })
 };
 
 export const createMockDatabaseService = (client: Client): DatabaseService => {

@@ -8,7 +8,7 @@ let connectionString: string;
 
 export default async function globalSetup() {
   // Start the postgres container once for all tests
-  postgresContainer = await new PostgreSqlContainer("postgres:15").start();
+  postgresContainer = await new PostgreSqlContainer("pgvector/pgvector:pg15").start();
   connectionString = postgresContainer.getConnectionUri();
 
   // Store connection string in global for other test files
