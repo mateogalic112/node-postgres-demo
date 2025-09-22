@@ -1,13 +1,14 @@
 import { Client } from "pg";
 import { migrate } from "./setup";
+import { env } from "config/env";
 
 async function main() {
   const client = new Client({
-    host: process.env.POSTGRES_HOST,
-    user: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-    database: process.env.POSTGRES_DB,
-    port: process.env.POSTGRES_PORT ? parseInt(process.env.POSTGRES_PORT) : undefined
+    host: env.POSTGRES_HOST,
+    user: env.POSTGRES_USER,
+    password: env.POSTGRES_PASSWORD,
+    database: env.POSTGRES_DB,
+    port: env.POSTGRES_PORT
   });
 
   await client.connect();

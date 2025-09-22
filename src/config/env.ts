@@ -25,5 +25,7 @@ export const env = cleanEnv(process.env, {
   ADMIN_EMAIL: str(),
   RESEND_API_KEY: str(),
 
-  OPENAI_API_KEY: str()
+  OPENAI_API_KEY: str(),
+
+  STRIPE_SECRET_KEY: str()
 });
