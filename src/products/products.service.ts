@@ -6,7 +6,6 @@ import { User } from "users/users.validation";
 import { FilesService } from "interfaces/files.interface";
 import { NotFoundError } from "api/api.errors";
 import { EmbeddingService } from "interfaces/embeddings.interface";
-import { PaymentsService } from "interfaces/payments.interface";
 
 export class ProductService {
   private readonly MAX_RELEVANT_PRODUCTS = 3;
@@ -15,8 +14,7 @@ export class ProductService {
     private readonly productRepository: ProductRepository,
     private readonly mailService: MailService,
     private readonly filesService: FilesService,
-    private readonly embeddingService: EmbeddingService,
-    private readonly paymentsService: PaymentsService
+    private readonly embeddingService: EmbeddingService
   ) {}
 
   public async getProducts(params: PaginatedRequestParams) {
@@ -54,8 +52,6 @@ export class ProductService {
         ? await this.filesService.uploadFile(payload.file, `products/${crypto.randomUUID()}`)
         : null
     });
-
-    await this.paymentsService.createProduct(newProduct);
 
     await this.productRepository.createEmbedding(
       newProduct.id,

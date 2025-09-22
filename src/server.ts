@@ -23,7 +23,6 @@ import { RolesRepository } from "roles/roles.repository";
 import { UsersHttpController } from "users/users.controller";
 import { BotHttpController } from "bot/bot.controller";
 import { OpenAIService } from "services/openai";
-import { StripeService } from "services/stripe.service";
 
 const DB = PostgresService.getInstance();
 
@@ -33,8 +32,7 @@ const productService = new ProductService(
   new ProductRepository(DB),
   ResendService.getInstance(),
   AWSService.getInstance(),
-  OpenAIService.getInstance(),
-  StripeService.getInstance()
+  OpenAIService.getInstance()
 );
 
 const auctionService = new AuctionService(new AuctionRepository(DB), ResendService.getInstance());
