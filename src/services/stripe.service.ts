@@ -1,6 +1,5 @@
 import { env } from "config/env";
 import { PaymentsService } from "interfaces/payments.interface";
-import { Product } from "products/products.validation";
 import Stripe from "stripe";
 import { LoggerService } from "./logger.service";
 export class StripeService implements PaymentsService {
@@ -20,21 +19,12 @@ export class StripeService implements PaymentsService {
     return StripeService.instance;
   }
 
-  public async createProduct(product: Product) {
+  public async createCustomer(email: string) {
     try {
-      const newProduct = await this.stripe.products.create({
-        name: product.name,
-        description: product.description,
-        images: product.image_url ? [product.image_url] : undefined
+      const customer = await this.stripe.customers.create({
+        email
       });
-
-      await this.stripe.prices.create({
-        product: newProduct.id,
-        unit_amount: product.price_in_cents,
-        currency: "eur"
-      });
-
-      return newProduct.id;
+      return customer.id;
     } catch (error) {
       this.logger.error(String(error));
       return null;
