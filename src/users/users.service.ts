@@ -1,6 +1,6 @@
 import { RegisterPayload } from "auth/auth.validation";
 import { UsersRepository } from "./users.repository";
-import { userSchema } from "./users.validation";
+import { UpdateUserPayload, userSchema } from "./users.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 
 export class UserService {
@@ -29,6 +29,11 @@ export class UserService {
 
   public async createUser(payload: RegisterPayload) {
     const user = await this.usersRepository.createUser(payload);
+    return userSchema.parse(user);
+  }
+
+  public async updateUser(id: number, payload: UpdateUserPayload) {
+    const user = await this.usersRepository.updateUser(id, payload);
     return userSchema.parse(user);
   }
 }
