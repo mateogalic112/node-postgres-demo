@@ -17,21 +17,21 @@ export const createdOrderSchema = z.object({
   updated_at: z.date()
 });
 
-export const orderDetailSchema = z.object({
+export const createOrderDetailSchema = z.object({
   id: z.number().int().positive(),
   order_id: z.number().int().positive(),
   product_id: z.number().int().positive(),
   quantity: z.number().int().positive(),
   total_price_in_cents: z.number().int().positive()
 });
-export type OrderDetail = z.infer<typeof orderDetailSchema>;
+export type CreateOrderDetailPayload = z.infer<typeof createOrderDetailSchema>;
 
-export const orderDetailsSchema = z.array(orderDetailSchema);
+export const orderDetailsSchema = z.array(createOrderDetailSchema);
 
 export const orderSchema = z.object({
   id: z.number().int().positive(),
   buyer_id: z.number().int().positive(),
-  order_details: z.array(orderDetailSchema),
+  order_details: z.array(createOrderDetailSchema),
   created_at: z.date(),
   updated_at: z.date()
 });

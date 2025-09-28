@@ -1,5 +1,5 @@
 import { User } from "users/users.validation";
-import { Order, OrderDetail } from "./orders.validation";
+import { Order, CreateOrderDetailPayload } from "./orders.validation";
 import { PoolClient } from "pg";
 
 export class OrderRepository {
@@ -18,7 +18,7 @@ export class OrderRepository {
     orderId: number,
     payload: { line_items: { product_id: number; quantity: number; price_in_cents: number }[] }
   ) {
-    const result = await client.query<OrderDetail>(
+    const result = await client.query<CreateOrderDetailPayload>(
       `INSERT INTO order_details (order_id, product_id, quantity, total_price_in_cents) 
       VALUES ${payload.line_items.map((_, index) => `($${index * 4 + 1}, $${index * 4 + 2}, $${index * 4 + 3}, $${index * 4 + 4})`).join(", ")} 
       RETURNING *`,

@@ -25,7 +25,8 @@ describe("AuthService", () => {
     email: "test@example.com",
     password: "hashedPassword",
     created_at: new Date(),
-    updated_at: new Date()
+    updated_at: new Date(),
+    stripe_customer_id: null
   };
 
   beforeEach(() => {
