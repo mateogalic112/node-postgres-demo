@@ -3,8 +3,9 @@ import { OrderRepository } from "./orders.repository";
 import {
   createdOrderSchema,
   CreateOrderPayload,
-  orderDetailsSchema,
-  orderSchema
+  createOrderDetailsSchema,
+  orderSchema,
+  populatedOrderSchema
 } from "./orders.validation";
 import { DatabaseService } from "interfaces/database.interface";
 import { LoggerService } from "services/logger.service";
@@ -45,7 +46,7 @@ export class OrderService {
         newOrder.id,
         parsedPayload
       );
-      const orderDetails = orderDetailsSchema.parse(orderDetailsResult);
+      const orderDetails = createOrderDetailsSchema.parse(orderDetailsResult);
 
       await client.query("COMMIT");
 
@@ -66,5 +67,9 @@ export class OrderService {
     } finally {
       client.release();
     }
+  }
+
+  public async getPopulatedOrder(orderId: number) {
+    return populatedOrderSchema.parse(await this.orderRepository.getPopulatedOrder(orderId));
   }
 }

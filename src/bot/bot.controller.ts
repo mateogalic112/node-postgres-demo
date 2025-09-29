@@ -62,16 +62,11 @@ export class BotHttpController extends HttpController {
           }),
           execute: async ({ line_items }) => {
             try {
-              const order = await this.ordersService.createOrder({
+              const newOrder = await this.ordersService.createOrder({
                 user,
                 payload: { line_items }
               });
-              return {
-                success: true,
-                order_id: order.id,
-                total_items: order.order_details.length,
-                message: `Order #${order.id} created successfully with ${order.order_details.length} item(s)`
-              };
+              return this.ordersService.getPopulatedOrder(newOrder.id);
             } catch (error) {
               this.logger.error(`Failed to create order for user ${user.id}: ${error}`);
               return {

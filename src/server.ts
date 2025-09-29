@@ -47,7 +47,7 @@ const authService = new AuthService(usersService);
 const rolesService = new RolesService(new RolesRepository(DB));
 
 const orderService = new OrderService(
-  new OrderRepository(),
+  new OrderRepository(DB),
   new ProductRepository(DB),
   DB,
   LoggerService.getInstance()
