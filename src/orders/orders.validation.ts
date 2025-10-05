@@ -1,5 +1,3 @@
-import { productSchema } from "products/products.validation";
-import { userSchema } from "users/users.validation";
 import { z } from "zod";
 
 export const createOrderSchema = z.object({
@@ -12,12 +10,20 @@ export const createOrderSchema = z.object({
 });
 export type CreateOrderPayload = z.infer<typeof createOrderSchema>;
 
+export enum OrderStatus {
+  PENDING = "pending",
+  PAID = "paid",
+  FAILED = "failed"
+}
+
 export const createdOrderSchema = z.object({
   id: z.number().int().positive(),
   buyer_id: z.number().int().positive(),
+  status: z.enum(Object.values(OrderStatus)),
   created_at: z.date(),
   updated_at: z.date()
 });
+export type CreatedOrder = z.infer<typeof createdOrderSchema>;
 
 export const createOrderDetailSchema = z.object({
   id: z.number().int().positive(),
@@ -38,22 +44,3 @@ export const orderSchema = z.object({
   updated_at: z.date()
 });
 export type Order = z.infer<typeof orderSchema>;
-
-export const orderDetailSchema = z.object({
-  id: z.number().int().positive(),
-  product: productSchema,
-  quantity: z.number().int().positive(),
-  total_price_in_cents: z.number().int().positive()
-});
-export type OrderDetail = z.infer<typeof orderDetailSchema>;
-
-export const orderDetailsSchema = z.array(orderDetailSchema);
-
-export const populatedOrderSchema = z.object({
-  id: z.number().int().positive(),
-  buyer: userSchema,
-  order_details: z.array(orderDetailSchema),
-  created_at: z.date(),
-  updated_at: z.date()
-});
-export type PopulatedOrder = z.infer<typeof populatedOrderSchema>;

@@ -46,12 +46,7 @@ const authService = new AuthService(usersService);
 
 const rolesService = new RolesService(new RolesRepository(DB));
 
-const orderService = new OrderService(
-  new OrderRepository(DB),
-  new ProductRepository(DB),
-  DB,
-  LoggerService.getInstance()
-);
+const orderService = new OrderService(new OrderRepository(), DB, LoggerService.getInstance());
 
 const app = new App(
   [
@@ -60,7 +55,7 @@ const app = new App(
     new AuctionHttpController(auctionService, authService),
     new BidHttpController(bidService),
     new UsersHttpController(authService, rolesService, usersService),
-    new BotHttpController(authService, productService, orderService, LoggerService.getInstance()),
+    new BotHttpController(productService, LoggerService.getInstance()),
     new OrderHttpController(authService, orderService)
   ],
   [

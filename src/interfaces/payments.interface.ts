@@ -1,3 +1,7 @@
+import { Product } from "products/products.validation";
+
 export interface PaymentsService {
-  createCustomer: (email: string) => Promise<string | null>;
+  createPaymentLink: (
+    lineItems: Array<{ product: Product; quantity: number }>
+  ) => Promise<string | null>;
 }

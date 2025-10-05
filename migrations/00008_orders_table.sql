@@ -1,6 +1,9 @@
+CREATE TYPE order_status AS ENUM ('pending', 'paid', 'failed');
+
 CREATE TABLE IF NOT EXISTS orders (
   id SERIAL PRIMARY KEY,
   buyer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  status order_status NOT NULL DEFAULT 'pending',
   
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL

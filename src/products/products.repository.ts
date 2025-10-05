@@ -4,7 +4,6 @@ import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
 import { User } from "users/users.validation";
 import { LoggerService } from "services/logger.service";
-import { PoolClient } from "pg";
 
 export class ProductRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -27,14 +26,6 @@ export class ProductRepository {
 
   public async findProductByIds(ids: number[]) {
     const result = await this.DB.query<Product>("SELECT * FROM products WHERE id = ANY($1)", [ids]);
-    return result.rows;
-  }
-
-  public async findProductPricesByIds(client: PoolClient, ids: number[]) {
-    const result = await client.query<{ id: number; price_in_cents: number }>(
-      "SELECT id, price_in_cents FROM products WHERE id = ANY($1)",
-      [ids]
-    );
     return result.rows;
   }
 

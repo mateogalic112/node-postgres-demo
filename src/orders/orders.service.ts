@@ -5,21 +5,25 @@ import {
   CreateOrderPayload,
   createOrderDetailsSchema,
   orderSchema,
-  populatedOrderSchema
+  Order
 } from "./orders.validation";
 import { DatabaseService } from "interfaces/database.interface";
 import { LoggerService } from "services/logger.service";
-import { ProductRepository } from "products/products.repository";
 
 export class OrderService {
   constructor(
     private readonly orderRepository: OrderRepository,
-    private readonly productRepository: ProductRepository,
     private readonly DB: DatabaseService,
     private readonly logger: LoggerService
   ) {}
 
-  public async createOrder({ user, payload }: { user: User; payload: CreateOrderPayload }) {
+  public async createOrder({
+    user,
+    payload
+  }: {
+    user: User;
+    payload: CreateOrderPayload;
+  }): Promise<Order> {
     const client = await this.DB.getClient();
 
     try {
@@ -28,34 +32,18 @@ export class OrderService {
       const newOrderResult = await this.orderRepository.createOrder(client, user);
       const newOrder = createdOrderSchema.parse(newOrderResult);
 
-      const productPrices = await this.productRepository.findProductPricesByIds(
-        client,
-        payload.line_items.map((item) => item.product_id)
-      );
-      const productPricesMap = new Map(productPrices.map((item) => [item.id, item.price_in_cents]));
-
-      const parsedPayload = {
-        line_items: payload.line_items.map((item) => ({
-          ...item,
-          price_in_cents: productPricesMap.get(item.product_id) as number
-        }))
-      };
-
       const orderDetailsResult = await this.orderRepository.createOrderDetails(
         client,
         newOrder.id,
-        parsedPayload
+        payload
       );
       const orderDetails = createOrderDetailsSchema.parse(orderDetailsResult);
 
       await client.query("COMMIT");
 
       return orderSchema.parse({
-        id: newOrder.id,
-        buyer_id: newOrder.buyer_id,
-        order_details: orderDetails,
-        created_at: newOrder.created_at,
-        updated_at: newOrder.updated_at
+        ...newOrder,
+        order_details: orderDetails
       });
     } catch (error) {
       console.log(error);
@@ -67,9 +55,5 @@ export class OrderService {
     } finally {
       client.release();
     }
-  }
-
-  public async getPopulatedOrder(orderId: number) {
-    return populatedOrderSchema.parse(await this.orderRepository.getPopulatedOrder(orderId));
   }
 }
