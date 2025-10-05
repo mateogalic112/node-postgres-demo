@@ -4,7 +4,8 @@ import { z } from "zod";
 export const createProductSchema = z.object({
   body: z.object({
     name: z.string().min(3),
-    description: z.string().min(10)
+    description: z.string().min(10),
+    price_in_cents: z.coerce.number().int().positive()
   }),
   file: fileSchema.optional()
 });
@@ -16,7 +17,8 @@ export const productSchema = z.object({
   owner_id: z.number().int().positive(),
   name: z.string().min(3),
   description: z.string().min(10),
-  image_url: z.string().url().nullable(),
+  image_url: z.url().nullable(),
+  price_in_cents: z.number().int().positive(),
   created_at: z.date(),
   updated_at: z.date()
 });

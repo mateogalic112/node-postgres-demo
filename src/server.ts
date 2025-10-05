@@ -23,6 +23,10 @@ import { RolesRepository } from "roles/roles.repository";
 import { UsersHttpController } from "users/users.controller";
 import { BotHttpController } from "bot/bot.controller";
 import { OpenAIService } from "services/openai";
+import { OrderService } from "orders/orders.service";
+import { OrderRepository } from "orders/orders.repository";
+import { OrderHttpController } from "orders/orders.controller";
+import { StripeService } from "services/stripe.service";
 
 const DB = PostgresService.getInstance();
 
@@ -43,6 +47,13 @@ const authService = new AuthService(usersService);
 
 const rolesService = new RolesService(new RolesRepository(DB));
 
+const orderService = new OrderService(
+  new OrderRepository(DB),
+  productService,
+  LoggerService.getInstance(),
+  StripeService.getInstance()
+);
+
 const app = new App(
   [
     new AuthHttpController(authService),
@@ -50,7 +61,8 @@ const app = new App(
     new AuctionHttpController(auctionService, authService),
     new BidHttpController(bidService),
     new UsersHttpController(authService, rolesService, usersService),
-    new BotHttpController(productService, LoggerService.getInstance())
+    new BotHttpController(productService, LoggerService.getInstance()),
+    new OrderHttpController(authService, orderService)
   ],
   [
     new AuctionSocketController(auctionService),

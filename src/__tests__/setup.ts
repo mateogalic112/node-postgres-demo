@@ -96,7 +96,8 @@ export const createProductRequest = async (app: App, authCookie: string) => {
     .post("/api/v1/products")
     .set("Cookie", authCookie)
     .field("name", faker.commerce.productName())
-    .field("description", faker.commerce.productDescription());
+    .field("description", faker.commerce.productDescription())
+    .field("price_in_cents", faker.number.int({ min: 100, max: 100000 }));
 };
 
 export const createAuctionRequest = async (app: App, authCookie: string, productId: number) => {

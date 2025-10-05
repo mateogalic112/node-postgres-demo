@@ -17,7 +17,7 @@ const products: Array<CreateProductPayload["body"] & { image_url: string | null 
   () => ({
     name: faker.commerce.productName(),
     description: faker.commerce.productDescription(),
-    price: +faker.commerce.price({ min: 1000, max: 100000, dec: 0 }),
+    price_in_cents: faker.number.int({ min: 100, max: 100000 }),
     image_url: faker.image.url()
   })
 );
@@ -56,10 +56,10 @@ export async function seedDatabase() {
 
     const user = await client.query("SELECT id FROM users WHERE email = $1", [users[0].email]);
 
-    for (const { name, description, image_url } of products) {
+    for (const { name, description, image_url, price_in_cents } of products) {
       await client.query(
-        `INSERT INTO products (name, description, image_url, owner_id) VALUES ($1, $2, $3, $4)`,
-        [name, description, image_url, user.rows[0].id]
+        `INSERT INTO products (name, description, image_url, owner_id, price_in_cents) VALUES ($1, $2, $3, $4, $5)`,
+        [name, description, image_url, user.rows[0].id, price_in_cents]
       );
     }
 

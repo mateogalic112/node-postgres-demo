@@ -30,6 +30,11 @@ export class ProductService {
     return productSchema.parse(product);
   }
 
+  public async getProductsByIds(ids: number[]) {
+    const products = await this.productRepository.findProductsByIds(ids);
+    return products.map((product) => productSchema.parse(product));
+  }
+
   public async findRelevantProducts(query: string) {
     const embeddedQuery = await this.embeddingService.generateEmbedding(query);
     if (!embeddedQuery || !embeddedQuery.embedding) {
@@ -46,18 +51,17 @@ export class ProductService {
   }
 
   public async createProduct({ user, payload }: { user: User; payload: CreateProductPayload }) {
-    const imageUrl = payload.file
-      ? await this.filesService.uploadFile(payload.file, `products/${crypto.randomUUID()}`)
-      : null;
-
     const newProduct = await this.productRepository.createProduct(user, {
       ...payload.body,
-      imageUrl
+      imageUrl: payload.file
+        ? await this.filesService.uploadFile(payload.file, `products/${crypto.randomUUID()}`)
+        : null
     });
 
-    const embeddings = await this.embeddingService.generateEmbeddings(newProduct.description);
-
-    await this.productRepository.createEmbedding(newProduct.id, embeddings);
+    await this.productRepository.createEmbedding(
+      newProduct.id,
+      await this.embeddingService.generateEmbeddings(newProduct.description)
+    );
 
     this.mailService.sendEmail({
       to: user.email,
