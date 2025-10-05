@@ -30,6 +30,11 @@ export class ProductService {
     return productSchema.parse(product);
   }
 
+  public async getProductsByIds(ids: number[]) {
+    const products = await this.productRepository.findProductsByIds(ids);
+    return products.map((product) => productSchema.parse(product));
+  }
+
   public async findRelevantProducts(query: string) {
     const embeddedQuery = await this.embeddingService.generateEmbedding(query);
     if (!embeddedQuery || !embeddedQuery.embedding) {

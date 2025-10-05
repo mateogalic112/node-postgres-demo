@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export enum OrderStatus {
+  PENDING = "pending",
+  PAID = "paid",
+  FAILED = "failed"
+}
+
 export const createOrderSchema = z.object({
   line_items: z.array(
     z.object({
@@ -9,12 +15,6 @@ export const createOrderSchema = z.object({
   )
 });
 export type CreateOrderPayload = z.infer<typeof createOrderSchema>;
-
-export enum OrderStatus {
-  PENDING = "pending",
-  PAID = "paid",
-  FAILED = "failed"
-}
 
 export const createdOrderSchema = z.object({
   id: z.number().int().positive(),
@@ -29,12 +29,9 @@ export const createOrderDetailSchema = z.object({
   id: z.number().int().positive(),
   order_id: z.number().int().positive(),
   product_id: z.number().int().positive(),
-  quantity: z.number().int().positive(),
-  total_price_in_cents: z.number().int().positive()
+  quantity: z.number().int().positive()
 });
 export type CreateOrderDetailPayload = z.infer<typeof createOrderDetailSchema>;
-
-export const createOrderDetailsSchema = z.array(createOrderDetailSchema);
 
 export const orderSchema = z.object({
   id: z.number().int().positive(),

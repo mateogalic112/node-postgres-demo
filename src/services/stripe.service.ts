@@ -1,8 +1,7 @@
 import { env } from "config/env";
 import Stripe from "stripe";
 import { LoggerService } from "./logger.service";
-import { Product } from "products/products.validation";
-import { PaymentsService } from "interfaces/payments.interface";
+import { PaymentLineItem, PaymentsService } from "interfaces/payments.interface";
 
 export class StripeService implements PaymentsService {
   private static instance: StripeService;
@@ -21,24 +20,21 @@ export class StripeService implements PaymentsService {
     return StripeService.instance;
   }
 
-  public async createPaymentLink(
-    lineItems: Array<{ product: Product; quantity: number }>
-  ): Promise<string | null> {
+  public async createPaymentLink(lineItems: Array<PaymentLineItem>): Promise<string | null> {
     try {
       const paymentLink = await this.stripe.paymentLinks.create({
         line_items: lineItems.map((item) => ({
           price_data: {
             currency: "usd",
             product_data: {
-              name: item.product.name,
-              description: item.product.description,
-              images: item.product.image_url ? [item.product.image_url] : undefined,
+              name: item.name,
+              description: item.description,
+              images: item.image_url ? [item.image_url] : undefined,
               metadata: {
-                product_id: item.product.id.toString(),
-                owner_id: item.product.owner_id.toString()
+                product_id: item.product_id.toString()
               }
             },
-            unit_amount: item.product.price_in_cents
+            unit_amount: item.price_in_cents
           },
           quantity: item.quantity
         })),

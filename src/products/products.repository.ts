@@ -29,6 +29,11 @@ export class ProductRepository {
     return result.rows;
   }
 
+  public async findProductsByIds(ids: number[]) {
+    const result = await this.DB.query<Product>("SELECT * FROM products WHERE id = ANY($1)", [ids]);
+    return result.rows;
+  }
+
   public async createProduct(
     user: User,
     payload: CreateProductPayload["body"] & { imageUrl: string | null }

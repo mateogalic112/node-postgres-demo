@@ -1,5 +1,5 @@
 import { User } from "users/users.validation";
-import { CreateOrderDetailPayload, CreatedOrder } from "./orders.validation";
+import { CreateOrderDetailPayload, CreateOrderPayload, CreatedOrder } from "./orders.validation";
 import { PoolClient } from "pg";
 
 export class OrderRepository {
@@ -16,20 +16,18 @@ export class OrderRepository {
   public async createOrderDetails(
     client: PoolClient,
     orderId: number,
-    payload: { line_items: { product_id: number; quantity: number }[] }
+    payload: CreateOrderPayload
   ) {
-    // Create a VALUES clause for the line items and join with products to get prices
+    // Create a VALUES clause for the line items (order_id, product_id, quantity)
     const values = payload.line_items
       .map((_, index) => `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`)
       .join(", ");
 
     const result = await client.query<CreateOrderDetailPayload>(
-      `INSERT INTO order_details (order_id, product_id, quantity, total_price_in_cents)
-      SELECT v.order_id, v.product_id, v.quantity, (v.quantity * p.price_in_cents)
-      FROM (VALUES ${values}) AS v(order_id, product_id, quantity)
-      JOIN products p ON p.id = v.product_id
+      `INSERT INTO order_details (order_id, product_id, quantity)
+      VALUES ${values}
       RETURNING *`,
-      payload.line_items.map((item) => [orderId, item.product_id, item.quantity])
+      payload.line_items.flatMap((item) => [orderId, item.product_id, item.quantity])
     );
     return result.rows;
   }

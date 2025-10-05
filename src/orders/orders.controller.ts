@@ -25,6 +25,9 @@ export class OrderHttpController extends HttpController {
       user: userSchema.parse(response.locals.user),
       payload: createOrderSchema.parse(request.body)
     });
-    response.status(201).json(formatResponse(order));
+    const paymentLink = await this.orderService.getPaymentLink(
+      createOrderSchema.parse(request.body)
+    );
+    response.status(201).json(formatResponse({ ...order, payment_link: paymentLink }));
   });
 }
