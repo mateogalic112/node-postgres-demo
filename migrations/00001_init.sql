@@ -48,6 +48,10 @@ CREATE TABLE IF NOT EXISTS auctions (
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
+CREATE UNIQUE INDEX idx_unique_active_auction_per_product 
+ON auctions (product_id) 
+WHERE is_cancelled = FALSE;
+
 CREATE TABLE IF NOT EXISTS bids (
   id SERIAL PRIMARY KEY,
   auction_id INTEGER NOT NULL REFERENCES auctions(id) ON DELETE CASCADE,
