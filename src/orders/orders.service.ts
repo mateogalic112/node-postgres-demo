@@ -1,13 +1,6 @@
 import { User } from "users/users.validation";
 import { OrderRepository } from "./orders.repository";
-import {
-  createdOrderSchema,
-  CreateOrderPayload,
-  orderSchema,
-  Order,
-  createOrderDetailSchema
-} from "./orders.validation";
-import { DatabaseService } from "interfaces/database.interface";
+import { CreateOrderPayload, orderSchema, Order } from "./orders.validation";
 import { LoggerService } from "services/logger.service";
 import { PaymentsService } from "interfaces/payments.interface";
 import { ProductService } from "products/products.service";
@@ -15,7 +8,6 @@ import { ProductService } from "products/products.service";
 export class OrderService {
   constructor(
     private readonly orderRepository: OrderRepository,
-    private readonly DB: DatabaseService,
     private readonly productService: ProductService,
     private readonly logger: LoggerService,
     private readonly paymentsService: PaymentsService
@@ -28,39 +20,8 @@ export class OrderService {
     user: User;
     payload: CreateOrderPayload;
   }): Promise<Order> {
-    const client = await this.DB.getClient();
-
-    try {
-      await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
-
-      const newOrderResult = await this.orderRepository.createOrder(client, user);
-      const newOrder = createdOrderSchema.parse(newOrderResult);
-
-      const orderDetailsResult = await this.orderRepository.createOrderDetails(
-        client,
-        newOrder.id,
-        payload
-      );
-      const orderDetails = orderDetailsResult.map((detail) =>
-        createOrderDetailSchema.parse(detail)
-      );
-
-      await client.query("COMMIT");
-
-      return orderSchema.parse({
-        ...newOrder,
-        order_details: orderDetails
-      });
-    } catch (error) {
-      console.log(error);
-      await client.query("ROLLBACK");
-      this.logger.error(
-        `[FAILED_TO_CREATE_ORDER] Failed to create order for user ${user.id} with items ${payload.line_items.map((item) => item.product_id).join(", ")}`
-      );
-      throw error;
-    } finally {
-      client.release();
-    }
+    const newOrderResult = await this.orderRepository.createOrder(user, payload);
+    return orderSchema.parse(newOrderResult);
   }
 
   async getPaymentLink(payload: CreateOrderPayload) {
