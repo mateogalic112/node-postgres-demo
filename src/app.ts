@@ -31,7 +31,12 @@ class App {
   }
 
   private initializeMiddlewares() {
+    // Apply raw body parsing for Stripe webhook endpoint before JSON parsing
+    this.app.use("/api/v1/orders/confirm-order", express.raw({ type: "application/json" }));
+
+    // Apply JSON parsing to all other routes
     this.app.use(express.json());
+
     this.app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
     this.app.use(cookieParser());
     this.app.use(loggerMiddleware);

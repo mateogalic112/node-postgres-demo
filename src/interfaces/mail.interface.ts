@@ -1,4 +1,5 @@
 import { Auction } from "auctions/auctions.validation";
+import { Order } from "orders/orders.validation";
 import { Product } from "products/products.validation";
 
 export interface MailTemplate {
@@ -24,6 +25,15 @@ export class CreateAuctionTemplate {
     return {
       subject: "New auction created",
       html: `<strong>New auction created</strong> Starting price: ${auction.starting_price_in_cents}</p><p>Start time: ${auction.start_time}</p><p>Duration: ${auction.duration_hours} hours</p>`
+    };
+  }
+}
+
+export class CreateOrderTemplate {
+  public static getTemplate(order: Order) {
+    return {
+      subject: "New order created",
+      html: `<strong>New order created</strong> Order ID: ${order.id}`
     };
   }
 }

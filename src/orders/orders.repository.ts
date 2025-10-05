@@ -26,4 +26,12 @@ export class OrderRepository {
 
     return { ...order, order_details: orderDetailsResult.rows };
   }
+
+  async confirmOrder(orderId: number) {
+    const result = await this.DB.query<Order>(
+      "UPDATE orders SET status = 'paid' WHERE id = $1 RETURNING *",
+      [orderId]
+    );
+    return result.rows[0];
+  }
 }

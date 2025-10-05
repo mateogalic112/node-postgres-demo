@@ -1,3 +1,5 @@
+import Stripe from "stripe";
+
 export interface PaymentLineItem {
   product_id: number;
   name: string;
@@ -8,5 +10,9 @@ export interface PaymentLineItem {
 }
 
 export interface PaymentsService {
-  createPaymentLink: (lineItems: Array<PaymentLineItem>) => Promise<string | null>;
+  createPaymentLink: (
+    orderId: number,
+    lineItems: Array<PaymentLineItem>
+  ) => Promise<Stripe.Response<Stripe.PaymentLink> | null>;
+  constructEvent: (payload: string | Buffer, sig: string) => Promise<Stripe.Event>;
 }

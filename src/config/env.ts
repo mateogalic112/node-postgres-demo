@@ -27,5 +27,6 @@ export const env = cleanEnv(process.env, {
 
   OPENAI_API_KEY: str(),
 
-  STRIPE_SECRET_KEY: str()
+  STRIPE_SECRET_KEY: str(),
+  STRIPE_WEBHOOK_SECRET: str()
 });

@@ -50,8 +50,8 @@ const rolesService = new RolesService(new RolesRepository(DB));
 const orderService = new OrderService(
   new OrderRepository(DB),
   productService,
-  LoggerService.getInstance(),
-  StripeService.getInstance()
+  StripeService.getInstance(),
+  ResendService.getInstance()
 );
 
 const app = new App(
@@ -62,7 +62,7 @@ const app = new App(
     new BidHttpController(bidService),
     new UsersHttpController(authService, rolesService, usersService),
     new BotHttpController(productService, LoggerService.getInstance()),
-    new OrderHttpController(authService, orderService)
+    new OrderHttpController(authService, orderService, StripeService.getInstance())
   ],
   [
     new AuctionSocketController(auctionService),

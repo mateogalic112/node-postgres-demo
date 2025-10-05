@@ -20,9 +20,9 @@ export class StripeService implements PaymentsService {
     return StripeService.instance;
   }
 
-  public async createPaymentLink(lineItems: Array<PaymentLineItem>): Promise<string | null> {
+  public async createPaymentLink(orderId: number, lineItems: Array<PaymentLineItem>) {
     try {
-      const paymentLink = await this.stripe.paymentLinks.create({
+      return await this.stripe.paymentLinks.create({
         line_items: lineItems.map((item) => ({
           price_data: {
             currency: "usd",
@@ -38,14 +38,20 @@ export class StripeService implements PaymentsService {
           },
           quantity: item.quantity
         })),
+        metadata: {
+          order_id: orderId
+        },
         automatic_tax: { enabled: true }
       });
-
-      this.logger.log(`Created checkout session: ${paymentLink.id} for ${lineItems.length} items`);
-      return paymentLink.url;
     } catch (error) {
-      this.logger.error(`Failed to create checkout session: ${String(error)}`);
+      this.logger.error(
+        `Failed to create checkout payment link for order ${orderId}: ${String(error)}`
+      );
       return null;
     }
+  }
+
+  public async constructEvent(payload: string | Buffer, sig: string) {
+    return this.stripe.webhooks.constructEvent(payload, sig, env.STRIPE_WEBHOOK_SECRET);
   }
 }
