@@ -16,28 +16,28 @@ export const createOrderSchema = z.object({
 });
 export type CreateOrderPayload = z.infer<typeof createOrderSchema>;
 
-export const createdOrderSchema = z.object({
+export const orderSchema = z.object({
   id: z.number().int().positive(),
   buyer_id: z.number().int().positive(),
   status: z.enum(Object.values(OrderStatus)),
   created_at: z.date(),
   updated_at: z.date()
 });
-export type CreatedOrder = z.infer<typeof createdOrderSchema>;
+export type Order = z.infer<typeof orderSchema>;
 
-export const createOrderDetailSchema = z.object({
+export const orderDetailSchema = z.object({
   id: z.number().int().positive(),
   order_id: z.number().int().positive(),
   product_id: z.number().int().positive(),
   quantity: z.number().int().positive()
 });
-export type CreateOrderDetailPayload = z.infer<typeof createOrderDetailSchema>;
+export type OrderDetail = z.infer<typeof orderDetailSchema>;
 
-export const orderSchema = z.object({
+export const orderWithOrderDetailsSchema = z.object({
   id: z.number().int().positive(),
   buyer_id: z.number().int().positive(),
-  order_details: z.array(createOrderDetailSchema),
+  order_details: z.array(orderDetailSchema),
   created_at: z.date(),
   updated_at: z.date()
 });
-export type Order = z.infer<typeof orderSchema>;
+export type OrderWithOrderDetails = z.infer<typeof orderWithOrderDetailsSchema>;

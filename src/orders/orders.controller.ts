@@ -21,13 +21,15 @@ export class OrderHttpController extends HttpController {
   }
 
   private createOrder = asyncMiddleware(async (request, response) => {
-    const order = await this.orderService.createOrder({
+    const orderWithOrderDetails = await this.orderService.createOrderWithOrderDetails({
       user: userSchema.parse(response.locals.user),
       payload: createOrderSchema.parse(request.body)
     });
     const paymentLink = await this.orderService.getPaymentLink(
       createOrderSchema.parse(request.body)
     );
-    response.status(201).json(formatResponse({ ...order, payment_link: paymentLink }));
+    response
+      .status(201)
+      .json(formatResponse({ ...orderWithOrderDetails, payment_link: paymentLink }));
   });
 }

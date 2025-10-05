@@ -1,6 +1,10 @@
 import { User } from "users/users.validation";
 import { OrderRepository } from "./orders.repository";
-import { CreateOrderPayload, orderSchema, Order } from "./orders.validation";
+import {
+  CreateOrderPayload,
+  OrderWithOrderDetails,
+  orderWithOrderDetailsSchema
+} from "./orders.validation";
 import { LoggerService } from "services/logger.service";
 import { PaymentsService } from "interfaces/payments.interface";
 import { ProductService } from "products/products.service";
@@ -13,15 +17,15 @@ export class OrderService {
     private readonly paymentsService: PaymentsService
   ) {}
 
-  public async createOrder({
+  public async createOrderWithOrderDetails({
     user,
     payload
   }: {
     user: User;
     payload: CreateOrderPayload;
-  }): Promise<Order> {
-    const newOrderResult = await this.orderRepository.createOrder(user, payload);
-    return orderSchema.parse(newOrderResult);
+  }): Promise<OrderWithOrderDetails> {
+    const newOrderResult = await this.orderRepository.createOrderWithOrderDetails(user, payload);
+    return orderWithOrderDetailsSchema.parse(newOrderResult);
   }
 
   async getPaymentLink(payload: CreateOrderPayload) {
