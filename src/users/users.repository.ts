@@ -1,5 +1,5 @@
 import { DatabaseService } from "interfaces/database.interface";
-import { UpdateUserPayload, User } from "./users.validation";
+import { User } from "./users.validation";
 import { RegisterPayload } from "auth/auth.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 
@@ -34,14 +34,6 @@ export class UsersRepository {
     const result = await this.DB.query<User>(
       "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
       [payload.username, payload.email, payload.password]
-    );
-    return result.rows[0];
-  }
-
-  public async updateUser(id: number, payload: UpdateUserPayload) {
-    const result = await this.DB.query<User>(
-      "UPDATE users SET stripe_customer_id = $1 WHERE id = $2 RETURNING *",
-      [payload.stripe_customer_id, id]
     );
     return result.rows[0];
   }
