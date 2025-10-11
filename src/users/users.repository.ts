@@ -2,9 +2,15 @@ import { DatabaseService } from "interfaces/database.interface";
 import { User } from "./users.validation";
 import { RegisterPayload } from "auth/auth.validation";
 import { PaginatedRequestParams } from "api/api.validations";
+import { RolesRepository } from "roles/roles.repository";
+import { RoleName } from "roles/roles.validation";
+import { InternalServerError } from "api/api.errors";
 
 export class UsersRepository {
-  constructor(private readonly DB: DatabaseService) {}
+  constructor(
+    private readonly DB: DatabaseService,
+    private readonly rolesRepository: RolesRepository
+  ) {}
 
   public async getUsers(params: PaginatedRequestParams) {
     const result = await this.DB.query<User>(
@@ -31,9 +37,14 @@ export class UsersRepository {
   }
 
   public async createUser(payload: RegisterPayload) {
+    const role = await this.rolesRepository.findRoleByName(RoleName.USER);
+    if (!role) {
+      throw new InternalServerError("Role not found");
+    }
+
     const result = await this.DB.query<User>(
-      "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
-      [payload.username, payload.email, payload.password]
+      "INSERT INTO users (username, email, password, role_id) VALUES ($1, $2, $3, $4) RETURNING *",
+      [payload.username, payload.email, payload.password, role.id]
     );
     return result.rows[0];
   }

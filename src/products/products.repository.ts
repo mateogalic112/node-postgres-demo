@@ -58,15 +58,9 @@ export class ProductRepository {
   }
 
   public async createEmbedding(productId: number, embeddings: Embedding[]) {
-    // Create placeholders for batch insert - each embedding needs its own parameter
-    const values = embeddings.map((_, index) => `($1, $${index + 2}::vector)`).join(", ");
-
-    // Format each embedding as a vector string for PostgreSQL
-    const vectorStrings = embeddings.map((embedding) => `[${embedding.join(",")}]`);
-
     await this.DB.query<ProductEmbedding>(
-      `INSERT INTO products_embeddings (product_id, embedding) VALUES ${values}`,
-      [productId, ...vectorStrings]
+      `INSERT INTO products_embeddings (product_id, embedding) VALUES ${embeddings.map((_, index) => `($1, $${index + 2}::vector)`).join(", ")}`,
+      [productId, ...embeddings.map((embedding) => `[${embedding.join(",")}]`)]
     );
 
     LoggerService.getInstance().log(

@@ -5,6 +5,7 @@ import { BadRequestError, UnauthenticatedError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { DatabaseService } from "interfaces/database.interface";
 import { UserService } from "users/users.service";
+import { RolesRepository } from "roles/roles.repository";
 
 // Mock the AuthRepository
 jest.mock("users/users.repository");
@@ -24,6 +25,7 @@ describe("AuthService", () => {
     username: "testuser",
     email: "test@example.com",
     password: "hashedPassword",
+    role_id: 1,
     created_at: new Date(),
     updated_at: new Date()
   };
@@ -33,7 +35,8 @@ describe("AuthService", () => {
     jest.clearAllMocks();
 
     mockUsersRepository = new UsersRepository(
-      {} as DatabaseService
+      {} as DatabaseService,
+      {} as RolesRepository
     ) as jest.Mocked<UsersRepository>;
     authService = new AuthService(new UserService(mockUsersRepository));
   });

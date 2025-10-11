@@ -28,6 +28,7 @@ import {
 } from "__tests__/setup";
 import { createMockedAuctionPayload, createFinishedAuction } from "./mocks/auction.mocks";
 import { subDays } from "date-fns";
+import { RolesRepository } from "roles/roles.repository";
 
 describe("AuctionsController", () => {
   let client: Client;
@@ -38,7 +39,9 @@ describe("AuctionsController", () => {
     client = freshClient;
 
     const DB = createMockDatabaseService(client);
-    const authService = new AuthService(new UserService(new UsersRepository(DB)));
+    const authService = new AuthService(
+      new UserService(new UsersRepository(DB, new RolesRepository(DB)))
+    );
     const auctionService = new AuctionService(new AuctionRepository(DB), mailService);
     const productService = new ProductService(
       new ProductRepository(DB),

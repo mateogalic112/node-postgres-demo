@@ -23,28 +23,19 @@ export default async function globalSetup() {
   await client.connect();
   await migrate(client);
 
-  // Create initial state once (roles and admin user)
-
   // Insert default roles
   await client.query(
-    `INSERT INTO roles (name, description) VALUES ('admin', 'Admin role'), ('user', 'User role')`
-  );
-
-  // Insert default admin user with hashed password
-  await client.query(
-    `INSERT INTO users (username, email, password) VALUES ('admin', 'admin@example.com', $1)`,
-    [await bcrypt.hash("password", 10)]
+    `INSERT INTO roles (name, description) VALUES ('ADMIN', 'Admin role'), ('USER', 'User role')`
   );
 
   // Get the admin user and role IDs
-  const adminRole = await client.query(`SELECT id FROM roles WHERE name = 'admin'`);
-  const adminUser = await client.query(`SELECT id FROM users WHERE email = 'admin@example.com'`);
+  const adminRole = await client.query(`SELECT id FROM roles WHERE name = 'ADMIN'`);
 
-  // Insert default admin user role
-  await client.query(`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`, [
-    adminUser.rows[0].id,
-    adminRole.rows[0].id
-  ]);
+  // Insert default admin user with hashed password
+  await client.query(
+    `INSERT INTO users (username, email, password, role_id) VALUES ('admin', 'admin@example.com', $1, $2)`,
+    [await bcrypt.hash("password", 10), adminRole.rows[0].id]
+  );
 
   await client.end();
 

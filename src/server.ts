@@ -30,7 +30,7 @@ import { StripeService } from "services/stripe.service";
 
 const DB = PostgresService.getInstance();
 
-const usersService = new UserService(new UsersRepository(DB));
+const usersService = new UserService(new UsersRepository(DB, new RolesRepository(DB)));
 
 const productService = new ProductService(
   new ProductRepository(DB),

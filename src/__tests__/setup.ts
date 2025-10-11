@@ -9,7 +9,7 @@ import { User } from "users/users.validation";
 const getDbInitialState = async (client: Client) => {
   // Fetch existing roles (created in global setup)
   const rolesResult = await client.query<Role>(
-    `SELECT * FROM roles WHERE name IN ('admin', 'user') ORDER BY name`
+    `SELECT * FROM roles WHERE name IN ('ADMIN', 'USER') ORDER BY name`
   );
 
   // Fetch existing admin user (created in global setup)

@@ -31,7 +31,7 @@ describe("UsersController", () => {
     adminUser = freshAdminUser;
 
     const DB = createMockDatabaseService(client);
-    const usersService = new UserService(new UsersRepository(DB));
+    const usersService = new UserService(new UsersRepository(DB, new RolesRepository(DB)));
     const authService = new AuthService(usersService);
     const rolesService = new RolesService(new RolesRepository(DB));
 
@@ -59,7 +59,6 @@ describe("UsersController", () => {
   describe("GET /api/v1/users", () => {
     it("should throw an error when NOT authenticated", async () => {
       const response = await request(app.getServer()).get("/api/v1/users");
-
       expect(response.status).toBe(401);
     });
 
@@ -68,7 +67,6 @@ describe("UsersController", () => {
       const response = await request(app.getServer())
         .get("/api/v1/users")
         .set("Cookie", authCookie);
-
       expect(response.status).toBe(403);
     });
 
@@ -94,12 +92,15 @@ describe("UsersController", () => {
       await bulkInsertUsers(app, 8);
 
       const userResponse = await loginUserRequest(app, adminUser.email, adminUser.password);
+
       const authCookie = userResponse.headers["set-cookie"][0];
 
       const response = await request(app.getServer())
         .get("/api/v1/users")
         .query({ limit: 10 })
         .set("Cookie", authCookie);
+
+      console.log(response.body);
 
       expect(response.status).toBe(200);
       expect(response.body.data.length).toBe(9); // 8 users + 1 admin user

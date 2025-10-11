@@ -22,6 +22,7 @@ import {
   mailService
 } from "__tests__/mocks";
 import { bulkInsertProducts } from "./mocks/products.mock";
+import { RolesRepository } from "roles/roles.repository";
 
 describe("ProductsController", () => {
   let client: Client;
@@ -32,7 +33,9 @@ describe("ProductsController", () => {
     client = freshClient;
 
     const DB = createMockDatabaseService(client);
-    const authService = new AuthService(new UserService(new UsersRepository(DB)));
+    const authService = new AuthService(
+      new UserService(new UsersRepository(DB, new RolesRepository(DB)))
+    );
     const productService = new ProductService(
       new ProductRepository(DB),
       mailService,

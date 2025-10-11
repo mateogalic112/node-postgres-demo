@@ -13,6 +13,7 @@ import {
 } from "__tests__/setup";
 import { createMockDatabaseService } from "__tests__/mocks";
 import { createMockedLoginPayload, createMockedRegisterPayload } from "./mocks/auth.mocks";
+import { RolesRepository } from "roles/roles.repository";
 
 describe("AuthController", () => {
   let client: Client;
@@ -23,7 +24,9 @@ describe("AuthController", () => {
     client = freshClient;
 
     const DB = createMockDatabaseService(client);
-    const authService = new AuthService(new UserService(new UsersRepository(DB)));
+    const authService = new AuthService(
+      new UserService(new UsersRepository(DB, new RolesRepository(DB)))
+    );
 
     app = new App([new AuthHttpController(authService)], []);
   });
