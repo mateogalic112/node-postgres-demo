@@ -14,8 +14,4 @@ yarn install
 yarn dev
 ```
 
-- **Step 3** - Run the stripe webhook listener in a separate terminal
-
-```bash
-stripe listen --forward-to localhost:4000/api/v1/orders/confirm-order
-```
+The server will start and the stripe webhook listener will start in a new terminal.

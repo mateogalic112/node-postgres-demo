@@ -54,3 +54,23 @@ else
 
   echo "'${CONTAINER_NAME}' is up and ready!"
 fi
+
+# Check if Stripe CLI is installed
+if ! command -v stripe &> /dev/null; then
+  echo "Warning: Stripe CLI not found. Please install it first:"
+  echo "brew install stripe/stripe-cli/stripe"
+  exit 1
+fi
+
+# Start Stripe webhook listener in new terminal
+echo "Starting Stripe webhook listener in new terminal..."
+osascript -e 'tell application "Terminal" to do script "cd '$(pwd)' && echo \"Stripe webhook listener starting...\" && stripe listen --forward-to localhost:4000/api/v1/orders/confirm-order"'
+
+echo ""
+echo "✅ Setup complete!"
+echo "📦 PostgreSQL container: ${CONTAINER_NAME}"
+echo "🔗 Stripe webhook listener: Started in new terminal"
+echo ""
+echo "Next steps:"
+echo "1. Run: yarn dev"
+echo "2. Check the new terminal tab for webhook events"
