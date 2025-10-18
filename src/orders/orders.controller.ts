@@ -7,7 +7,7 @@ import { userSchema } from "users/users.validation";
 import { createOrderSchema } from "./orders.validation";
 import { formatResponse } from "api/api.formats";
 import { PaymentsService } from "interfaces/payments.interface";
-import { BadRequestError } from "api/api.errors";
+import { BadRequestError, InternalServerError } from "api/api.errors";
 
 export class OrderHttpController extends HttpController {
   constructor(
@@ -29,11 +29,14 @@ export class OrderHttpController extends HttpController {
       user: userSchema.parse(response.locals.user),
       payload: createOrderSchema.parse(request.body)
     });
-    const paymentLink = await this.orderService.getPaymentLink(
+    const checkoutSession = await this.orderService.getCheckoutSessionUrl(
       orderWithOrderDetails.id,
       createOrderSchema.parse(request.body)
     );
-    response.status(201).json(formatResponse({ ...orderWithOrderDetails, paymentLink }));
+    if (!checkoutSession.url) {
+      throw new InternalServerError("Checkout session not created!");
+    }
+    response.json(formatResponse({ url: checkoutSession.url }));
   });
 
   private confirmOrder = asyncMiddleware(async (request, response) => {

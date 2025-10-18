@@ -10,9 +10,10 @@ export interface PaymentLineItem {
 }
 
 export interface PaymentsService {
-  createPaymentLink: (
+  createCheckoutSession: (
     orderId: number,
     lineItems: Array<PaymentLineItem>
-  ) => Promise<Stripe.Response<Stripe.PaymentLink> | null>;
+  ) => Promise<Stripe.Response<Stripe.Checkout.Session>>;
+
   constructEvent: (payload: string | Buffer, sig: string) => Promise<Stripe.Event>;
 }

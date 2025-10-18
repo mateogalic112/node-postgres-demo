@@ -20,35 +20,31 @@ export class StripeService implements PaymentsService {
     return StripeService.instance;
   }
 
-  public async createPaymentLink(orderId: number, lineItems: Array<PaymentLineItem>) {
-    try {
-      return await this.stripe.paymentLinks.create({
-        line_items: lineItems.map((item) => ({
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: item.name,
-              description: item.description,
-              images: item.image_url ? [item.image_url] : undefined,
-              metadata: {
-                product_id: item.product_id.toString()
-              }
-            },
-            unit_amount: item.price_in_cents
+  public async createCheckoutSession(orderId: number, lineItems: Array<PaymentLineItem>) {
+    return this.stripe.checkout.sessions.create({
+      line_items: lineItems.map((item) => ({
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: item.name,
+            description: item.description,
+            images: item.image_url ? [item.image_url] : undefined,
+            metadata: {
+              product_id: item.product_id.toString()
+            }
           },
-          quantity: item.quantity
-        })),
-        metadata: {
-          order_id: orderId
+          unit_amount: item.price_in_cents
         },
-        automatic_tax: { enabled: true }
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to create checkout payment link for order ${orderId}: ${String(error)}`
-      );
-      return null;
-    }
+        quantity: item.quantity
+      })),
+      mode: "payment",
+      metadata: {
+        order_id: orderId
+      },
+      success_url: `${env.FRONTEND_URL}?success=true`,
+      cancel_url: `${env.FRONTEND_URL}?canceled=true`,
+      automatic_tax: { enabled: true }
+    });
   }
 
   public async constructEvent(payload: string | Buffer, sig: string) {

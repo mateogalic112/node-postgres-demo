@@ -30,12 +30,12 @@ export class OrderService {
     return orderWithOrderDetailsSchema.parse(newOrderResult);
   }
 
-  async getPaymentLink(orderId: number, payload: CreateOrderPayload) {
+  async getCheckoutSessionUrl(orderId: number, payload: CreateOrderPayload) {
     const products = await this.productService.getProductsByIds(
       payload.line_items.map((item) => item.product_id)
     );
 
-    return this.paymentsService.createPaymentLink(
+    return this.paymentsService.createCheckoutSession(
       orderId,
       products.map((product) => ({
         product_id: product.id,
