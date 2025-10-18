@@ -45,12 +45,15 @@ export class OrderHttpController extends HttpController {
       throw new BadRequestError("Stripe signature is required");
     }
     const event = await this.paymentsService.constructEvent(request.body, sig as string);
-    if (event.type === "checkout.session.completed") {
+    if (
+      event.type === "checkout.session.completed" ||
+      event.type === "checkout.session.async_payment_succeeded"
+    ) {
       await this.orderService.confirmOrder(
         event.data.object.metadata?.order_id as number | undefined,
         event.data.object.customer_details?.email as string | undefined
       );
     }
-    response.json(formatResponse(event));
+    response.status(200).end();
   });
 }
