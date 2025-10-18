@@ -6,7 +6,6 @@ import {
   orderWithOrderDetailsSchema,
   orderSchema
 } from "./orders.validation";
-import { BadRequestError } from "api/api.errors";
 import { CreateOrderTemplate, MailService } from "interfaces/mail.interface";
 
 export class OrderService {
@@ -26,13 +25,7 @@ export class OrderService {
     return orderWithOrderDetailsSchema.parse(newOrderResult);
   }
 
-  async confirmOrder(orderId: number | undefined, buyerEmail: string | undefined) {
-    if (!orderId) {
-      throw new BadRequestError("Order ID is missing to confirm order");
-    }
-    if (!buyerEmail) {
-      throw new BadRequestError("Buyer email is missing to confirm order");
-    }
+  async confirmOrder(orderId: number, buyerEmail: string) {
     const orderResult = await this.orderRepository.confirmOrder(orderId);
     const order = orderSchema.parse(orderResult);
 

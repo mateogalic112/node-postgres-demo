@@ -32,7 +32,7 @@ class App {
 
   private initializeMiddlewares() {
     // Apply raw body parsing for Stripe webhook endpoint before JSON parsing
-    this.app.use("/api/v1/orders/confirm-order", express.raw({ type: "application/json" }));
+    this.app.use("/api/v1/payments/orders", express.raw({ type: "application/json" }));
 
     // Apply JSON parsing to all other routes
     this.app.use(express.json());

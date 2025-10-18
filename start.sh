@@ -64,7 +64,7 @@ fi
 
 # Start Stripe webhook listener in new terminal
 echo "Starting Stripe webhook listener in new terminal..."
-osascript -e 'tell application "Terminal" to do script "cd '$(pwd)' && echo \"Stripe webhook listener starting...\" && stripe listen --forward-to localhost:4000/api/v1/orders/confirm-order"'
+osascript -e 'tell application "Terminal" to do script "cd '$(pwd)' && echo \"Stripe webhook listener starting...\" && stripe listen --forward-to localhost:4000/api/v1/payments/orders"'
 
 echo ""
 echo "✅ Setup complete!"

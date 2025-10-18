@@ -58,7 +58,7 @@ export class StripeService implements PaymentsService {
     return checkoutSession;
   }
 
-  public async constructEvent(payload: string | Buffer, sig: string) {
+  public constructEvent(payload: string | Buffer, sig: string) {
     return this.stripe.webhooks.constructEvent(payload, sig, env.STRIPE_WEBHOOK_SECRET);
   }
 }

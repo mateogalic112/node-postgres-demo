@@ -15,5 +15,5 @@ export interface PaymentsService {
     order: OrderWithOrderDetails
   ) => Promise<Stripe.Response<Stripe.Checkout.Session>>;
 
-  constructEvent: (payload: string | Buffer, sig: string) => Promise<Stripe.Event>;
+  constructEvent: (payload: string | Buffer, sig: string) => Stripe.Event;
 }
