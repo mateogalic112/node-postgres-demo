@@ -1,3 +1,4 @@
+import { OrderWithOrderDetails } from "orders/orders.validation";
 import Stripe from "stripe";
 
 export interface PaymentLineItem {
@@ -11,8 +12,7 @@ export interface PaymentLineItem {
 
 export interface PaymentsService {
   createCheckoutSession: (
-    orderId: number,
-    lineItems: Array<PaymentLineItem>
+    order: OrderWithOrderDetails
   ) => Promise<Stripe.Response<Stripe.Checkout.Session>>;
 
   constructEvent: (payload: string | Buffer, sig: string) => Promise<Stripe.Event>;

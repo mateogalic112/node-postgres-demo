@@ -6,16 +6,12 @@ import {
   orderWithOrderDetailsSchema,
   orderSchema
 } from "./orders.validation";
-import { PaymentsService } from "interfaces/payments.interface";
-import { ProductService } from "products/products.service";
 import { BadRequestError } from "api/api.errors";
 import { CreateOrderTemplate, MailService } from "interfaces/mail.interface";
 
 export class OrderService {
   constructor(
     private readonly orderRepository: OrderRepository,
-    private readonly productService: ProductService,
-    private readonly paymentsService: PaymentsService,
     private readonly mailService: MailService
   ) {}
 
@@ -28,24 +24,6 @@ export class OrderService {
   }): Promise<OrderWithOrderDetails> {
     const newOrderResult = await this.orderRepository.createOrderWithOrderDetails(user, payload);
     return orderWithOrderDetailsSchema.parse(newOrderResult);
-  }
-
-  async getCheckoutSessionUrl(orderId: number, payload: CreateOrderPayload) {
-    const products = await this.productService.getProductsByIds(
-      payload.line_items.map((item) => item.product_id)
-    );
-
-    return this.paymentsService.createCheckoutSession(
-      orderId,
-      products.map((product) => ({
-        product_id: product.id,
-        name: product.name,
-        description: product.description,
-        image_url: product.image_url,
-        price_in_cents: product.price_in_cents,
-        quantity: payload.line_items.find((item) => item.product_id === product.id)?.quantity ?? 1
-      }))
-    );
   }
 
   async confirmOrder(orderId: number | undefined, buyerEmail: string | undefined) {

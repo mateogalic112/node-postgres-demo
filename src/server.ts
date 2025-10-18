@@ -47,12 +47,7 @@ const authService = new AuthService(usersService);
 
 const rolesService = new RolesService(new RolesRepository(DB));
 
-const orderService = new OrderService(
-  new OrderRepository(DB),
-  productService,
-  StripeService.getInstance(),
-  ResendService.getInstance()
-);
+const orderService = new OrderService(new OrderRepository(DB), ResendService.getInstance());
 
 const app = new App(
   [

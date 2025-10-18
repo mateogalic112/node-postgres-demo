@@ -29,10 +29,7 @@ export class OrderHttpController extends HttpController {
       user: userSchema.parse(response.locals.user),
       payload: createOrderSchema.parse(request.body)
     });
-    const checkoutSession = await this.orderService.getCheckoutSessionUrl(
-      orderWithOrderDetails.id,
-      createOrderSchema.parse(request.body)
-    );
+    const checkoutSession = await this.paymentsService.createCheckoutSession(orderWithOrderDetails);
     if (!checkoutSession.url) {
       throw new InternalServerError("Checkout session not created!");
     }

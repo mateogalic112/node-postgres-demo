@@ -100,8 +100,6 @@ describe("UsersController", () => {
         .query({ limit: 10 })
         .set("Cookie", authCookie);
 
-      console.log(response.body);
-
       expect(response.status).toBe(200);
       expect(response.body.data.length).toBe(9); // 8 users + 1 admin user
       expect(response.body.nextCursor).toBeNull();
