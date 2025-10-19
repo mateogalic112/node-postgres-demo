@@ -15,9 +15,9 @@ export interface PaymentsService {
   createCheckoutSession: (
     order: OrderWithOrderDetails,
     customerId: string
-  ) => Promise<Stripe.Response<Stripe.Checkout.Session> | null>;
+  ) => Promise<{ id: string; url: string | null } | null>;
 
-  createCustomer: (user: User) => Promise<Stripe.Response<Stripe.Customer> | null>;
+  createCustomer: (user: User) => Promise<{ id: string } | null>;
 
   constructEvent: (payload: string | Buffer, sig: string) => Stripe.Event;
 }
