@@ -2,6 +2,7 @@ import { DatabaseService } from "interfaces/database.interface";
 import { EmbeddingService } from "interfaces/embeddings.interface";
 import { FilesService } from "interfaces/files.interface";
 import { MailService } from "interfaces/mail.interface";
+import { PaymentsService } from "interfaces/payments.interface";
 import { Client, PoolClient } from "pg";
 
 export const mailService: MailService = {
@@ -20,6 +21,15 @@ export const embeddingService: EmbeddingService = {
   generateEmbedding: jest
     .fn()
     .mockResolvedValue({ embedding: mockEmbedding, usage: { promptTokens: 10, totalTokens: 10 } })
+};
+
+export const paymentsService: PaymentsService = {
+  createCustomer: jest.fn().mockResolvedValue({ id: "cus_test123" }),
+  createCheckoutSession: jest.fn().mockResolvedValue({ url: "https://checkout.stripe.com/test" }),
+  constructEvent: jest.fn().mockReturnValue({
+    type: "checkout.session.completed",
+    data: { object: { id: "cs_test123", metadata: { order_id: "1" } } }
+  })
 };
 
 export const createMockDatabaseService = (client: Client): DatabaseService => {

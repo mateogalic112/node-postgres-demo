@@ -5,13 +5,27 @@ import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
-import { createMockDatabaseService, mailService } from "__tests__/mocks";
-import { closeDatabase, prepareDatabase, resetDatabase } from "__tests__/setup";
+import {
+  closeDatabase,
+  createProductRequest,
+  getAuthCookieAfterRegister,
+  prepareDatabase,
+  resetDatabase
+} from "__tests__/setup";
 import { RolesRepository } from "roles/roles.repository";
-import { StripeService } from "services/stripe.service";
 import { OrderHttpController } from "./orders.controller";
 import { OrderService } from "./orders.service";
 import { OrderRepository } from "./orders.repository";
+import { ProductHttpController } from "products/products.controller";
+import { ProductRepository } from "products/products.repository";
+import { ProductService } from "products/products.service";
+import {
+  createMockDatabaseService,
+  mailService,
+  paymentsService,
+  filesService,
+  embeddingService
+} from "__tests__/mocks";
 
 describe("OrdersController", () => {
   let client: Client;
@@ -25,20 +39,22 @@ describe("OrdersController", () => {
     const usersService = new UserService(
       new UsersRepository(DB),
       new RolesRepository(DB),
-      StripeService.getInstance()
+      paymentsService
     );
     const authService = new AuthService(usersService);
     const orderService = new OrderService(new OrderRepository(DB), mailService);
+    const productService = new ProductService(
+      new ProductRepository(DB),
+      mailService,
+      filesService,
+      embeddingService
+    );
 
     app = new App(
       [
         new AuthHttpController(authService),
-        new OrderHttpController(
-          authService,
-          usersService,
-          orderService,
-          StripeService.getInstance()
-        )
+        new OrderHttpController(authService, usersService, orderService, paymentsService),
+        new ProductHttpController(productService, authService)
       ],
       []
     );
@@ -60,6 +76,20 @@ describe("OrdersController", () => {
     it("should throw an error when NOT authenticated", async () => {
       const response = await request(app.getServer()).post("/api/v1/orders");
       expect(response.status).toBe(401);
+    });
+
+    it("should create an order when authenticated", async () => {
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const productResponse = await createProductRequest(app, authCookie);
+      const productId = productResponse.body.data.id;
+
+      const response = await request(app.getServer())
+        .post("/api/v1/orders")
+        .set("Cookie", authCookie)
+        .send({ line_items: [{ product_id: productId, quantity: 2 }] });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.url).toBeDefined();
     });
   });
 });

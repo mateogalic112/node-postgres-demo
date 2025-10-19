@@ -38,6 +38,6 @@ export class OrderHttpController extends HttpController {
     if (!checkoutSession) {
       throw new InternalServerError("Checkout session not created!");
     }
-    response.json(formatResponse({ url: checkoutSession.url }));
+    response.status(201).json(formatResponse({ url: checkoutSession.url }));
   });
 }
