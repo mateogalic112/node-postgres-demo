@@ -63,7 +63,11 @@ const app = new App(
     new UsersHttpController(authService, rolesService, usersService),
     new BotHttpController(productService, LoggerService.getInstance()),
     new OrderHttpController(authService, usersService, orderService, StripeService.getInstance()),
-    new PaymentsHttpController(StripeService.getInstance(), orderService)
+    new PaymentsHttpController(
+      StripeService.getInstance(),
+      orderService,
+      LoggerService.getInstance()
+    )
   ],
   [
     new AuctionSocketController(auctionService),
