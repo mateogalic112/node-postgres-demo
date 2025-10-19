@@ -6,9 +6,12 @@ import { User } from "users/users.validation";
 import { DatabaseService } from "interfaces/database.interface";
 import { UserService } from "users/users.service";
 import { RolesRepository } from "roles/roles.repository";
+import { RoleName } from "roles/roles.validation";
+import { StripeService } from "services/stripe.service";
 
-// Mock the AuthRepository
+// Mock the repositories
 jest.mock("users/users.repository");
+jest.mock("roles/roles.repository");
 
 // Mock the bcrypt module
 jest.mock("bcrypt", () => ({
@@ -19,6 +22,7 @@ jest.mock("bcrypt", () => ({
 describe("AuthService", () => {
   let authService: AuthService;
   let mockUsersRepository: jest.Mocked<UsersRepository>;
+  let mockRolesRepository: jest.Mocked<RolesRepository>;
 
   const mockUser: User = {
     id: 123,
@@ -34,11 +38,23 @@ describe("AuthService", () => {
     // Clear all mocks before each test
     jest.clearAllMocks();
 
+    mockRolesRepository = new RolesRepository(
+      {} as DatabaseService
+    ) as jest.Mocked<RolesRepository>;
+
     mockUsersRepository = new UsersRepository(
-      {} as DatabaseService,
-      {} as RolesRepository
+      {} as DatabaseService
     ) as jest.Mocked<UsersRepository>;
-    authService = new AuthService(new UserService(mockUsersRepository));
+
+    // Mock the findRoleByName method
+    mockRolesRepository.findRoleByName = jest.fn().mockResolvedValue({
+      id: 1,
+      name: RoleName.USER
+    });
+
+    authService = new AuthService(
+      new UserService(mockUsersRepository, mockRolesRepository, StripeService.getInstance())
+    );
   });
 
   describe("user registration", () => {

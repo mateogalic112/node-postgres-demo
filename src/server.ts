@@ -31,7 +31,11 @@ import { PaymentsHttpController } from "payments/payments.controller";
 
 const DB = PostgresService.getInstance();
 
-const usersService = new UserService(new UsersRepository(DB, new RolesRepository(DB)));
+const usersService = new UserService(
+  new UsersRepository(DB),
+  new RolesRepository(DB),
+  StripeService.getInstance()
+);
 
 const productService = new ProductService(
   new ProductRepository(DB),
@@ -58,7 +62,7 @@ const app = new App(
     new BidHttpController(bidService),
     new UsersHttpController(authService, rolesService, usersService),
     new BotHttpController(productService, LoggerService.getInstance()),
-    new OrderHttpController(authService, orderService, StripeService.getInstance()),
+    new OrderHttpController(authService, usersService, orderService, StripeService.getInstance()),
     new PaymentsHttpController(StripeService.getInstance(), orderService)
   ],
   [

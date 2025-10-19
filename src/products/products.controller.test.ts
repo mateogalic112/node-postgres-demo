@@ -23,6 +23,7 @@ import {
 } from "__tests__/mocks";
 import { bulkInsertProducts } from "./mocks/products.mock";
 import { RolesRepository } from "roles/roles.repository";
+import { StripeService } from "services/stripe.service";
 
 describe("ProductsController", () => {
   let client: Client;
@@ -34,7 +35,7 @@ describe("ProductsController", () => {
 
     const DB = createMockDatabaseService(client);
     const authService = new AuthService(
-      new UserService(new UsersRepository(DB, new RolesRepository(DB)))
+      new UserService(new UsersRepository(DB), new RolesRepository(DB), StripeService.getInstance())
     );
     const productService = new ProductService(
       new ProductRepository(DB),

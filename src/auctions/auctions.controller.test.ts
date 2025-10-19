@@ -29,6 +29,7 @@ import {
 import { createMockedAuctionPayload, createFinishedAuction } from "./mocks/auction.mocks";
 import { subDays } from "date-fns";
 import { RolesRepository } from "roles/roles.repository";
+import { StripeService } from "services/stripe.service";
 
 describe("AuctionsController", () => {
   let client: Client;
@@ -40,7 +41,7 @@ describe("AuctionsController", () => {
 
     const DB = createMockDatabaseService(client);
     const authService = new AuthService(
-      new UserService(new UsersRepository(DB, new RolesRepository(DB)))
+      new UserService(new UsersRepository(DB), new RolesRepository(DB), StripeService.getInstance())
     );
     const auctionService = new AuctionService(new AuctionRepository(DB), mailService);
     const productService = new ProductService(

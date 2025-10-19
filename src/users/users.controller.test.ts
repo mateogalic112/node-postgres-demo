@@ -18,6 +18,7 @@ import request from "supertest";
 import { AuthHttpController } from "auth/auth.controller";
 import { bulkInsertUsers } from "./mocks/users.mocks";
 import { User } from "./users.validation";
+import { StripeService } from "services/stripe.service";
 
 describe("UsersController", () => {
   let client: Client;
@@ -31,7 +32,11 @@ describe("UsersController", () => {
     adminUser = freshAdminUser;
 
     const DB = createMockDatabaseService(client);
-    const usersService = new UserService(new UsersRepository(DB, new RolesRepository(DB)));
+    const usersService = new UserService(
+      new UsersRepository(DB),
+      new RolesRepository(DB),
+      StripeService.getInstance()
+    );
     const authService = new AuthService(usersService);
     const rolesService = new RolesService(new RolesRepository(DB));
 

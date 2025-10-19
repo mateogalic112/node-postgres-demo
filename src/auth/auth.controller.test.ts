@@ -14,6 +14,7 @@ import {
 import { createMockDatabaseService } from "__tests__/mocks";
 import { createMockedLoginPayload, createMockedRegisterPayload } from "./mocks/auth.mocks";
 import { RolesRepository } from "roles/roles.repository";
+import { StripeService } from "services/stripe.service";
 
 describe("AuthController", () => {
   let client: Client;
@@ -25,7 +26,7 @@ describe("AuthController", () => {
 
     const DB = createMockDatabaseService(client);
     const authService = new AuthService(
-      new UserService(new UsersRepository(DB, new RolesRepository(DB)))
+      new UserService(new UsersRepository(DB), new RolesRepository(DB), StripeService.getInstance())
     );
 
     app = new App([new AuthHttpController(authService)], []);

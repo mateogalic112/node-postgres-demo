@@ -1,16 +1,10 @@
 import { DatabaseService } from "interfaces/database.interface";
-import { User } from "./users.validation";
+import { User, UserCustomer } from "./users.validation";
 import { RegisterPayload } from "auth/auth.validation";
 import { PaginatedRequestParams } from "api/api.validations";
-import { RolesRepository } from "roles/roles.repository";
-import { RoleName } from "roles/roles.validation";
-import { InternalServerError } from "api/api.errors";
 
 export class UsersRepository {
-  constructor(
-    private readonly DB: DatabaseService,
-    private readonly rolesRepository: RolesRepository
-  ) {}
+  constructor(private readonly DB: DatabaseService) {}
 
   public async getUsers(params: PaginatedRequestParams) {
     const result = await this.DB.query<User>(
@@ -36,16 +30,30 @@ export class UsersRepository {
     return result.rows[0];
   }
 
-  public async createUser(payload: RegisterPayload) {
-    const role = await this.rolesRepository.findRoleByName(RoleName.USER);
-    if (!role) {
-      throw new InternalServerError("Role not found");
-    }
-
+  public async createUser(payload: RegisterPayload, roleId: number) {
     const result = await this.DB.query<User>(
       "INSERT INTO users (username, email, password, role_id) VALUES ($1, $2, $3, $4) RETURNING *",
-      [payload.username, payload.email, payload.password, role.id]
+      [payload.username, payload.email, payload.password, roleId]
     );
+    return result.rows[0];
+  }
+
+  public async createUserCustomer(userId: number, customerId: string) {
+    const result = await this.DB.query<UserCustomer>(
+      "INSERT INTO user_customers (user_id, customer_id) VALUES ($1, $2) RETURNING *",
+      [userId, customerId]
+    );
+    return result.rows[0];
+  }
+
+  public async findUserCustomerByUserId(userId: number) {
+    const result = await this.DB.query<UserCustomer>(
+      "SELECT * FROM user_customers WHERE user_id = $1",
+      [userId]
+    );
+    if (result.rowCount === 0) {
+      return null;
+    }
     return result.rows[0];
   }
 }

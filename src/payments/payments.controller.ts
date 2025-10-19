@@ -23,8 +23,8 @@ export class PaymentsHttpController extends HttpController {
     if (!sig) {
       throw new BadRequestError("Stripe signature is required");
     }
-    const rawEvent = this.paymentsService.constructEvent(request.body, sig as string);
 
+    const rawEvent = this.paymentsService.constructEvent(request.body, sig as string);
     if (
       rawEvent.type === "checkout.session.completed" ||
       rawEvent.type === "checkout.session.async_payment_succeeded"
