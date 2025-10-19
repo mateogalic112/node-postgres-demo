@@ -60,4 +60,5 @@ function setTestEnvironmentVariables() {
   process.env.RESEND_API_KEY = "test-resend-api-key";
   process.env.OPENAI_API_KEY = "test-openai-api-key";
   process.env.STRIPE_SECRET_KEY = "test-stripe-secret-key";
+  process.env.STRIPE_WEBHOOK_SECRET = "test-stripe-webhook-secret";
 }
