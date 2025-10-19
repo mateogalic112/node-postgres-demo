@@ -1,13 +1,13 @@
 import { HttpController } from "api/api.controllers";
 import asyncMiddleware from "middleware/async.middleware";
-import { PaymentsService } from "interfaces/payments.interface";
 import { BadRequestError } from "api/api.errors";
 import { OrderService } from "orders/orders.service";
 import { processOrderSchema } from "./payments.validation";
+import { StripeService } from "services/stripe.service";
 
 export class PaymentsHttpController extends HttpController {
   constructor(
-    private readonly paymentsService: PaymentsService,
+    private readonly stripeService: StripeService,
     private readonly orderService: OrderService
   ) {
     super("/payments");
@@ -24,7 +24,7 @@ export class PaymentsHttpController extends HttpController {
       throw new BadRequestError("Stripe signature is required");
     }
 
-    const rawEvent = this.paymentsService.constructEvent(request.body, sig as string);
+    const rawEvent = this.stripeService.constructEvent(request.body, sig as string);
     if (
       rawEvent.type === "checkout.session.completed" ||
       rawEvent.type === "checkout.session.async_payment_succeeded"

@@ -1,5 +1,4 @@
 import { OrderWithOrderDetails } from "orders/orders.validation";
-import Stripe from "stripe";
 import { User } from "users/users.validation";
 
 export interface PaymentLineItem {
@@ -18,6 +17,4 @@ export interface PaymentsService {
   ) => Promise<{ id: string; url: string | null } | null>;
 
   createCustomer: (user: User) => Promise<{ id: string } | null>;
-
-  constructEvent: (payload: string | Buffer, sig: string) => Stripe.Event;
 }

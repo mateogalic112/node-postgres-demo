@@ -25,11 +25,7 @@ export const embeddingService: EmbeddingService = {
 
 export const paymentsService: PaymentsService = {
   createCustomer: jest.fn().mockResolvedValue({ id: "cus_test123" }),
-  createCheckoutSession: jest.fn().mockResolvedValue({ url: "https://checkout.stripe.com/test" }),
-  constructEvent: jest.fn().mockReturnValue({
-    type: "checkout.session.completed",
-    data: { object: { id: "cs_test123", metadata: { order_id: "1" } } }
-  })
+  createCheckoutSession: jest.fn().mockResolvedValue({ url: "https://checkout.stripe.com/test" })
 };
 
 export const createMockDatabaseService = (client: Client): DatabaseService => {
