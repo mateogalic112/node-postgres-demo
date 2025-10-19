@@ -70,9 +70,8 @@ export class StripeService implements PaymentsService {
         metadata: {
           order_id: order.id
         },
-        success_url: `${env.FRONTEND_URL}/orders/${order.id}?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${env.FRONTEND_URL}/orders/${order.id}?canceled=true`,
-        automatic_tax: { enabled: true }
+        success_url: `${env.FRONTEND_URL}/orders/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${env.FRONTEND_URL}/orders/canceled?canceled=true`
       });
     } catch (err) {
       this.logger.error(String(err));
