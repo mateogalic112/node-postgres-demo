@@ -61,7 +61,10 @@ export const resetDatabase = async (client: Client) => {
     TRUNCATE TABLE
       bids,
       auctions,
-      products
+      products,
+      orders,
+      order_details,
+      user_customers
     RESTART IDENTITY CASCADE
   `);
 

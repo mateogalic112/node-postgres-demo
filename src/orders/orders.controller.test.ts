@@ -78,6 +78,40 @@ describe("OrdersController", () => {
       expect(response.status).toBe(401);
     });
 
+    it("should throw an error when customer creation fails", async () => {
+      // Override the mock for this specific test
+      (paymentsService.createCustomer as jest.Mock).mockResolvedValueOnce(null);
+
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const productResponse = await createProductRequest(app, authCookie);
+      const productId = productResponse.body.data.id;
+
+      const response = await request(app.getServer())
+        .post("/api/v1/orders")
+        .set("Cookie", authCookie)
+        .send({ line_items: [{ product_id: productId, quantity: 2 }] });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Customer not created!");
+    });
+
+    it("should throw an error when checkout session is not created", async () => {
+      // Override the mock for this specific test
+      (paymentsService.createCheckoutSession as jest.Mock).mockResolvedValueOnce(null);
+
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const productResponse = await createProductRequest(app, authCookie);
+      const productId = productResponse.body.data.id;
+
+      const response = await request(app.getServer())
+        .post("/api/v1/orders")
+        .set("Cookie", authCookie)
+        .send({ line_items: [{ product_id: productId, quantity: 2 }] });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Checkout session not created!");
+    });
+
     it("should create an order when authenticated", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
       const productResponse = await createProductRequest(app, authCookie);
