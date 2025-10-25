@@ -5,7 +5,7 @@ import { User } from "users/users.validation";
 import { BadRequestError, InternalServerError } from "api/api.errors";
 import { DatabaseService } from "interfaces/database.interface";
 import { PgError } from "database/errors";
-import { getFormattedAmount } from "utils/currency";
+import { Currency } from "utils/currency";
 
 export class BidService {
   private readonly MINIMUM_BID_INCREASE_PERCENTAGE = 10;
@@ -96,7 +96,9 @@ export class BidService {
       Math.max(highestBidInCents, startingPriceInCents) + minimumBidIncreaseAmount;
 
     if (currentBidInCents < minimumAcceptableBid) {
-      throw new BadRequestError(`Bid must be at least ${getFormattedAmount(minimumAcceptableBid)}`);
+      throw new BadRequestError(
+        `Bid must be at least ${Currency.formatAmount(minimumAcceptableBid)}`
+      );
     }
   }
 
