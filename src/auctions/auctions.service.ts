@@ -3,14 +3,10 @@ import { AuctionRepository } from "./auctions.repository";
 import { auctionSchema, CreateAuctionPayload } from "./auctions.validation";
 import { BadRequestError, ForbiddenError, NotFoundError } from "api/api.errors";
 import { User } from "users/users.validation";
-import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
 import { addHours, isPast } from "date-fns";
 
 export class AuctionService {
-  constructor(
-    private readonly auctionRepository: AuctionRepository,
-    private readonly mailService: MailService
-  ) {}
+  constructor(private readonly auctionRepository: AuctionRepository) {}
 
   public async getAuctions(params: PaginatedRequestParams) {
     const auctions = await this.auctionRepository.getAuctions(params);
@@ -27,12 +23,6 @@ export class AuctionService {
 
   public async createAuction({ user, payload }: { user: User; payload: CreateAuctionPayload }) {
     const newAuction = await this.auctionRepository.createAuction(user, payload);
-
-    this.mailService.sendEmail({
-      to: user.email,
-      template: CreateAuctionTemplate.getTemplate(newAuction)
-    });
-
     return auctionSchema.parse(newAuction);
   }
 

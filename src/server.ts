@@ -44,7 +44,7 @@ const productService = new ProductService(
   OpenAIService.getInstance()
 );
 
-const auctionService = new AuctionService(new AuctionRepository(DB), ResendService.getInstance());
+const auctionService = new AuctionService(new AuctionRepository(DB));
 
 const bidService = new BidService(new BidRepository(DB), DB, LoggerService.getInstance());
 
@@ -58,7 +58,7 @@ const app = new App(
   [
     new AuthHttpController(authService),
     new ProductHttpController(productService, authService),
-    new AuctionHttpController(auctionService, authService),
+    new AuctionHttpController(auctionService, authService, ResendService.getInstance()),
     new BidHttpController(bidService),
     new UsersHttpController(authService, rolesService, usersService),
     new BotHttpController(productService, LoggerService.getInstance()),

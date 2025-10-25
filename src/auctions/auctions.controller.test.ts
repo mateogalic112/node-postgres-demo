@@ -43,7 +43,7 @@ describe("AuctionsController", () => {
     const authService = new AuthService(
       new UserService(new UsersRepository(DB), new RolesRepository(DB), StripeService.getInstance())
     );
-    const auctionService = new AuctionService(new AuctionRepository(DB), mailService);
+    const auctionService = new AuctionService(new AuctionRepository(DB));
     const productService = new ProductService(
       new ProductRepository(DB),
       mailService,
@@ -54,7 +54,7 @@ describe("AuctionsController", () => {
     app = new App(
       [
         new AuthHttpController(authService),
-        new AuctionHttpController(auctionService, authService),
+        new AuctionHttpController(auctionService, authService, mailService),
         new ProductHttpController(productService, authService)
       ],
       []
