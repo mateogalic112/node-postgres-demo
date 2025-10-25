@@ -45,7 +45,6 @@ describe("OrdersController", () => {
     const orderService = new OrderService(new OrderRepository(DB), mailService);
     const productService = new ProductService(
       new ProductRepository(DB),
-      mailService,
       filesService,
       embeddingService
     );
@@ -54,7 +53,7 @@ describe("OrdersController", () => {
       [
         new AuthHttpController(authService),
         new OrderHttpController(authService, usersService, orderService, paymentsService),
-        new ProductHttpController(productService, authService)
+        new ProductHttpController(productService, authService, mailService)
       ],
       []
     );

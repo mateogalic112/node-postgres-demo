@@ -1,4 +1,3 @@
-import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
 import { ProductRepository } from "./products.repository";
 import { CreateProductPayload, productSchema } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
@@ -12,7 +11,6 @@ export class ProductService {
 
   constructor(
     private readonly productRepository: ProductRepository,
-    private readonly mailService: MailService,
     private readonly filesService: FilesService,
     private readonly embeddingService: EmbeddingService
   ) {}
@@ -62,11 +60,6 @@ export class ProductService {
       newProduct.id,
       await this.embeddingService.generateEmbeddings(newProduct.description)
     );
-
-    this.mailService.sendEmail({
-      to: user.email,
-      template: CreateProductTemplate.getTemplate(newProduct)
-    });
 
     return productSchema.parse(newProduct);
   }

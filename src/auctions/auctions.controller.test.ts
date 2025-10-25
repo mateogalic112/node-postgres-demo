@@ -46,7 +46,6 @@ describe("AuctionsController", () => {
     const auctionService = new AuctionService(new AuctionRepository(DB));
     const productService = new ProductService(
       new ProductRepository(DB),
-      mailService,
       filesService,
       embeddingService
     );
@@ -55,7 +54,7 @@ describe("AuctionsController", () => {
       [
         new AuthHttpController(authService),
         new AuctionHttpController(auctionService, authService, mailService),
-        new ProductHttpController(productService, authService)
+        new ProductHttpController(productService, authService, mailService)
       ],
       []
     );

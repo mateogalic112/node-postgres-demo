@@ -12,11 +12,13 @@ import { fileMiddleware } from "middleware/file.middleware";
 import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
 import { AuthService } from "auth/auth.service";
+import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
 
 export class ProductHttpController extends HttpController {
   constructor(
     private readonly productService: ProductService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly mailService: MailService
   ) {
     super("/products");
     this.initializeRoutes();
@@ -56,9 +58,14 @@ export class ProductHttpController extends HttpController {
   });
 
   private createProduct = asyncMiddleware(async (request, response) => {
+    const user = userSchema.parse(response.locals.user);
     const product = await this.productService.createProduct({
-      user: userSchema.parse(response.locals.user),
+      user,
       payload: createProductSchema.parse(request)
+    });
+    this.mailService.sendEmail({
+      to: user.email,
+      template: CreateProductTemplate.getTemplate(product)
     });
     response.status(201).json(formatResponse(product));
   });

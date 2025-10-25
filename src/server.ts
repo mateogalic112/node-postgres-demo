@@ -39,7 +39,6 @@ const usersService = new UserService(
 
 const productService = new ProductService(
   new ProductRepository(DB),
-  ResendService.getInstance(),
   AWSService.getInstance(),
   OpenAIService.getInstance()
 );
@@ -57,7 +56,7 @@ const orderService = new OrderService(new OrderRepository(DB), ResendService.get
 const app = new App(
   [
     new AuthHttpController(authService),
-    new ProductHttpController(productService, authService),
+    new ProductHttpController(productService, authService, ResendService.getInstance()),
     new AuctionHttpController(auctionService, authService, ResendService.getInstance()),
     new BidHttpController(bidService),
     new UsersHttpController(authService, rolesService, usersService),

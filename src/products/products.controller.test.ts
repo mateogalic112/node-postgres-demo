@@ -39,13 +39,15 @@ describe("ProductsController", () => {
     );
     const productService = new ProductService(
       new ProductRepository(DB),
-      mailService,
       filesService,
       embeddingService
     );
 
     app = new App(
-      [new AuthHttpController(authService), new ProductHttpController(productService, authService)],
+      [
+        new AuthHttpController(authService),
+        new ProductHttpController(productService, authService, mailService)
+      ],
       []
     );
   });
