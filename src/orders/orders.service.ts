@@ -6,13 +6,9 @@ import {
   orderWithOrderDetailsSchema,
   orderSchema
 } from "./orders.validation";
-import { CreateOrderTemplate, MailService } from "interfaces/mail.interface";
 
 export class OrderService {
-  constructor(
-    private readonly orderRepository: OrderRepository,
-    private readonly mailService: MailService
-  ) {}
+  constructor(private readonly orderRepository: OrderRepository) {}
 
   async createOrderWithOrderDetails({
     user,
@@ -25,13 +21,8 @@ export class OrderService {
     return orderWithOrderDetailsSchema.parse(newOrderResult);
   }
 
-  async confirmOrder(orderId: number, buyerEmail: string) {
+  async confirmOrder(orderId: number) {
     const orderResult = await this.orderRepository.confirmOrder(orderId);
-    const order = orderSchema.parse(orderResult);
-
-    this.mailService.sendEmail({
-      to: buyerEmail,
-      template: CreateOrderTemplate.getTemplate(order)
-    });
+    return orderSchema.parse(orderResult);
   }
 }

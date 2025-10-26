@@ -48,7 +48,7 @@ export class AuctionHttpController extends HttpController {
       user,
       payload: createAuctionSchema.parse(request.body)
     });
-    this.mailService.sendEmail({
+    await this.mailService.sendEmail({
       to: user.email,
       template: CreateAuctionTemplate.getTemplate(auction)
     });

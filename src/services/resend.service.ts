@@ -46,7 +46,7 @@ export class ResendService implements MailService {
 
       return data.id;
     } catch (error) {
-      LoggerService.getInstance().error(String(error));
+      this.logger.error(String(error));
       return null;
     }
   }

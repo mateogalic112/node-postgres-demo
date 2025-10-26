@@ -63,7 +63,7 @@ export class ProductHttpController extends HttpController {
       user,
       payload: createProductSchema.parse(request)
     });
-    this.mailService.sendEmail({
+    await this.mailService.sendEmail({
       to: user.email,
       template: CreateProductTemplate.getTemplate(product)
     });

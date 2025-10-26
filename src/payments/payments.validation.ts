@@ -6,9 +6,6 @@ export const processOrderSchema = z.object({
     object: z.object({
       metadata: z.object({
         order_id: z.coerce.number()
-      }),
-      customer_details: z.object({
-        email: z.email()
       })
     })
   })

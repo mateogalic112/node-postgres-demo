@@ -32,10 +32,7 @@ export class PaymentsHttpController extends HttpController {
       rawEvent.type === "checkout.session.async_payment_succeeded"
     ) {
       const event = processOrderSchema.parse(rawEvent);
-      this.orderService.confirmOrder(
-        event.data.object.metadata.order_id,
-        event.data.object.customer_details.email
-      );
+      await this.orderService.confirmOrder(event.data.object.metadata.order_id);
     }
     response.status(200).end();
   });

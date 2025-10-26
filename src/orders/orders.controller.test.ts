@@ -42,7 +42,7 @@ describe("OrdersController", () => {
       paymentsService
     );
     const authService = new AuthService(usersService);
-    const orderService = new OrderService(new OrderRepository(DB), mailService);
+    const orderService = new OrderService(new OrderRepository(DB));
     const productService = new ProductService(
       new ProductRepository(DB),
       filesService,
