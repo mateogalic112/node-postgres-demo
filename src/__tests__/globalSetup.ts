@@ -7,9 +7,6 @@ let postgresContainer: StartedPostgreSqlContainer;
 let connectionString: string;
 
 export default async function globalSetup() {
-  // Set test environment variables
-  setTestEnvironmentVariables();
-
   // Start the postgres container once for all tests
   postgresContainer = await new PostgreSqlContainer("pgvector/pgvector:pg15").start();
   connectionString = postgresContainer.getConnectionUri();
@@ -40,25 +37,4 @@ export default async function globalSetup() {
   await client.end();
 
   console.log("Global test setup complete - PostgreSQL container started");
-}
-
-function setTestEnvironmentVariables() {
-  // Set test environment variables
-  process.env.NODE_ENV = "test";
-  process.env.POSTGRES_USER = "test";
-  process.env.POSTGRES_PASSWORD = "test";
-  process.env.POSTGRES_HOST = "localhost";
-  process.env.POSTGRES_PORT = "5432";
-  process.env.POSTGRES_DB = "test";
-  process.env.JWT_SECRET = "test-jwt-secret-for-testing-only";
-  process.env.FRONTEND_URL = "http://localhost:3000";
-  process.env.AWS_ACCESS_KEY_ID = "test-aws-access-key";
-  process.env.AWS_SECRET_ACCESS_KEY = "test-aws-secret-key";
-  process.env.AWS_REGION = "us-east-1";
-  process.env.AWS_S3_BUCKET = "test-bucket";
-  process.env.ADMIN_EMAIL = "admin@test.com";
-  process.env.RESEND_API_KEY = "test-resend-api-key";
-  process.env.OPENAI_API_KEY = "test-openai-api-key";
-  process.env.STRIPE_SECRET_KEY = "test-stripe-secret-key";
-  process.env.STRIPE_WEBHOOK_SECRET = "test-stripe-webhook-secret";
 }
