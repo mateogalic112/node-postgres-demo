@@ -7,24 +7,33 @@ export class OrderRepository {
 
   public async createOrderWithOrderDetails(user: User, payload: CreateOrderPayload) {
     const client = await this.DB.getClient();
+    try {
+      await client.query("BEGIN");
 
-    const orderResult = await client.query<Order>(
-      "INSERT INTO orders (buyer_id) VALUES ($1) RETURNING *",
-      [user.id]
-    );
+      const orderResult = await client.query<Order>(
+        "INSERT INTO orders (buyer_id) VALUES ($1) RETURNING *",
+        [user.id]
+      );
 
-    const order = orderResult.rows[0];
+      const order = orderResult.rows[0];
 
-    const orderDetailsResult = await client.query<OrderDetail>(
-      `INSERT INTO order_details (order_id, product_id, quantity)
-      VALUES ${payload.line_items
-        .map((_, index) => `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`)
-        .join(", ")}
-      RETURNING *`,
-      payload.line_items.flatMap((item) => [order.id, item.product_id, item.quantity])
-    );
+      const orderDetailsResult = await client.query<OrderDetail>(
+        `INSERT INTO order_details (order_id, product_id, quantity)
+        VALUES ${payload.line_items
+          .map((_, index) => `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`)
+          .join(", ")}
+        RETURNING *`,
+        payload.line_items.flatMap((item) => [order.id, item.product_id, item.quantity])
+      );
 
-    return { ...order, order_details: orderDetailsResult.rows };
+      await client.query("COMMIT");
+      return { ...order, order_details: orderDetailsResult.rows };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async confirmOrder(orderId: number) {

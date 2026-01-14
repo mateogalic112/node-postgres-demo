@@ -13,7 +13,11 @@ export class PostgresService implements DatabaseService {
       password: env.POSTGRES_PASSWORD,
       database: env.POSTGRES_DB,
       port: env.POSTGRES_PORT,
-      idleTimeoutMillis: 30000
+      max: 20,
+      min: 2,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+      application_name: "node-postgres-demo"
     });
   }
 

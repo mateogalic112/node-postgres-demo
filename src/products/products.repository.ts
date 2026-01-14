@@ -47,12 +47,12 @@ export class ProductRepository {
 
   public async findRelevantProducts(embeddedQuery: Embedding, limit: number) {
     const result = await this.DB.query<Pick<ProductEmbedding, "id" | "product_id">>(
-      `SELECT 
+      `SELECT
         e.id, e.product_id, 1 - (e.embedding <=> $1::vector) AS cosine_similarity FROM products_embeddings e
         WHERE 1 - (e.embedding <=> $1::vector) > 0.5
         ORDER BY cosine_similarity DESC
-        LIMIT ${limit}`,
-      [`[${embeddedQuery.join(",")}]`]
+        LIMIT $2`,
+      [`[${embeddedQuery.join(",")}]`, limit]
     );
     return result.rows;
   }
