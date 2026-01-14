@@ -11,7 +11,10 @@
     "migrate": "tsx src/database/migrations.ts",
     "prettier:fix": "npx prettier --write .",
     "lint": "eslint 'src/**/*.ts' --fix",
-    "test": "NODE_ENV=test npx jest --detectOpenHandles"
+    "test": "NODE_ENV=test npx jest --runInBand --detectOpenHandles"
+  },
+  "engines": {
+    "node": ">=20.0.0 <25.0.0"
   },
   "tsup": {
     "entry": [

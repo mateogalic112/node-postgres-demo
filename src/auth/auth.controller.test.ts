@@ -2,46 +2,24 @@ import App from "app";
 import { AuthHttpController } from "./auth.controller";
 import request from "supertest";
 import { AuthService } from "./auth.service";
-import { Client } from "pg";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
-import {
-  closeDatabase,
-  prepareDatabase,
-  registerUserRequest,
-  resetDatabase
-} from "__tests__/setup";
+import { getTestClient, registerUserRequest } from "__tests__/setup";
 import { createMockDatabaseService } from "__tests__/mocks";
 import { createMockedLoginPayload, createMockedRegisterPayload } from "./mocks/auth.mocks";
 import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
 
 describe("AuthController", () => {
-  let client: Client;
   let app: App;
 
-  beforeAll(async () => {
-    const { client: freshClient } = await prepareDatabase();
-    client = freshClient;
-
-    const DB = createMockDatabaseService(client);
+  beforeAll(() => {
+    const DB = createMockDatabaseService(getTestClient());
     const authService = new AuthService(
       new UserService(new UsersRepository(DB), new RolesRepository(DB), StripeService.getInstance())
     );
 
     app = new App([new AuthHttpController(authService)], []);
-  });
-
-  beforeEach(async () => {
-    await resetDatabase(client);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  afterAll(async () => {
-    await closeDatabase(client);
   });
 
   describe("POST /api/v1/auth/register", () => {

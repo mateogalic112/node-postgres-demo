@@ -1,4 +1,4 @@
-import { faker } from "@faker-js/faker/.";
+import { faker } from "@faker-js/faker";
 import App from "app";
 import { createMockedAuctionPayload } from "auctions/mocks/auction.mocks";
 import { Client } from "pg";
@@ -6,72 +6,32 @@ import { Role } from "roles/roles.validation";
 import request from "supertest";
 import { User } from "users/users.validation";
 
-const getDbInitialState = async (client: Client) => {
-  // Fetch existing roles (created in global setup)
-  const rolesResult = await client.query<Role>(
-    `SELECT * FROM roles WHERE name IN ('ADMIN', 'USER') ORDER BY name`
-  );
-
-  // Fetch existing admin user (created in global setup)
-  const adminUserResult = await client.query<User>(
-    `SELECT * FROM users WHERE email = 'admin@example.com'`
-  );
-
-  return {
-    adminUser: { ...adminUserResult.rows[0], password: "password" }, // Return plain text password for tests
-    roles: rolesResult.rows
-  };
-};
-
-export const prepareDatabase = async () => {
-  // Use the shared PostgreSQL container from global setup
-  const connectionString = (globalThis as Record<string, unknown>).__POSTGRES_URI__ as string;
-
-  if (!connectionString) {
-    throw new Error(
-      "PostgreSQL container not found. Make sure globalSetup is configured correctly."
-    );
+// Helper to get shared test state from jestSetup.ts
+export const getTestClient = (): Client => {
+  const client = (globalThis as Record<string, unknown>).__TEST_CLIENT__;
+  if (!client) {
+    throw new Error("Test client not initialized. Ensure jestSetup.ts has run.");
   }
-
-  // Connect to the shared database
-  const client = new Client({ connectionString });
-  await client.connect();
-
-  // Get existing initial state (roles and admin user created in global setup)
-  const { adminUser, roles } = await getDbInitialState(client);
-
-  return {
-    client,
-    adminUser,
-    roles
-  };
+  return client as Client;
 };
 
-export const closeDatabase = async (client: Client) => {
-  try {
-    await client.end();
-  } catch (error) {
-    console.warn("Error ending client:", error);
+export const getTestRoles = (): Role[] => {
+  const roles = (globalThis as Record<string, unknown>).__TEST_ROLES__;
+  if (!roles) {
+    throw new Error("Test roles not initialized. Ensure jestSetup.ts has run.");
   }
+  return roles as Role[];
 };
 
-export const resetDatabase = async (client: Client) => {
-  // Only truncate tables that are populated during tests, keep the initial state
-  await client.query(`
-    TRUNCATE TABLE
-      bids,
-      auctions,
-      products,
-      orders,
-      order_details,
-      user_customers
-    RESTART IDENTITY CASCADE
-  `);
-
-  // Delete any users except the admin user
-  await client.query(`DELETE FROM users WHERE email != 'admin@example.com'`);
+export const getTestAdminUser = (): User & { password: string } => {
+  const adminUser = (globalThis as Record<string, unknown>).__TEST_ADMIN_USER__;
+  if (!adminUser) {
+    throw new Error("Test admin user not initialized. Ensure jestSetup.ts has run.");
+  }
+  return adminUser as User & { password: string };
 };
 
+// Request helpers
 export const registerUserRequest = async (app: App, username: string) => {
   return request(app.getServer())
     .post("/api/v1/auth/register")

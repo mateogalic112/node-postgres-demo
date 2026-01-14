@@ -1,5 +1,4 @@
 import App from "app";
-import { Client } from "pg";
 import { ProductHttpController } from "./products.controller";
 import { ProductService } from "./products.service";
 import { ProductRepository } from "./products.repository";
@@ -9,12 +8,7 @@ import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
-import {
-  closeDatabase,
-  getAuthCookieAfterRegister,
-  prepareDatabase,
-  resetDatabase
-} from "__tests__/setup";
+import { getAuthCookieAfterRegister, getTestClient } from "__tests__/setup";
 import {
   createMockDatabaseService,
   embeddingService,
@@ -26,14 +20,10 @@ import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
 
 describe("ProductsController", () => {
-  let client: Client;
   let app: App;
 
-  beforeAll(async () => {
-    const { client: freshClient } = await prepareDatabase();
-    client = freshClient;
-
-    const DB = createMockDatabaseService(client);
+  beforeAll(() => {
+    const DB = createMockDatabaseService(getTestClient());
     const authService = new AuthService(
       new UserService(new UsersRepository(DB), new RolesRepository(DB), StripeService.getInstance())
     );
@@ -50,18 +40,6 @@ describe("ProductsController", () => {
       ],
       []
     );
-  });
-
-  beforeEach(async () => {
-    await resetDatabase(client);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  afterAll(async () => {
-    await closeDatabase(client);
   });
 
   describe("GET /api/v1/products", () => {

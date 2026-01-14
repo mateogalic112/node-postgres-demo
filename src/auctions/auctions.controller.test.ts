@@ -1,5 +1,4 @@
 import App from "app";
-import { Client } from "pg";
 import request from "supertest";
 import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
@@ -18,13 +17,11 @@ import {
   mailService
 } from "__tests__/mocks";
 import {
-  closeDatabase,
   createAuctionRequest,
   createProductRequest,
   getAuthCookieAfterRegister,
-  prepareDatabase,
-  registerUserRequest,
-  resetDatabase
+  getTestClient,
+  registerUserRequest
 } from "__tests__/setup";
 import { createMockedAuctionPayload, createFinishedAuction } from "./mocks/auction.mocks";
 import { subDays } from "date-fns";
@@ -32,14 +29,10 @@ import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
 
 describe("AuctionsController", () => {
-  let client: Client;
   let app: App;
 
-  beforeAll(async () => {
-    const { client: freshClient } = await prepareDatabase();
-    client = freshClient;
-
-    const DB = createMockDatabaseService(client);
+  beforeAll(() => {
+    const DB = createMockDatabaseService(getTestClient());
     const authService = new AuthService(
       new UserService(new UsersRepository(DB), new RolesRepository(DB), StripeService.getInstance())
     );
@@ -58,18 +51,6 @@ describe("AuctionsController", () => {
       ],
       []
     );
-  });
-
-  beforeEach(async () => {
-    await resetDatabase(client);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  afterAll(async () => {
-    await closeDatabase(client);
   });
 
   describe("POST /api/v1/auctions", () => {
@@ -221,7 +202,7 @@ describe("AuctionsController", () => {
       const productId = productResponse.body.data.id;
 
       const finishedAuction = await createFinishedAuction(
-        client,
+        getTestClient(),
         userResponse.body.data.id,
         productId
       );

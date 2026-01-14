@@ -5,6 +5,7 @@ export default {
   testMatch: ["**/*.test.ts"],
   globalSetup: "<rootDir>/src/__tests__/globalSetup.ts",
   globalTeardown: "<rootDir>/src/__tests__/globalTeardown.ts",
+  setupFilesAfterEnv: ["<rootDir>/src/__tests__/jestSetup.ts"],
   moduleNameMapper: {
     "^config/(.*)$": "<rootDir>/src/config/$1",
     "^api/(.*)$": "<rootDir>/src/api/$1",

@@ -1,16 +1,13 @@
 import App from "app";
-import { Client } from "pg";
 import request from "supertest";
 import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
 import {
-  closeDatabase,
   createProductRequest,
   getAuthCookieAfterRegister,
-  prepareDatabase,
-  resetDatabase
+  getTestClient
 } from "__tests__/setup";
 import { RolesRepository } from "roles/roles.repository";
 import { OrderHttpController } from "./orders.controller";
@@ -28,14 +25,10 @@ import {
 } from "__tests__/mocks";
 
 describe("OrdersController", () => {
-  let client: Client;
   let app: App;
 
-  beforeAll(async () => {
-    const { client: freshClient } = await prepareDatabase();
-    client = freshClient;
-
-    const DB = createMockDatabaseService(client);
+  beforeAll(() => {
+    const DB = createMockDatabaseService(getTestClient());
     const usersService = new UserService(
       new UsersRepository(DB),
       new RolesRepository(DB),
@@ -57,18 +50,6 @@ describe("OrdersController", () => {
       ],
       []
     );
-  });
-
-  beforeEach(async () => {
-    await resetDatabase(client);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  afterAll(async () => {
-    await closeDatabase(client);
   });
 
   describe("POST /api/v1/orders", () => {
