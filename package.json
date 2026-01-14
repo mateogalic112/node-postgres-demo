@@ -9,6 +9,7 @@
     "seed": "tsx src/database/seed.ts",
     "build": "tsup",
     "migrate": "tsx src/database/migrations.ts",
+    "migrate:down": "tsx src/database/rollback.ts",
     "prettier:fix": "npx prettier --write .",
     "lint": "eslint 'src/**/*.ts' --fix",
     "test": "NODE_ENV=test npx jest --runInBand --detectOpenHandles"
