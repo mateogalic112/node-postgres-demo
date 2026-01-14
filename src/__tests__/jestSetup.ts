@@ -1,32 +1,28 @@
+import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { Client } from "pg";
-import { Role } from "roles/roles.validation";
 import { User } from "users/users.validation";
 
 let client: Client;
 
 beforeAll(async () => {
-  const connectionString = (globalThis as Record<string, unknown>).__POSTGRES_URI__ as string;
+  const container = (globalThis as unknown as Record<string, unknown>)
+    .__POSTGRES_CONTAINER__ as StartedPostgreSqlContainer;
 
-  if (!connectionString) {
+  if (!container) {
     throw new Error(
       "PostgreSQL container not found. Make sure globalSetup is configured correctly."
     );
   }
 
-  client = new Client({ connectionString });
+  client = new Client({ connectionString: container.getConnectionUri() });
   await client.connect();
 
-  // Fetch initial state created in globalSetup
-  const rolesResult = await client.query<Role>(
-    `SELECT * FROM roles WHERE name IN ('ADMIN', 'USER') ORDER BY name`
-  );
   const adminUserResult = await client.query<User>(
     `SELECT * FROM users WHERE email = 'admin@example.com'`
   );
 
   // Store shared state globally
   (globalThis as Record<string, unknown>).__TEST_CLIENT__ = client;
-  (globalThis as Record<string, unknown>).__TEST_ROLES__ = rolesResult.rows;
   (globalThis as Record<string, unknown>).__TEST_ADMIN_USER__ = {
     ...adminUserResult.rows[0],
     password: "password"
@@ -62,7 +58,5 @@ afterAll(async () => {
     console.warn("Error ending client:", error);
   } finally {
     delete (globalThis as Record<string, unknown>).__TEST_CLIENT__;
-    delete (globalThis as Record<string, unknown>).__TEST_ROLES__;
-    delete (globalThis as Record<string, unknown>).__TEST_ADMIN_USER__;
   }
 });

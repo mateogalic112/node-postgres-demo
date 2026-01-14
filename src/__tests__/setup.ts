@@ -2,7 +2,6 @@ import { faker } from "@faker-js/faker";
 import App from "app";
 import { createMockedAuctionPayload } from "auctions/mocks/auction.mocks";
 import { Client } from "pg";
-import { Role } from "roles/roles.validation";
 import request from "supertest";
 import { User } from "users/users.validation";
 
@@ -13,14 +12,6 @@ export const getTestClient = (): Client => {
     throw new Error("Test client not initialized. Ensure jestSetup.ts has run.");
   }
   return client as Client;
-};
-
-export const getTestRoles = (): Role[] => {
-  const roles = (globalThis as Record<string, unknown>).__TEST_ROLES__;
-  if (!roles) {
-    throw new Error("Test roles not initialized. Ensure jestSetup.ts has run.");
-  }
-  return roles as Role[];
 };
 
 export const getTestAdminUser = (): User & { password: string } => {
