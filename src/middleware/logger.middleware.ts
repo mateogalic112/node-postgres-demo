@@ -7,7 +7,9 @@ export const loggerMiddleware: RequestHandler = (request, response, next) => {
   const start = process.hrtime();
   const logger = LoggerService.getInstance();
 
-  logger.log(`[START] ${request.method} ${request.url}: ${JSON.stringify(request.body)}`);
+  logger.log(
+    `[START] ${request.method} ${request.url}: ${JSON.stringify(logger.redactBody(request.body))}`
+  );
 
   const finishHandler = () => {
     const [seconds, nanoseconds] = process.hrtime(start);

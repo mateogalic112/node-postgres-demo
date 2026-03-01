@@ -3,6 +3,8 @@ import { createLogger, format, transports } from "winston";
 export class LoggerService {
   private static instance: LoggerService;
 
+  private readonly REDACTED_FIELDS = ["password", "token", "secret", "authorization"];
+
   private constructor() {}
 
   public static getInstance(): LoggerService {
@@ -10,6 +12,15 @@ export class LoggerService {
       LoggerService.instance = new LoggerService();
     }
     return LoggerService.instance;
+  }
+
+  public redactBody(body: unknown): unknown {
+    if (!body || typeof body !== "object") return body;
+    const redacted: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(body)) {
+      redacted[key] = this.REDACTED_FIELDS.includes(key.toLowerCase()) ? "[REDACTED]" : value;
+    }
+    return redacted;
   }
 
   public log(message: string) {
