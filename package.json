@@ -12,7 +12,8 @@
     "migrate:down": "tsx src/database/rollback.ts",
     "prettier:fix": "npx prettier --write .",
     "lint": "eslint 'src/**/*.ts' --fix",
-    "test": "NODE_ENV=test npx jest --runInBand --detectOpenHandles"
+    "test": "NODE_ENV=test npx jest --runInBand --detectOpenHandles",
+    "test:coverage": "NODE_ENV=test npx jest --runInBand --detectOpenHandles --coverage"
   },
   "engines": {
     "node": ">=20.0.0 <25.0.0"
