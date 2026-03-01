@@ -17,7 +17,6 @@ import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
 import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
-import { LoggerService } from "services/logger.service";
 import { Auction } from "auctions/auctions.validation";
 import { Client } from "pg";
 import { subHours } from "date-fns";
@@ -52,7 +51,7 @@ describe("BidSocketController", () => {
       filesService,
       embeddingService
     );
-    const bidService = new BidService(new BidRepository(DB), DB, LoggerService.getInstance());
+    const bidService = new BidService(new BidRepository(DB), DB);
     const stripeService = new StripeService(new ProductRepository(DB));
     const authService = new AuthService(
       new UserService(new UsersRepository(DB), new RolesRepository(DB), stripeService)

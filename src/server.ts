@@ -47,7 +47,7 @@ const usersService = new UserService(
 
 const auctionService = new AuctionService(new AuctionRepository(DB));
 
-const bidService = new BidService(new BidRepository(DB), DB, LoggerService.getInstance());
+const bidService = new BidService(new BidRepository(DB), DB);
 
 const authService = new AuthService(usersService);
 

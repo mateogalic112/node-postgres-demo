@@ -1,4 +1,3 @@
-import { LoggerService } from "services/logger.service";
 import { BidRepository } from "./bids.repository";
 import { bidSchema, CreateBidPayload } from "./bids.validation";
 import { User } from "users/users.validation";
@@ -6,14 +5,14 @@ import { BadRequestError, InternalServerError } from "api/api.errors";
 import { DatabaseService } from "interfaces/database.interface";
 import { PgError } from "database/errors";
 import { Currency } from "utils/currency";
+import { LoggerService } from "services/logger.service";
 
 export class BidService {
   private readonly MINIMUM_BID_INCREASE_PERCENTAGE = 10;
 
   constructor(
     private readonly bidRepository: BidRepository,
-    private readonly DB: DatabaseService,
-    private readonly logger: LoggerService
+    private readonly DB: DatabaseService
   ) {}
 
   public async createBid(user: User, payload: CreateBidPayload) {
@@ -64,7 +63,7 @@ export class BidService {
 
         if (shouldRetryError && attempt < MAX_RETRIES - 1) {
           const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
-          this.logger.log(
+          LoggerService.getInstance().log(
             `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
           );
           await new Promise((resolve) => setTimeout(resolve, delay));

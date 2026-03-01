@@ -56,7 +56,7 @@ export class BidRepository {
   }
 
   public async getBidsByAuctionId(auctionId: number) {
-    const result = await this.DB.query<Array<Bid>>(
+    const result = await this.DB.query<Bid>(
       "SELECT * FROM bids WHERE auction_id = $1 ORDER BY created_at DESC",
       [auctionId]
     );
