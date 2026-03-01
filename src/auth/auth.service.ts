@@ -6,6 +6,7 @@ import { CookieOptions } from "express";
 import { User, userSchema } from "users/users.validation";
 import { BadRequestError, UnauthenticatedError } from "api/api.errors";
 import { UserService } from "users/users.service";
+import { AUTH_COOKIE_NAME } from "./auth.constants";
 
 export class AuthService {
   constructor(private readonly usersService: UserService) {}
@@ -61,7 +62,10 @@ export class AuthService {
   public async extractUserFromCookie(cookieHeader: string | undefined) {
     if (!cookieHeader) throw new UnauthenticatedError("Cookie header not found");
 
-    const token = cookieHeader.split("Authentication=")[1];
+    const cookies = Object.fromEntries(
+      cookieHeader.split("; ").map((c) => c.split("=") as [string, string])
+    );
+    const token = cookies[AUTH_COOKIE_NAME];
     if (!token) throw new UnauthenticatedError("Token not found");
 
     return this.extractUserFromToken(token);
