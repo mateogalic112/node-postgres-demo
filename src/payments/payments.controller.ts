@@ -26,7 +26,7 @@ export class PaymentsHttpController extends HttpController {
       throw new BadRequestError("Stripe signature is required");
     }
     const rawEvent = this.stripeService.constructEvent(request.body, sig as string);
-    this.logger.log(`[STRIPE] Webhook received: ${rawEvent.type}: ${JSON.stringify(rawEvent)}`);
+    this.logger.log(`[STRIPE] Webhook received: ${rawEvent.type}`);
     if (
       rawEvent.type === "checkout.session.completed" ||
       rawEvent.type === "checkout.session.async_payment_succeeded"
