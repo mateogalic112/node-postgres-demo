@@ -2,6 +2,7 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { env } from "config/env";
 import { LoggerService } from "./logger.service";
 import { FilesService } from "interfaces/files.interface";
+import { getMimeType } from "api/api.validations";
 
 export class AWSService implements FilesService {
   private static instance: AWSService;
@@ -26,14 +27,18 @@ export class AWSService implements FilesService {
     return AWSService.instance;
   }
 
-  public async uploadFile(file: { buffer: Buffer; mimetype: string }, key: string) {
+  public async uploadFile(
+    file: { buffer: Buffer; mimetype: string; originalname: string },
+    key: string
+  ) {
     try {
       const uploadResult = await this.s3Client.send(
         new PutObjectCommand({
           Bucket: env.AWS_S3_BUCKET,
           Key: key,
           Body: file.buffer,
-          ContentType: file.mimetype
+          ContentType: getMimeType(file.originalname),
+          ContentDisposition: "inline"
         })
       );
 
