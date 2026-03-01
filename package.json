@@ -20,7 +20,8 @@
   },
   "tsup": {
     "entry": [
-      "src/server.ts"
+      "src/server.ts",
+      "src/database/migrations.ts"
     ],
     "sourcemap": true
   },
