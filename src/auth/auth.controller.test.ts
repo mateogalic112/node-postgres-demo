@@ -9,14 +9,16 @@ import { createMockDatabaseService } from "__tests__/mocks";
 import { createMockedLoginPayload, createMockedRegisterPayload } from "./mocks/auth.mocks";
 import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
+import { ProductRepository } from "products/products.repository";
 
 describe("AuthController", () => {
   let app: App;
 
   beforeAll(() => {
     const DB = createMockDatabaseService(getTestClient());
+    const stripeService = new StripeService(new ProductRepository(DB));
     const authService = new AuthService(
-      new UserService(new UsersRepository(DB), new RolesRepository(DB), StripeService.getInstance())
+      new UserService(new UsersRepository(DB), new RolesRepository(DB), stripeService)
     );
 
     app = new App([new AuthHttpController(authService)], []);

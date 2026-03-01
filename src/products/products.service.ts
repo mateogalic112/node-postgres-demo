@@ -52,7 +52,14 @@ export class ProductService {
     const newProduct = await this.productRepository.createProduct(user, {
       ...payload.body,
       imageUrl: payload.file
-        ? await this.filesService.uploadFile(payload.file, `products/${crypto.randomUUID()}`)
+        ? await this.filesService.uploadFile(
+            {
+              buffer: payload.file.buffer,
+              mimetype: payload.file.mimetype,
+              originalname: payload.file.originalname
+            },
+            `products/${crypto.randomUUID()}`
+          )
         : null
     });
 

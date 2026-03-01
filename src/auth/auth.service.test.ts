@@ -8,6 +8,9 @@ import { UserService } from "users/users.service";
 import { RolesRepository } from "roles/roles.repository";
 import { RoleName } from "roles/roles.validation";
 import { StripeService } from "services/stripe.service";
+import { ProductRepository } from "products/products.repository";
+import { createMockDatabaseService } from "__tests__/mocks";
+import { getTestClient } from "__tests__/setup";
 
 // Mock the repositories
 jest.mock("users/users.repository");
@@ -52,8 +55,11 @@ describe("AuthService", () => {
       name: RoleName.USER
     });
 
+    const DB = createMockDatabaseService(getTestClient());
+    const stripeService = new StripeService(new ProductRepository(DB));
+
     authService = new AuthService(
-      new UserService(mockUsersRepository, mockRolesRepository, StripeService.getInstance())
+      new UserService(mockUsersRepository, mockRolesRepository, stripeService)
     );
   });
 

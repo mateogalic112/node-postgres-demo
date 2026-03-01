@@ -4,11 +4,7 @@ import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
-import {
-  createProductRequest,
-  getAuthCookieAfterRegister,
-  getTestClient
-} from "__tests__/setup";
+import { createProductRequest, getAuthCookieAfterRegister, getTestClient } from "__tests__/setup";
 import { RolesRepository } from "roles/roles.repository";
 import { OrderHttpController } from "./orders.controller";
 import { OrderService } from "./orders.service";

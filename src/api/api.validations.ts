@@ -14,7 +14,8 @@ export const idSchema = z.object({
 
 export const fileSchema = z.object({
   buffer: z.instanceof(Buffer),
-  mimetype: z.string()
+  mimetype: z.string(),
+  originalname: z.string()
 });
 
 export const EXTENSION_TO_MIME: Record<string, string> = {

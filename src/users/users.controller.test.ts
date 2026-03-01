@@ -16,16 +16,18 @@ import request from "supertest";
 import { AuthHttpController } from "auth/auth.controller";
 import { bulkInsertUsers } from "./mocks/users.mocks";
 import { StripeService } from "services/stripe.service";
+import { ProductRepository } from "products/products.repository";
 
 describe("UsersController", () => {
   let app: App;
 
   beforeAll(() => {
     const DB = createMockDatabaseService(getTestClient());
+    const stripeService = new StripeService(new ProductRepository(DB));
     const usersService = new UserService(
       new UsersRepository(DB),
       new RolesRepository(DB),
-      StripeService.getInstance()
+      stripeService
     );
     const authService = new AuthService(usersService);
     const rolesService = new RolesService(new RolesRepository(DB));

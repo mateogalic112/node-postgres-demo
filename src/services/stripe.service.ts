@@ -2,30 +2,17 @@ import { env } from "config/env";
 import Stripe from "stripe";
 import { PaymentsService } from "interfaces/payments.interface";
 import { ProductRepository } from "products/products.repository";
-import { PostgresService } from "./postgres.service";
 import { OrderWithOrderDetails } from "orders/orders.validation";
 import { User } from "users/users.validation";
 import { LoggerService } from "./logger.service";
 
 export class StripeService implements PaymentsService {
-  private static instance: StripeService;
   private readonly stripe: Stripe;
   private readonly productRepository: ProductRepository;
-  private readonly logger: LoggerService;
 
-  private constructor(productRepository: ProductRepository) {
+  constructor(productRepository: ProductRepository) {
     this.stripe = new Stripe(env.STRIPE_SECRET_KEY);
     this.productRepository = productRepository;
-    this.logger = LoggerService.getInstance();
-  }
-
-  public static getInstance() {
-    if (!StripeService.instance) {
-      StripeService.instance = new StripeService(
-        new ProductRepository(PostgresService.getInstance())
-      );
-    }
-    return StripeService.instance;
   }
 
   public async createCustomer(user: User) {
@@ -37,7 +24,7 @@ export class StripeService implements PaymentsService {
         }
       });
     } catch (err) {
-      this.logger.error(String(err));
+      LoggerService.getInstance().error(String(err));
       return null;
     }
   }
@@ -74,7 +61,7 @@ export class StripeService implements PaymentsService {
         cancel_url: `${env.FRONTEND_URL}/orders/canceled?canceled=true`
       });
     } catch (err) {
-      this.logger.error(String(err));
+      LoggerService.getInstance().error(String(err));
       return null;
     }
   }

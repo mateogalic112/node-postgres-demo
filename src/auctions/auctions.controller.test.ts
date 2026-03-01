@@ -33,8 +33,10 @@ describe("AuctionsController", () => {
 
   beforeAll(() => {
     const DB = createMockDatabaseService(getTestClient());
+    const stripeService = new StripeService(new ProductRepository(DB));
+
     const authService = new AuthService(
-      new UserService(new UsersRepository(DB), new RolesRepository(DB), StripeService.getInstance())
+      new UserService(new UsersRepository(DB), new RolesRepository(DB), stripeService)
     );
     const auctionService = new AuctionService(new AuctionRepository(DB));
     const productService = new ProductService(
