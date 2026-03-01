@@ -17,7 +17,6 @@ import {
   mailService
 } from "__tests__/mocks";
 import {
-  createAuctionRequest,
   createProductRequest,
   getAuthCookieAfterRegister,
   getTestClient,
@@ -27,6 +26,13 @@ import { createMockedAuctionPayload, createFinishedAuction } from "./mocks/aucti
 import { subDays } from "date-fns";
 import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
+
+export const createAuctionRequest = async (app: App, authCookie: string, productId: number) => {
+  return request(app.getServer())
+    .post("/api/v1/auctions")
+    .set("Cookie", authCookie)
+    .send(createMockedAuctionPayload(productId));
+};
 
 describe("AuctionsController", () => {
   let app: App;

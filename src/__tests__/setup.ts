@@ -1,6 +1,5 @@
 import { faker } from "@faker-js/faker";
 import App from "app";
-import { createMockedAuctionPayload } from "auctions/mocks/auction.mocks";
 import { Client } from "pg";
 import request from "supertest";
 import { User } from "users/users.validation";
@@ -52,13 +51,4 @@ export const createProductRequest = async (app: App, authCookie: string) => {
     .field("name", faker.commerce.productName())
     .field("description", faker.commerce.productDescription())
     .field("price_in_cents", faker.number.int({ min: 100, max: 100000 }));
-};
-
-export const createAuctionRequest = async (app: App, authCookie: string, productId: number) => {
-  const mockedAuctionPayload = createMockedAuctionPayload(productId);
-
-  return request(app.getServer())
-    .post("/api/v1/auctions")
-    .set("Cookie", authCookie)
-    .send(mockedAuctionPayload);
 };
