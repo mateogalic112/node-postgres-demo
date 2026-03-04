@@ -23,13 +23,6 @@ export const registerUserRequest = async (app: App, username: string) => {
     });
 };
 
-export const loginUserRequest = async (app: App, email: string, password: string) => {
-  return request(app.getServer()).post("/api/v1/auth/login").send({
-    email,
-    password
-  });
-};
-
 export const getAuthCookieAfterRegister = async (app: App, username: string) => {
   const userResponse = await registerUserRequest(app, username);
   return userResponse.headers["set-cookie"][0];

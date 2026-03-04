@@ -4,7 +4,7 @@ import { UsersHttpController } from "./users.controller";
 import { AuthService } from "auth/auth.service";
 import { UserService } from "./users.service";
 import { UsersRepository } from "./users.repository";
-import { getAuthCookieAfterRegister, getTestClient, loginUserRequest } from "__tests__/setup";
+import { getAuthCookieAfterRegister, getTestClient } from "__tests__/setup";
 import { RolesService } from "roles/roles.service";
 import { RolesRepository } from "roles/roles.repository";
 import request from "supertest";
@@ -53,11 +53,11 @@ describe("UsersController", () => {
     it("should return paginated users with next cursor", async () => {
       await bulkInsertUsers(app, 21);
 
-      const userResponse = await loginUserRequest(
-        app,
-        TEST_ADMIN_USER.email,
-        TEST_ADMIN_USER.password
-      );
+      const userResponse = await request(app.getServer()).post("/api/v1/auth/login").send({
+        email: TEST_ADMIN_USER.email,
+        password: TEST_ADMIN_USER.password
+      });
+
       const authCookie = userResponse.headers["set-cookie"][0];
 
       const response = await request(app.getServer())
@@ -75,11 +75,11 @@ describe("UsersController", () => {
     it("should return paginated users without next cursor", async () => {
       await bulkInsertUsers(app, 8);
 
-      const userResponse = await loginUserRequest(
-        app,
-        TEST_ADMIN_USER.email,
-        TEST_ADMIN_USER.password
-      );
+      const userResponse = await request(app.getServer()).post("/api/v1/auth/login").send({
+        email: TEST_ADMIN_USER.email,
+        password: TEST_ADMIN_USER.password
+      });
+
       const authCookie = userResponse.headers["set-cookie"][0];
 
       const response = await request(app.getServer())
