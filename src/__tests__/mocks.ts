@@ -5,6 +5,8 @@ import { MailService } from "interfaces/mail.interface";
 import { PaymentsService } from "interfaces/payments.interface";
 import { Client, PoolClient } from "pg";
 
+export { TEST_ADMIN_USER } from "./constants";
+
 export const mailService: MailService = {
   sendEmail: jest.fn().mockResolvedValue("123e4567-e89b-12d3-a456-426614174000")
 };

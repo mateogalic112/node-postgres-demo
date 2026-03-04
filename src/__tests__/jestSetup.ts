@@ -1,6 +1,6 @@
 import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { Client } from "pg";
-import { User } from "users/users.validation";
+import { TEST_ADMIN_USER } from "./mocks";
 
 let client: Client;
 
@@ -17,16 +17,8 @@ beforeAll(async () => {
   client = new Client({ connectionString: container.getConnectionUri() });
   await client.connect();
 
-  const adminUserResult = await client.query<User>(
-    `SELECT * FROM users WHERE email = 'admin@example.com'`
-  );
-
   // Store shared state globally
   (globalThis as Record<string, unknown>).__TEST_CLIENT__ = client;
-  (globalThis as Record<string, unknown>).__TEST_ADMIN_USER__ = {
-    ...adminUserResult.rows[0],
-    password: "password"
-  };
 });
 
 beforeEach(async () => {
@@ -43,7 +35,7 @@ beforeEach(async () => {
         user_customers
       RESTART IDENTITY CASCADE
     `);
-    await client.query(`DELETE FROM users WHERE email != 'admin@example.com'`);
+    await client.query(`DELETE FROM users WHERE email != $1`, [TEST_ADMIN_USER.email]);
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");

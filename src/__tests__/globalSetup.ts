@@ -2,8 +2,16 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers
 import { Client } from "pg";
 import { migrate } from "../database/setup";
 import bcrypt from "bcrypt";
+import { Role, RoleName } from "../roles/roles.validation";
+import { User } from "../users/users.validation";
+import { TEST_ADMIN_USER } from "./constants";
 
 let postgresContainer: StartedPostgreSqlContainer;
+
+const DEFAULT_ROLES = new Map<RoleName, string>([
+  [RoleName.ADMIN, "Admin role"],
+  [RoleName.USER, "User role"]
+]);
 
 export default async function globalSetup() {
   // Start the postgres container once for all tests
@@ -18,17 +26,24 @@ export default async function globalSetup() {
   await migrate(client);
 
   // Insert default roles
-  await client.query(
-    `INSERT INTO roles (name, description) VALUES ('ADMIN', 'Admin role'), ('USER', 'User role')`
-  );
+  for (const [name, description] of DEFAULT_ROLES) {
+    await client.query(`INSERT INTO roles (name, description) VALUES ($1, $2)`, [
+      name,
+      description
+    ]);
+  }
 
-  // Get the admin role ID
-  const adminRole = await client.query(`SELECT id FROM roles WHERE name = 'ADMIN'`);
-
+  // Get the admin role
+  const adminRole = await client.query<Role>(`SELECT * FROM roles WHERE name = $1`, [
+    RoleName.ADMIN
+  ]);
+  const roleId = adminRole.rows[0].id;
   // Insert default admin user with hashed password
-  await client.query(
-    `INSERT INTO users (username, email, password, role_id) VALUES ('admin', 'admin@example.com', $1, $2)`,
-    [await bcrypt.hash("password", 10), adminRole.rows[0].id]
+  const { username, email, password } = TEST_ADMIN_USER;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  await client.query<User>(
+    `INSERT INTO users (username, email, password, role_id) VALUES ($1, $2, $3, $4)`,
+    [username, email, hashedPassword, roleId]
   );
 
   await client.end();
