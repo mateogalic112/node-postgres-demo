@@ -27,13 +27,6 @@ import { subDays } from "date-fns";
 import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
 
-export const createAuctionRequest = async (app: App, authCookie: string, productId: number) => {
-  return request(app.getServer())
-    .post("/api/v1/auctions")
-    .set("Cookie", authCookie)
-    .send(createMockedAuctionPayload(productId));
-};
-
 describe("AuctionsController", () => {
   let app: App;
 
@@ -84,6 +77,7 @@ describe("AuctionsController", () => {
 
     it("should NOT create an auction when starting time is in the past", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const productResponse = await createProductRequest(app, authCookie);
       const productId = productResponse.body.data.id;
 
@@ -99,6 +93,7 @@ describe("AuctionsController", () => {
 
     it("should NOT create an auction when duration is less than 24 hours", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const productResponse = await createProductRequest(app, authCookie);
       const productId = productResponse.body.data.id;
 
@@ -114,6 +109,7 @@ describe("AuctionsController", () => {
 
     it("should NOT create an auction when starting price is less than 100 cents", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const productResponse = await createProductRequest(app, authCookie);
       const productId = productResponse.body.data.id;
 
@@ -129,6 +125,7 @@ describe("AuctionsController", () => {
 
     it("should create an auction when authenticated", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const productResponse = await createProductRequest(app, authCookie);
       const productId = productResponse.body.data.id;
 
@@ -144,6 +141,7 @@ describe("AuctionsController", () => {
 
     it("should NOT create an auction when there is a race condition with products", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const productResponse = await createProductRequest(app, authCookie);
       const productId = productResponse.body.data.id;
 
@@ -187,10 +185,14 @@ describe("AuctionsController", () => {
 
     it("should NOT cancel an auction when authenticated but not the creator", async () => {
       const creatorCookie = await getAuthCookieAfterRegister(app, "creator");
+
       const productResponse = await createProductRequest(app, creatorCookie);
       const productId = productResponse.body.data.id;
 
-      const auctionResponse = await createAuctionRequest(app, creatorCookie, productId);
+      const auctionResponse = await request(app.getServer())
+        .post("/api/v1/auctions")
+        .set("Cookie", creatorCookie)
+        .send(createMockedAuctionPayload(productId));
       const auctionId = auctionResponse.body.data.id;
 
       const unauthorizedUserCookie = await getAuthCookieAfterRegister(app, "unauthorizedUser");
@@ -225,10 +227,14 @@ describe("AuctionsController", () => {
 
     it("should NOT cancel an auction when auction has been cancelled", async () => {
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
       const productResponse = await createProductRequest(app, authCookie);
       const productId = productResponse.body.data.id;
 
-      const auctionResponse = await createAuctionRequest(app, authCookie, productId);
+      const auctionResponse = await request(app.getServer())
+        .post("/api/v1/auctions")
+        .set("Cookie", authCookie)
+        .send(createMockedAuctionPayload(productId));
       const auctionId = auctionResponse.body.data.id;
 
       const response = await request(app.getServer())
