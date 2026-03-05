@@ -3,12 +3,7 @@ import { Client } from "pg";
 import { migrate } from "../database/setup";
 import bcrypt from "bcrypt";
 import { RoleName } from "../roles/roles.validation";
-import { TEST_ADMIN_USER } from "./constants";
-
-const DEFAULT_ROLES = new Map<RoleName, string>([
-  [RoleName.ADMIN, "Admin role"],
-  [RoleName.USER, "User role"]
-]);
+import { TEST_ROLES, TEST_ADMIN_USER } from "./constants";
 
 export default async function globalSetup() {
   // Start the postgres container once for all tests
@@ -23,7 +18,7 @@ export default async function globalSetup() {
   await migrate(client);
 
   // Insert default roles
-  for (const [name, description] of DEFAULT_ROLES) {
+  for (const [name, description] of TEST_ROLES) {
     await client.query(`INSERT INTO roles (name, description) VALUES ($1, $2)`, [
       name,
       description
