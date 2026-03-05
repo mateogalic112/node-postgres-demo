@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+logs
+.git
+.env.local
+.env.test
+*.test.ts
+jest.config.js
+eslint.config.mjs
+start.sh
+.claude

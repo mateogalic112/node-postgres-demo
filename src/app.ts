@@ -24,10 +24,17 @@ class App {
     });
 
     this.initializeMiddlewares();
+    this.initializeHealthCheck();
     this.initializeControllers(httpControllers);
     this.initializeSocketHandlers(socketControllers);
 
     this.app.use(errorMiddleware);
+  }
+
+  private initializeHealthCheck() {
+    this.app.get("/api/v1/health", (_req, res) => {
+      res.status(200).json({ status: "ok" });
+    });
   }
 
   private initializeMiddlewares() {
