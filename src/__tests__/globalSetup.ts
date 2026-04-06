@@ -17,14 +17,6 @@ export default async function globalSetup() {
   await client.connect();
   await migrate(client);
 
-  // Insert default roles
-  for (const [name, description] of TEST_ROLES) {
-    await client.query(`INSERT INTO roles (name, description) VALUES ($1, $2)`, [
-      name,
-      description
-    ]);
-  }
-
   // Get the admin role
   const adminRole = await client.query(`SELECT id FROM roles WHERE name = $1`, [RoleName.ADMIN]);
   const adminRoleId = adminRole.rows[0].id;
