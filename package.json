@@ -12,10 +12,8 @@
     "migrate:down": "tsx src/database/rollback.ts",
     "prettier:fix": "npx prettier --write .",
     "lint": "eslint 'src/**/*.ts' --fix",
-    "test": "NODE_ENV=test jest --selectProjects unit && NODE_ENV=test jest --runInBand --selectProjects integration",
-    "test:unit": "NODE_ENV=test jest --selectProjects unit",
-    "test:integration": "NODE_ENV=test jest --runInBand --selectProjects integration",
-    "test:coverage": "NODE_ENV=test jest --selectProjects unit --coverage && NODE_ENV=test jest --runInBand --selectProjects integration --coverage",
+    "test": "NODE_ENV=test jest --runInBand",
+    "test:coverage": "NODE_ENV=test jest --runInBand --coverage",
     "test:debug": "NODE_ENV=test jest --runInBand --detectOpenHandles"
   },
   "engines": {
