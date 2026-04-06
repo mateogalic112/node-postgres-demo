@@ -4,12 +4,11 @@ import { UsersHttpController } from "./users.controller";
 import { AuthService } from "auth/auth.service";
 import { UserService } from "./users.service";
 import { UsersRepository } from "./users.repository";
-import { getAuthCookieAfterRegister, getTestClient } from "__tests__/setup";
+import { getAuthCookieAfterRegister, getTestClient, registerUserRequest } from "__tests__/setup";
 import { RolesService } from "roles/roles.service";
 import { RolesRepository } from "roles/roles.repository";
 import request from "supertest";
 import { AuthHttpController } from "auth/auth.controller";
-import { bulkInsertUsers } from "./mocks/users.mocks";
 import { StripeService } from "services/stripe.service";
 import { ProductRepository } from "products/products.repository";
 
@@ -51,7 +50,9 @@ describe("UsersController", () => {
     });
 
     it("should return paginated users with next cursor", async () => {
-      await bulkInsertUsers(app, 21);
+      for (let i = 0; i < 21; i++) {
+        await registerUserRequest(app, `mocked-user-${i}`);
+      }
 
       const userResponse = await request(app.getServer()).post("/api/v1/auth/login").send({
         email: TEST_ADMIN_USER.email,
@@ -73,7 +74,9 @@ describe("UsersController", () => {
     });
 
     it("should return paginated users without next cursor", async () => {
-      await bulkInsertUsers(app, 8);
+      for (let i = 0; i < 8; i++) {
+        await registerUserRequest(app, `mocked-user-${i}`);
+      }
 
       const userResponse = await request(app.getServer()).post("/api/v1/auth/login").send({
         email: TEST_ADMIN_USER.email,
