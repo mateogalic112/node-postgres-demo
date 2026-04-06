@@ -3,7 +3,7 @@ import { Client } from "pg";
 import { migrate } from "../database/setup";
 import bcrypt from "bcrypt";
 import { RoleName } from "../roles/roles.validation";
-import { TEST_ROLES, TEST_ADMIN_USER } from "./constants";
+import { TEST_ADMIN_USER } from "./constants";
 
 export default async function globalSetup() {
   // Start the postgres container once for all tests

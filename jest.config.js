@@ -12,8 +12,8 @@ export default {
     "!src/__tests__/**",
     "!src/database/migrations.ts",
     "!src/database/rollback.ts",
-    "!src/database/seed.ts",
+    "!src/database/seed.ts"
   ],
   coverageDirectory: "coverage",
-  coverageReporters: ["text", "lcov", "clover"],
+  coverageReporters: ["text", "lcov", "clover"]
 };
