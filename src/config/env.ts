@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { cleanEnv, port, str, url } from "envalid";
+import { cleanEnv, port, str } from "envalid";
 
 if (process.env.NODE_ENV === "test") {
   config({ path: ".env.test" });
@@ -17,7 +17,7 @@ export const env = cleanEnv(process.env, {
   PORT: port({ default: 4000 }),
 
   JWT_SECRET: str(),
-  FRONTEND_URL: url(),
+  FRONTEND_URL: str(),
 
   AWS_ACCESS_KEY_ID: str(),
   AWS_SECRET_ACCESS_KEY: str(),
