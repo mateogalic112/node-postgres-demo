@@ -8,14 +8,13 @@ import { AuthHttpController } from "auth/auth.controller";
 import { AuthService } from "auth/auth.service";
 import { UsersRepository } from "users/users.repository";
 import { UserService } from "users/users.service";
-import { getAuthCookieAfterRegister, getTestClient } from "__tests__/setup";
+import { createProductRequest, getAuthCookieAfterRegister, getTestClient } from "__tests__/setup";
 import {
   createMockDatabaseService,
   embeddingService,
   filesService,
   mailService
 } from "__tests__/mocks";
-import { bulkInsertProducts } from "./mocks/products.mock";
 import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
 
@@ -46,7 +45,10 @@ describe("ProductsController", () => {
 
   describe("GET /api/v1/products", () => {
     it("should return paginated products WITH next cursor", async () => {
-      await bulkInsertProducts(app, 21);
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      for (let i = 0; i < 21; i++) {
+        await createProductRequest(app, authCookie);
+      }
 
       const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
 
@@ -56,7 +58,10 @@ describe("ProductsController", () => {
     });
 
     it("should return paginated products WITHOUT next cursor", async () => {
-      await bulkInsertProducts(app, 8);
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      for (let i = 0; i < 8; i++) {
+        await createProductRequest(app, authCookie);
+      }
 
       const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
 
