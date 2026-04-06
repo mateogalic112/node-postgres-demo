@@ -57,14 +57,8 @@ class App {
 
   private initializeSocketHandlers(controllers: SocketController[]) {
     this.io.on("connection", (socket) => {
-      console.log(`User connected: ${socket.id}`);
-
       controllers.forEach((controller) => {
         controller.initializeEventHandlers(socket);
-      });
-
-      socket.on("disconnect", () => {
-        console.log("user disconnected");
       });
     });
   }
