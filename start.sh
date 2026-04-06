@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Pull environment variables from 1Password
+bash pull-env.sh
+
 # Load environment variables from .env.local if it exists
 if [ -f .env.local ]; then
   export $(grep -v '^#' .env.local | xargs)
