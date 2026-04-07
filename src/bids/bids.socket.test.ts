@@ -19,7 +19,6 @@ import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
 import { Auction } from "auctions/auctions.validation";
 import { Client } from "pg";
-import { subHours } from "date-fns";
 import {
   createMockDatabaseService,
   embeddingService,
@@ -30,9 +29,9 @@ import { createProductRequest, getTestClient, registerUserRequest } from "__test
 
 const createActiveAuction = async (client: Client, creatorId: number, productId: number) => {
   const result = await client.query<Auction>(
-    `INSERT INTO auctions (product_id, creator_id, start_time, duration_hours, starting_price_in_cents)
-     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [productId, creatorId, subHours(new Date(), 1), 48, 1000]
+    `INSERT INTO auctions (product_id, creator_id, start_time, duration_hours, starting_price_in_cents, created_at)
+     VALUES ($1, $2, NOW() - INTERVAL '1 hour', $3, $4, NOW() - INTERVAL '2 hours') RETURNING *`,
+    [productId, creatorId, 48, 1000]
   );
   return result.rows[0];
 };

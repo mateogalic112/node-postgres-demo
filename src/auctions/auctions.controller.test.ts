@@ -16,13 +16,8 @@ import {
   filesService,
   mailService
 } from "__tests__/mocks";
-import {
-  createProductRequest,
-  getAuthCookieAfterRegister,
-  getTestClient,
-  registerUserRequest
-} from "__tests__/setup";
-import { createMockedAuctionPayload, createFinishedAuction } from "./mocks/auction.mocks";
+import { createProductRequest, getAuthCookieAfterRegister, getTestClient } from "__tests__/setup";
+import { createMockedAuctionPayload } from "./mocks/auction.mocks";
 import { subDays } from "date-fns";
 import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
@@ -205,20 +200,30 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when auction has finished", async () => {
-      const userResponse = await registerUserRequest(app, "testuser");
-      const authCookie = userResponse.headers["set-cookie"][0];
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
 
       const productResponse = await createProductRequest(app, authCookie);
       const productId = productResponse.body.data.id;
 
-      const finishedAuction = await createFinishedAuction(
-        getTestClient(),
-        userResponse.body.data.id,
-        productId
+      const auctionResponse = await request(app.getServer())
+        .post("/api/v1/auctions")
+        .set("Cookie", authCookie)
+        .send(createMockedAuctionPayload(productId));
+      const auctionId = auctionResponse.body.data.id;
+
+      // Backdate the auction in the DB so it has already ended
+      // Update created_at too to satisfy the chk_start_time_not_in_past constraint
+      const client = getTestClient();
+      await client.query(
+        `UPDATE auctions
+         SET start_time = NOW() - INTERVAL '3 days',
+             created_at = NOW() - INTERVAL '4 days'
+         WHERE id = $1`,
+        [auctionId]
       );
 
       const response = await request(app.getServer())
-        .patch(`/api/v1/auctions/${finishedAuction.id}/cancel`)
+        .patch(`/api/v1/auctions/${auctionId}/cancel`)
         .set("Cookie", authCookie);
 
       expect(response.status).toBe(400);
