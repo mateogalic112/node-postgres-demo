@@ -17,10 +17,17 @@ import {
   mailService
 } from "__tests__/mocks";
 import { createProductRequest, getAuthCookieAfterRegister, getTestClient } from "__tests__/setup";
-import { createMockedAuctionPayload } from "./mocks/auction.mocks";
-import { subDays } from "date-fns";
+import { addDays, subDays } from "date-fns";
 import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
+import { CreateAuctionPayload } from "./auctions.validation";
+
+export const createMockedAuctionPayload = (productId: number): CreateAuctionPayload => ({
+  product_id: productId,
+  start_time: addDays(new Date(), 1),
+  duration_hours: 24,
+  starting_price_in_cents: 1000
+});
 
 describe("AuctionsController", () => {
   let app: App;
