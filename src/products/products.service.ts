@@ -17,21 +17,21 @@ export class ProductService {
   ) {}
 
   public async getProducts(params: PaginatedRequestParams) {
-    const products = await this.productRepository.getProducts(params);
-    return products.map((product) => productSchema.parse(product));
+    const result = await this.productRepository.getProducts(params);
+    return this.toProducts(result);
   }
 
   public async getProductById(id: number) {
-    const product = await this.productRepository.findProductById(id);
-    if (!product) {
+    const result = await this.productRepository.findProductById(id);
+    if (!result) {
       throw new NotFoundError(`Product with id ${id} not found`);
     }
-    return productSchema.parse(product);
+    return this.toProduct(result);
   }
 
   public async getProductsByIds(ids: number[]) {
-    const products = await this.productRepository.findProductsByIds(ids);
-    return products.map((product) => productSchema.parse(product));
+    const result = await this.productRepository.findProductsByIds(ids);
+    return this.toProducts(result);
   }
 
   public async findRelevantProducts(query: string) {
@@ -43,19 +43,18 @@ export class ProductService {
       embeddedQuery.embedding,
       this.MAX_RELEVANT_PRODUCTS
     );
-    const products = await this.productRepository.findProductsByIds(
+    const result = await this.productRepository.findProductsByIds(
       relevantProducts.map((product) => product.product_id)
     );
-    return products.map((product) => productSchema.parse(product));
+    return this.toProducts(result);
   }
 
   public async createProduct(user: User, payload: CreateProductPayload) {
-    const imageUrl = await this.getProductImageUrl(payload.file);
-    const newProduct = await this.productRepository.createProduct(user, {
+    const result = await this.productRepository.createProduct(user, {
       ...payload.body,
-      imageUrl
+      imageUrl: await this.getProductImageUrl(payload.file)
     });
-    return productSchema.parse(newProduct);
+    return this.toProduct(result);
   }
 
   public async createProductEmbedding(product: Product) {
@@ -65,6 +64,14 @@ export class ProductService {
     } catch (error) {
       LoggerService.getInstance().error(String(error));
     }
+  }
+
+  private toProduct(data: unknown): Product {
+    return productSchema.parse(data);
+  }
+
+  private toProducts(data: Array<unknown>): Array<Product> {
+    return data.map(this.toProduct);
   }
 
   private getProductImageUrl(rawFile: CreateProductPayload["file"]) {
