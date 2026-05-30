@@ -60,13 +60,13 @@ export class ProductHttpController extends HttpController {
   private createProduct = asyncMiddleware(async (request, response) => {
     const user = userSchema.parse(response.locals.user);
     const payload = createProductSchema.parse(request);
-    const product = await this.productService.createProduct(user, payload);
+    const newProduct = await this.productService.createProduct(user, payload);
 
-    await this.productService.createProductEmbedding(product.id, product.description);
+    await this.productService.createProductEmbedding(newProduct);
     await this.mailService.sendEmail({
       to: user.email,
-      template: CreateProductTemplate.getTemplate(product)
+      template: CreateProductTemplate.getTemplate(newProduct)
     });
-    response.status(201).json(formatResponse(product));
+    response.status(201).json(formatResponse(newProduct));
   });
 }

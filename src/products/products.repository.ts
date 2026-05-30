@@ -24,11 +24,6 @@ export class ProductRepository {
     return result.rows[0];
   }
 
-  public async findProductByIds(ids: number[]) {
-    const result = await this.DB.query<Product>("SELECT * FROM products WHERE id = ANY($1)", [ids]);
-    return result.rows;
-  }
-
   public async findProductsByIds(ids: number[]) {
     const result = await this.DB.query<Product>("SELECT * FROM products WHERE id = ANY($1)", [ids]);
     return result.rows;
@@ -57,7 +52,7 @@ export class ProductRepository {
     return result.rows;
   }
 
-  public async createEmbedding(productId: number, embeddings: Embedding[]) {
+  public async attachEmbedding(productId: number, embeddings: Embedding[]) {
     await this.DB.query<ProductEmbedding>(
       `INSERT INTO products_embeddings (product_id, embedding) VALUES ${embeddings.map((_, index) => `($1, $${index + 2}::vector)`).join(", ")}`,
       [productId, ...embeddings.map((embedding) => `[${embedding.join(",")}]`)]

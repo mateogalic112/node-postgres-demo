@@ -1,5 +1,5 @@
 import { ProductRepository } from "./products.repository";
-import { CreateProductPayload, productSchema } from "./products.validation";
+import { CreateProductPayload, Product, productSchema } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { User } from "users/users.validation";
 import { FilesService } from "interfaces/files.interface";
@@ -39,12 +39,12 @@ export class ProductService {
     if (!embeddedQuery || !embeddedQuery.embedding) {
       return [];
     }
-    const relevantProductIds = await this.productRepository.findRelevantProducts(
+    const relevantProducts = await this.productRepository.findRelevantProducts(
       embeddedQuery.embedding,
       this.MAX_RELEVANT_PRODUCTS
     );
-    const products = await this.productRepository.findProductByIds(
-      relevantProductIds.map((product) => product.product_id)
+    const products = await this.productRepository.findProductsByIds(
+      relevantProducts.map((product) => product.product_id)
     );
     return products.map((product) => productSchema.parse(product));
   }
@@ -58,12 +58,10 @@ export class ProductService {
     return productSchema.parse(newProduct);
   }
 
-  public async createProductEmbedding(id: number, description: string) {
+  public async createProductEmbedding(product: Product) {
     try {
-      await this.productRepository.createEmbedding(
-        id,
-        await this.embeddingService.generateEmbeddings(description)
-      );
+      const embedding = await this.embeddingService.generateEmbeddings(product.description);
+      await this.productRepository.attachEmbedding(product.id, embedding);
     } catch (error) {
       LoggerService.getInstance().error(String(error));
     }
