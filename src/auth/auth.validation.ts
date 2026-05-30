@@ -1,5 +1,7 @@
 import { z } from "zod";
-import { MINIMUM_PASSWORD_CHARACTERS, MINIMUM_USERNAME_CHARACTERS } from "./auth.constants";
+
+export const MINIMUM_USERNAME_CHARACTERS = 3;
+export const MINIMUM_PASSWORD_CHARACTERS = 6;
 
 export const registerSchema = z.object({
   username: z
@@ -8,7 +10,7 @@ export const registerSchema = z.object({
       MINIMUM_USERNAME_CHARACTERS,
       `Username has to have at least ${MINIMUM_USERNAME_CHARACTERS} characers`
     ),
-  email: z.string().email("Invalid email format provided"),
+  email: z.email("Invalid email format provided"),
   password: z
     .string()
     .min(
@@ -20,7 +22,7 @@ export const registerSchema = z.object({
 export type RegisterPayload = z.infer<typeof registerSchema>;
 
 export const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string()
 });
 

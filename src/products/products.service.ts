@@ -5,6 +5,7 @@ import { User } from "users/users.validation";
 import { FilesService } from "interfaces/files.interface";
 import { NotFoundError } from "api/api.errors";
 import { EmbeddingService } from "interfaces/embeddings.interface";
+import { LoggerService } from "services/logger.service";
 
 export class ProductService {
   private readonly MAX_RELEVANT_PRODUCTS = 3;
@@ -48,26 +49,28 @@ export class ProductService {
     return products.map((product) => productSchema.parse(product));
   }
 
-  public async createProduct({ user, payload }: { user: User; payload: CreateProductPayload }) {
+  public async createProduct(user: User, payload: CreateProductPayload) {
+    const imageUrl = await this.getProductImageUrl(payload.file);
     const newProduct = await this.productRepository.createProduct(user, {
       ...payload.body,
-      imageUrl: payload.file
-        ? await this.filesService.uploadFile(
-            {
-              buffer: payload.file.buffer,
-              mimetype: payload.file.mimetype,
-              originalname: payload.file.originalname
-            },
-            `products/${crypto.randomUUID()}`
-          )
-        : null
+      imageUrl
     });
-
-    await this.productRepository.createEmbedding(
-      newProduct.id,
-      await this.embeddingService.generateEmbeddings(newProduct.description)
-    );
-
     return productSchema.parse(newProduct);
+  }
+
+  public async createProductEmbedding(id: number, description: string) {
+    try {
+      await this.productRepository.createEmbedding(
+        id,
+        await this.embeddingService.generateEmbeddings(description)
+      );
+    } catch (error) {
+      LoggerService.getInstance().error(String(error));
+    }
+  }
+
+  private getProductImageUrl(rawFile: CreateProductPayload["file"]) {
+    if (!rawFile) return null;
+    return this.filesService.uploadFile(rawFile, `products/${crypto.randomUUID()}`);
   }
 }
