@@ -1,33 +1,37 @@
-import App from "app";
-import { ProductHttpController } from "./products.controller";
-import { ProductService } from "./products.service";
-import { ProductRepository } from "./products.repository";
-import request from "supertest";
 import { faker } from "@faker-js/faker/.";
-import { AuthHttpController } from "auth/auth.controller";
-import { AuthService } from "auth/auth.service";
-import { UsersRepository } from "users/users.repository";
-import { UserService } from "users/users.service";
-import { createProductRequest, getAuthCookieAfterRegister, getTestClient } from "__tests__/setup";
 import {
   createMockDatabaseService,
   embeddingService,
   filesService,
   mailService
 } from "__tests__/mocks";
+import { getTestClient, registerUserRequest, seedProducts } from "__tests__/setup";
+import App from "app";
+import { AuthHttpController } from "auth/auth.controller";
+import { AuthService } from "auth/auth.service";
 import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
+import request from "supertest";
+import { UsersRepository } from "users/users.repository";
+import { UserService } from "users/users.service";
+import { ProductHttpController } from "./products.controller";
+import { ProductRepository } from "./products.repository";
+import { ProductService } from "./products.service";
 
 describe("ProductsController", () => {
   let app: App;
 
   beforeAll(() => {
     const DB = createMockDatabaseService(getTestClient());
-    const stripeService = new StripeService(new ProductRepository(DB));
 
-    const authService = new AuthService(
-      new UserService(new UsersRepository(DB), new RolesRepository(DB), stripeService)
+    const stripeService = new StripeService(new ProductRepository(DB));
+    const usersService = new UserService(
+      new UsersRepository(DB),
+      new RolesRepository(DB),
+      stripeService
     );
+    const authService = new AuthService(usersService);
+
     const productService = new ProductService(
       new ProductRepository(DB),
       filesService,
@@ -45,10 +49,7 @@ describe("ProductsController", () => {
 
   describe("GET /api/v1/products", () => {
     it("should return paginated products WITH next cursor", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
-      for (let i = 0; i < 21; i++) {
-        await createProductRequest(app, authCookie);
-      }
+      await seedProducts(21);
 
       const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
 
@@ -58,10 +59,7 @@ describe("ProductsController", () => {
     });
 
     it("should return paginated products WITHOUT next cursor", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
-      for (let i = 0; i < 8; i++) {
-        await createProductRequest(app, authCookie);
-      }
+      await seedProducts(8);
 
       const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
 
@@ -79,12 +77,12 @@ describe("ProductsController", () => {
     });
 
     it("should create a product when authenticated", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const userResponse = await registerUserRequest(app, "testuser");
       const productName = faker.commerce.productName();
 
       const response = await request(app.getServer())
         .post("/api/v1/products")
-        .set("Cookie", authCookie)
+        .set("Cookie", userResponse.headers["set-cookie"][0])
         .field("name", productName)
         .field("description", faker.commerce.productDescription())
         .field("price_in_cents", faker.number.int({ min: 100, max: 100000 }))
