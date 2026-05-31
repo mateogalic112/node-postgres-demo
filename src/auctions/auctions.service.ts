@@ -1,6 +1,6 @@
 import { PaginatedRequestParams } from "api/api.validations";
 import { AuctionRepository } from "./auctions.repository";
-import { auctionSchema, CreateAuctionPayload } from "./auctions.validation";
+import { Auction, auctionSchema, CreateAuctionPayload } from "./auctions.validation";
 import { BadRequestError, ForbiddenError, NotFoundError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { addHours, isPast } from "date-fns";
@@ -9,27 +9,27 @@ export class AuctionService {
   constructor(private readonly auctionRepository: AuctionRepository) {}
 
   public async getAuctions(params: PaginatedRequestParams) {
-    const auctions = await this.auctionRepository.getAuctions(params);
-    return auctions.map((auction) => auctionSchema.parse(auction));
+    const result = await this.auctionRepository.getAuctions(params);
+    return this.toAuctions(result);
   }
 
   public async getAuctionById(id: number) {
-    const auction = await this.auctionRepository.findAuctionById(id);
-    if (!auction) {
+    const result = await this.auctionRepository.findAuctionById(id);
+    if (!result) {
       throw new NotFoundError(`Auction with id ${id} not found`);
     }
-    return auctionSchema.parse(auction);
+    return this.toAuction(result);
   }
 
-  public async createAuction({ user, payload }: { user: User; payload: CreateAuctionPayload }) {
-    const newAuction = await this.auctionRepository.createAuction(user, payload);
-    return auctionSchema.parse(newAuction);
+  public async createAuction(user: User, payload: CreateAuctionPayload) {
+    const result = await this.auctionRepository.createAuction(user, payload);
+    return this.toAuction(result);
   }
 
-  public async cancelAuction({ user, auctionId }: { user: User; auctionId: number }) {
+  public async cancelAuction(user: User, auctionId: number) {
     const updatedAuction = await this.auctionRepository.cancelAuction(user.id, auctionId);
     if (updatedAuction) {
-      return auctionSchema.parse(updatedAuction);
+      return this.toAuction(updatedAuction);
     }
 
     const foundAuction = await this.auctionRepository.findAuctionById(auctionId);
@@ -46,6 +46,14 @@ export class AuctionService {
       default:
         throw new BadRequestError("Auction not cancelled");
     }
+  }
+
+  private toAuction(data: unknown): Auction {
+    return auctionSchema.parse(data);
+  }
+
+  private toAuctions(data: Array<unknown>): Array<Auction> {
+    return data.map(this.toAuction);
   }
 
   public getAuctionRoomName(namespace: string, auctionId: number) {

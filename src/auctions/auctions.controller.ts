@@ -44,10 +44,8 @@ export class AuctionHttpController extends HttpController {
 
   private createAuction = asyncMiddleware(async (request, response) => {
     const user = userSchema.parse(response.locals.user);
-    const auction = await this.auctionService.createAuction({
-      user,
-      payload: createAuctionSchema.parse(request.body)
-    });
+    const payload = createAuctionSchema.parse(request.body);
+    const auction = await this.auctionService.createAuction(user, payload);
     await this.mailService.sendEmail({
       to: user.email,
       template: CreateAuctionTemplate.getTemplate(auction)
@@ -57,10 +55,8 @@ export class AuctionHttpController extends HttpController {
 
   private cancelAuction = asyncMiddleware(async (request, response) => {
     const { id: auctionId } = idSchema.parse(request.params);
-    const auction = await this.auctionService.cancelAuction({
-      user: userSchema.parse(response.locals.user),
-      auctionId
-    });
+    const user = userSchema.parse(response.locals.user);
+    const auction = await this.auctionService.cancelAuction(user, auctionId);
     response.json(formatResponse(auction));
   });
 }
