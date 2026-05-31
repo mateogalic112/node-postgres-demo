@@ -4,25 +4,28 @@ import {
   CreateOrderPayload,
   OrderWithOrderDetails,
   orderWithOrderDetailsSchema,
-  orderSchema
+  orderSchema,
+  Order
 } from "./orders.validation";
 
 export class OrderService {
   constructor(private readonly orderRepository: OrderRepository) {}
 
-  async createOrderWithOrderDetails({
-    user,
-    payload
-  }: {
-    user: User;
-    payload: CreateOrderPayload;
-  }): Promise<OrderWithOrderDetails> {
-    const newOrderResult = await this.orderRepository.createOrderWithOrderDetails(user, payload);
-    return orderWithOrderDetailsSchema.parse(newOrderResult);
+  async createOrderWithOrderDetails(user: User, payload: CreateOrderPayload) {
+    const result = await this.orderRepository.createOrderWithOrderDetails(user, payload);
+    return this.toOrderWithOrderDetails(result);
   }
 
   async confirmOrder(orderId: number) {
-    const orderResult = await this.orderRepository.confirmOrder(orderId);
-    return orderSchema.parse(orderResult);
+    const result = await this.orderRepository.confirmOrder(orderId);
+    return this.toOrder(result);
+  }
+
+  private toOrderWithOrderDetails(data: unknown): OrderWithOrderDetails {
+    return orderWithOrderDetailsSchema.parse(data);
+  }
+
+  private toOrder(data: unknown): Order {
+    return orderSchema.parse(data);
   }
 }

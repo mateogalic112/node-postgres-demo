@@ -26,10 +26,12 @@ export class OrderHttpController extends HttpController {
   }
 
   private createOrder = asyncMiddleware(async (request, response) => {
-    const orderWithOrderDetails = await this.orderService.createOrderWithOrderDetails({
-      user: userSchema.parse(response.locals.user),
-      payload: createOrderSchema.parse(request.body)
-    });
+    const user = userSchema.parse(response.locals.user);
+    const payload = createOrderSchema.parse(request.body);
+    const orderWithOrderDetails = await this.orderService.createOrderWithOrderDetails(
+      user,
+      payload
+    );
     const customer = await this.usersService.findOrCreateCustomer(response.locals.user);
     const checkoutSession = await this.paymentsService.createCheckoutSession(
       orderWithOrderDetails,
