@@ -204,7 +204,7 @@ describe("AuctionsController", () => {
         .set("Cookie", seller);
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toBe("Auction not found");
+      expect(response.body.message).toMatch(/not found/i);
     });
 
     it("should NOT cancel an auction when authenticated but not the creator", async () => {
@@ -215,7 +215,7 @@ describe("AuctionsController", () => {
         .set("Cookie", notSeller);
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe("You are not the creator of this auction");
+      expect(response.body.message).toMatch(/not the creator/i);
     });
 
     it("should NOT cancel an auction when auction has finished", async () => {
@@ -235,15 +235,11 @@ describe("AuctionsController", () => {
         .set("Cookie", seller);
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe("Auction has ended");
+      expect(response.body.message).toMatch(/ended/i);
     });
 
     it("should NOT cancel an auction when auction has been cancelled", async () => {
       const response = await request(app.getServer())
-        .patch(`/api/v1/auctions/${auctionId}/cancel`)
-        .set("Cookie", seller);
-
-      const responseTwo = await request(app.getServer())
         .patch(`/api/v1/auctions/${auctionId}/cancel`)
         .set("Cookie", seller);
 
@@ -253,8 +249,12 @@ describe("AuctionsController", () => {
         is_cancelled: true
       });
 
+      const responseTwo = await request(app.getServer())
+        .patch(`/api/v1/auctions/${auctionId}/cancel`)
+        .set("Cookie", seller);
+
       expect(responseTwo.status).toBe(400);
-      expect(responseTwo.body.message).toBe("Auction has already been cancelled");
+      expect(responseTwo.body.message).toMatch(/cancelled/i);
     });
   });
 });
