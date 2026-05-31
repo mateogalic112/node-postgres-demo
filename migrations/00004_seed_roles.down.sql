@@ -1,1 +1,0 @@
-DELETE FROM roles WHERE name IN ('ADMIN', 'USER');

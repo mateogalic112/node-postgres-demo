@@ -1,3 +1,6 @@
+-- pgvector extension (requires it to be installed)
+CREATE EXTENSION IF NOT EXISTS vector;
+
 CREATE TABLE IF NOT EXISTS roles (
   id SERIAL PRIMARY KEY,
   name TEXT UNIQUE NOT NULL,
@@ -37,11 +40,12 @@ CREATE TABLE IF NOT EXISTS auctions (
   starting_price_in_cents INTEGER NOT NULL CHECK (starting_price_in_cents > 0),
   is_cancelled BOOLEAN DEFAULT FALSE NOT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT chk_start_time_not_in_past CHECK (start_time >= created_at)
 );
 
-CREATE UNIQUE INDEX idx_unique_active_auction_per_product 
-ON auctions (product_id) 
+CREATE UNIQUE INDEX idx_unique_active_auction_per_product
+ON auctions (product_id)
 WHERE is_cancelled = FALSE;
 
 CREATE TABLE IF NOT EXISTS bids (
@@ -53,7 +57,6 @@ CREATE TABLE IF NOT EXISTS bids (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
-
 
 CREATE TABLE IF NOT EXISTS orders (
   id SERIAL PRIMARY KEY,
@@ -71,3 +74,34 @@ CREATE TABLE IF NOT EXISTS order_details (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
+
+CREATE TABLE products_embeddings (
+    id bigserial PRIMARY KEY,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    embedding vector(1536),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+-- HNSW index for vector search using cosine distance
+CREATE INDEX idx_embeddings_hnsw_cosine
+  ON products_embeddings
+  USING hnsw (embedding vector_cosine_ops);
+
+-- index for product_id lookups/joins
+CREATE INDEX idx_embeddings_product_id
+  ON products_embeddings (product_id);
+
+CREATE TABLE IF NOT EXISTS user_customers (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  customer_id TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  PRIMARY KEY (user_id, customer_id)
+);
+
+INSERT INTO roles (name, description)
+VALUES
+  ('ADMIN', 'Administrator with full access'),
+  ('USER', 'Regular user')
+ON CONFLICT (name) DO NOTHING;
