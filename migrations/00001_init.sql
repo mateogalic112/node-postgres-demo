@@ -100,6 +100,33 @@ CREATE TABLE IF NOT EXISTS user_customers (
   PRIMARY KEY (user_id, customer_id)
 );
 
+-- Auto-bump updated_at on every row modification.
+CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_roles_updated_at BEFORE UPDATE ON roles
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_users_updated_at BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_products_updated_at BEFORE UPDATE ON products
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_auctions_updated_at BEFORE UPDATE ON auctions
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_bids_updated_at BEFORE UPDATE ON bids
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_orders_updated_at BEFORE UPDATE ON orders
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_order_details_updated_at BEFORE UPDATE ON order_details
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_products_embeddings_updated_at BEFORE UPDATE ON products_embeddings
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_user_customers_updated_at BEFORE UPDATE ON user_customers
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
 INSERT INTO roles (name, description)
 VALUES
   ('ADMIN', 'Administrator with full access'),

@@ -10,4 +10,6 @@ DROP TABLE IF EXISTS auctions;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS roles;
+-- Triggers are dropped with their tables; the shared function is not.
+DROP FUNCTION IF EXISTS set_updated_at();
 -- Note: Not dropping vector extension as it may be shared
