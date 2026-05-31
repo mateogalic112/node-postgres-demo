@@ -27,7 +27,7 @@ export class AuctionService {
   }
 
   public async cancelAuction(user: User, auctionId: number) {
-    const updatedAuction = await this.auctionRepository.cancelAuction(user.id, auctionId);
+    const updatedAuction = await this.auctionRepository.cancelAuction(user, auctionId);
     if (updatedAuction) {
       return this.toAuction(updatedAuction);
     }
@@ -36,16 +36,16 @@ export class AuctionService {
     if (!foundAuction) {
       throw new NotFoundError("Auction not found");
     }
-    switch (true) {
-      case foundAuction.creator_id !== user.id:
-        throw new ForbiddenError("You are not the creator of this auction");
-      case foundAuction.is_cancelled:
-        throw new BadRequestError("Auction has been cancelled");
-      case isPast(addHours(foundAuction.start_time, foundAuction.duration_hours)):
-        throw new BadRequestError("Auction has ended");
-      default:
-        throw new BadRequestError("Auction not cancelled");
+    if (foundAuction.creator_id !== user.id) {
+      throw new ForbiddenError("You are not the creator of this auction");
     }
+    if (foundAuction.is_cancelled) {
+      throw new BadRequestError("Auction has already been cancelled");
+    }
+    if (isPast(addHours(foundAuction.start_time, foundAuction.duration_hours))) {
+      throw new BadRequestError("Auction has ended");
+    }
+    throw new BadRequestError("Auction not cancelled");
   }
 
   private toAuction(data: unknown): Auction {
