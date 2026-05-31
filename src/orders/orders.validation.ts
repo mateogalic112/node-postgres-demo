@@ -29,7 +29,8 @@ export const orderDetailSchema = z.object({
   id: z.number().int().positive(),
   order_id: z.number().int().positive(),
   product_id: z.number().int().positive(),
-  quantity: z.number().int().positive()
+  quantity: z.number().int().positive(),
+  unit_price_in_cents: z.number().int().positive()
 });
 export type OrderDetail = z.infer<typeof orderDetailSchema>;
 
