@@ -101,5 +101,33 @@ describe("OrdersController", () => {
       expect(response.status).toBe(201);
       expect(response.body.data.url).toBeDefined();
     });
+
+    it("should freeze the line item price even if the product price later changes", async () => {
+      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+
+      const productResponse = await createProductRequest(app, authCookie);
+      const productId = productResponse.body.data.id;
+      const orderPrice = productResponse.body.data.price_in_cents;
+
+      const response = await request(app.getServer())
+        .post("/api/v1/orders")
+        .set("Cookie", authCookie)
+        .send({ line_items: [{ product_id: productId, quantity: 2 }] });
+      expect(response.status).toBe(201);
+
+      // Change the product price AFTER the order was placed.
+      await getTestClient().query("UPDATE products SET price_in_cents = $1 WHERE id = $2", [
+        orderPrice + 1000,
+        productId
+      ]);
+
+      // The order_details snapshot must still reflect the price at order time.
+      const orderDetails = await getTestClient().query(
+        "SELECT unit_price_in_cents FROM order_details WHERE product_id = $1",
+        [productId]
+      );
+      expect(orderDetails.rows).toHaveLength(1);
+      expect(orderDetails.rows[0].unit_price_in_cents).toBe(orderPrice);
+    });
   });
 });
