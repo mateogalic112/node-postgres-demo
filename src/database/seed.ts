@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import { RegisterPayload } from "auth/auth.validation";
 import { CreateProductPayload } from "products/products.validation";
 import { faker } from "@faker-js/faker";
-import { env } from "config/env";
+import { dbConnectionConfig } from "./connection";
 import { CreateRolePayload, RoleName } from "roles/roles.validation";
 import { OpenAIService } from "services/openai";
 
@@ -95,13 +95,7 @@ const products: Array<CreateProductPayload["body"] & { image_url: string | null 
 ];
 
 export async function seedDatabase() {
-  const client = new Client({
-    host: env.POSTGRES_HOST,
-    user: env.POSTGRES_USER,
-    password: env.POSTGRES_PASSWORD,
-    database: env.POSTGRES_DB,
-    port: env.POSTGRES_PORT
-  });
+  const client = new Client(dbConnectionConfig);
 
   try {
     await client.connect();

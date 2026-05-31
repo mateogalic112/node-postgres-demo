@@ -1,6 +1,6 @@
 import { Client } from "pg";
 import { rollback } from "./setup";
-import { env } from "config/env";
+import { dbConnectionConfig } from "./connection";
 
 async function main() {
   const steps = parseInt(process.argv[2] || "1", 10);
@@ -11,13 +11,7 @@ async function main() {
     process.exit(1);
   }
 
-  const client = new Client({
-    host: env.POSTGRES_HOST,
-    user: env.POSTGRES_USER,
-    password: env.POSTGRES_PASSWORD,
-    database: env.POSTGRES_DB,
-    port: env.POSTGRES_PORT
-  });
+  const client = new Client(dbConnectionConfig);
 
   await client.connect();
   await rollback(client, steps);

@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { cleanEnv, port, str } from "envalid";
+import { bool, cleanEnv, port, str } from "envalid";
 
 if (process.env.NODE_ENV === "test") {
   config({ path: ".env.test" });
@@ -13,6 +13,7 @@ export const env = cleanEnv(process.env, {
   POSTGRES_HOST: str(),
   POSTGRES_PORT: port({ default: 5432 }),
   POSTGRES_DB: str(),
+  POSTGRES_SSL: bool({ default: false }),
 
   PORT: port({ default: 4000 }),
 

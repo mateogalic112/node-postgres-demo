@@ -1,4 +1,4 @@
-import { env } from "config/env";
+import { dbConnectionConfig } from "database/connection";
 import { DatabaseService } from "interfaces/database.interface";
 import { Pool, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow } from "pg";
 
@@ -8,11 +8,7 @@ export class PostgresService implements DatabaseService {
 
   private constructor() {
     this.pool = new Pool({
-      host: env.POSTGRES_HOST,
-      user: env.POSTGRES_USER,
-      password: env.POSTGRES_PASSWORD,
-      database: env.POSTGRES_DB,
-      port: env.POSTGRES_PORT,
+      ...dbConnectionConfig,
       max: 20,
       min: 2,
       idleTimeoutMillis: 30000,
