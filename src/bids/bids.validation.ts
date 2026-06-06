@@ -18,3 +18,12 @@ export const bidSchema = z.object({
 });
 
 export type Bid = z.infer<typeof bidSchema>;
+
+export const auctionBidSchema = z.object({
+  id: z.number().int().positive(),
+  username: z.string(),
+  amount_in_cents: z.coerce.number().int().positive(),
+  created_at: z.date()
+});
+
+export type AuctionBid = z.infer<typeof auctionBidSchema>;
