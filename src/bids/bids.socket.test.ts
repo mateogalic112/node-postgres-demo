@@ -98,7 +98,8 @@ describe("BidSocketController", () => {
     const response = await registerUserRequest(app, username);
     return {
       cookie: response.headers["set-cookie"][0] as string,
-      userId: response.body.data.id as number
+      userId: response.body.data.id as number,
+      username
     };
   };
 
@@ -121,8 +122,7 @@ describe("BidSocketController", () => {
 
           socket.on("bids:bid_created", (response) => {
             expect(response.data).toMatchObject({
-              auction_id: auction.id,
-              user_id: bidder.userId,
+              username: bidder.username,
               amount_in_cents: BID_AMOUNT_IN_CENTS
             });
             done();
@@ -156,7 +156,7 @@ describe("BidSocketController", () => {
 
           watcherSocket.on("bids:bid_created", (response) => {
             expect(response.data).toMatchObject({
-              auction_id: auction.id,
+              username: bidder.username,
               amount_in_cents: BID_AMOUNT_IN_CENTS
             });
             done();
