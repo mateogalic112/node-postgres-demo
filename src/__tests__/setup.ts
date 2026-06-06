@@ -3,6 +3,7 @@ import App from "app";
 import { Client } from "pg";
 import request from "supertest";
 import { TEST_ADMIN_USER } from "./constants";
+import { Auction } from "auctions/auctions.validation";
 
 // Helper to get shared test state from jestSetup.ts
 export const getTestClient = (): Client => {
@@ -36,6 +37,17 @@ export const createProductRequest = async (app: App, authCookie: string) => {
     .field("name", faker.commerce.productName())
     .field("description", faker.commerce.productDescription())
     .field("price_in_cents", faker.number.int({ min: 100, max: 100000 }));
+};
+
+export const createActiveAuction = async (creatorId: number, productId: number) => {
+  const client = getTestClient();
+
+  const result = await client.query<Auction>(
+    `INSERT INTO auctions (product_id, creator_id, start_time, duration_hours, starting_price_in_cents, created_at)
+     VALUES ($1, $2, NOW() - INTERVAL '1 hour', $3, $4, NOW() - INTERVAL '2 hours') RETURNING *`,
+    [productId, creatorId, 48, 1000]
+  );
+  return result.rows[0];
 };
 
 export const seedProducts = async (count: number) => {

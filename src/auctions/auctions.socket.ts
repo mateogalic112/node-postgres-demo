@@ -6,13 +6,17 @@ import { getErrorMessage } from "api/api.errors";
 
 enum AuctionEvent {
   JOIN_AUCTION = "JOIN_AUCTION",
-  LEAVE_AUCTION = "LEAVE_AUCTION"
+  LEAVE_AUCTION = "LEAVE_AUCTION",
+  AUCTION_JOINED = "AUCTION_JOINED",
+  AUCTION_LEFT = "AUCTION_LEFT"
 }
 
 export class AuctionSocketController extends SocketController {
   private auctionEvents: Record<AuctionEvent, string> = {
     [AuctionEvent.JOIN_AUCTION]: `${this.namespace}:${AuctionEvent.JOIN_AUCTION.toLowerCase()}`,
-    [AuctionEvent.LEAVE_AUCTION]: `${this.namespace}:${AuctionEvent.LEAVE_AUCTION.toLowerCase()}`
+    [AuctionEvent.LEAVE_AUCTION]: `${this.namespace}:${AuctionEvent.LEAVE_AUCTION.toLowerCase()}`,
+    [AuctionEvent.AUCTION_JOINED]: `${this.namespace}:${AuctionEvent.AUCTION_JOINED.toLowerCase()}`,
+    [AuctionEvent.AUCTION_LEFT]: `${this.namespace}:${AuctionEvent.AUCTION_LEFT.toLowerCase()}`
   };
 
   constructor(private readonly auctionService: AuctionService) {
@@ -28,7 +32,8 @@ export class AuctionSocketController extends SocketController {
     return async (payload: unknown) => {
       try {
         const { auction_id } = auctionRoomSchema.parse(payload);
-        socket.join(this.auctionService.getAuctionRoomName(this.namespace, auction_id));
+        await socket.join(this.auctionService.getAuctionRoomName(this.namespace, auction_id));
+        socket.emit(this.auctionEvents.AUCTION_JOINED, { auction_id });
       } catch (error) {
         socket.emit(this.events.ERROR, { message: getErrorMessage(error) });
       }
@@ -39,7 +44,8 @@ export class AuctionSocketController extends SocketController {
     return async (payload: unknown) => {
       try {
         const { auction_id } = auctionRoomSchema.parse(payload);
-        socket.leave(this.auctionService.getAuctionRoomName(this.namespace, auction_id));
+        await socket.leave(this.auctionService.getAuctionRoomName(this.namespace, auction_id));
+        socket.emit(this.auctionEvents.AUCTION_LEFT, { auction_id });
       } catch (error) {
         socket.emit(this.events.ERROR, { message: getErrorMessage(error) });
       }

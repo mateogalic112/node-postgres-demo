@@ -6,18 +6,9 @@ import { AuthService } from "auth/auth.service";
 import { formatResponse } from "api/api.formats";
 import { AuctionService } from "auctions/auctions.service";
 import { getErrorMessage } from "api/api.errors";
-
-enum BidEvent {
-  CREATE_BID = "CREATE_BID",
-  BID_CREATED = "BID_CREATED"
-}
+import { BidEvent, constructBidEvent } from "./bids.events";
 
 export class BidSocketController extends SocketController {
-  private bidEvents: Record<BidEvent, string> = {
-    [BidEvent.CREATE_BID]: `${this.namespace}:${BidEvent.CREATE_BID.toLowerCase()}`,
-    [BidEvent.BID_CREATED]: `${this.namespace}:${BidEvent.BID_CREATED.toLowerCase()}`
-  };
-
   constructor(
     private readonly bidService: BidService,
     private readonly authService: AuthService,
@@ -27,7 +18,7 @@ export class BidSocketController extends SocketController {
   }
 
   public initializeEventHandlers(socket: Socket) {
-    socket.on(this.bidEvents.CREATE_BID, this.handleCreateBid(socket));
+    socket.on(constructBidEvent(this.namespace, BidEvent.CREATE_BID), this.handleCreateBid(socket));
   }
 
   private handleCreateBid = (socket: Socket) => {
@@ -40,10 +31,16 @@ export class BidSocketController extends SocketController {
         //@dev sends event to everyone EXCEPT sender
         socket
           .to(this.auctionService.getAuctionRoomName("auctions", newBid.auction_id))
-          .emit(this.bidEvents.BID_CREATED, formatResponse(auctionBid));
+          .emit(
+            constructBidEvent(this.namespace, BidEvent.BID_CREATED),
+            formatResponse(auctionBid)
+          );
 
         //@dev sends event ONLY to sender
-        socket.emit(this.bidEvents.BID_CREATED, formatResponse(auctionBid));
+        socket.emit(
+          constructBidEvent(this.namespace, BidEvent.BID_CREATED),
+          formatResponse(auctionBid)
+        );
       } catch (error) {
         socket.emit(this.events.ERROR, {
           message: getErrorMessage(error)

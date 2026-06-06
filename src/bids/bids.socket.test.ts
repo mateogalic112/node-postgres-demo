@@ -17,24 +17,20 @@ import { ProductService } from "products/products.service";
 import { ProductRepository } from "products/products.repository";
 import { RolesRepository } from "roles/roles.repository";
 import { StripeService } from "services/stripe.service";
-import { Auction } from "auctions/auctions.validation";
-import { Client } from "pg";
 import {
   createMockDatabaseService,
   embeddingService,
   filesService,
   mailService
 } from "__tests__/mocks";
-import { createProductRequest, getTestClient, registerUserRequest } from "__tests__/setup";
-
-const createActiveAuction = async (client: Client, creatorId: number, productId: number) => {
-  const result = await client.query<Auction>(
-    `INSERT INTO auctions (product_id, creator_id, start_time, duration_hours, starting_price_in_cents, created_at)
-     VALUES ($1, $2, NOW() - INTERVAL '1 hour', $3, $4, NOW() - INTERVAL '2 hours') RETURNING *`,
-    [productId, creatorId, 48, 1000]
-  );
-  return result.rows[0];
-};
+import {
+  createActiveAuction,
+  createProductRequest,
+  getTestClient,
+  registerUserRequest
+} from "__tests__/setup";
+import { BidEvent, constructBidEvent } from "./bids.events";
+import { AuctionBid, CreateBidPayload } from "./bids.validation";
 
 describe("BidSocketController", () => {
   let app: App;
@@ -94,182 +90,174 @@ describe("BidSocketController", () => {
     return socket;
   };
 
-  const getAuthCookie = async (username: string) => {
+  // @dev Resolve on the first matching event (no implicit rejection).
+  const once = <T>(socket: ClientSocket, event: string): Promise<T> =>
+    new Promise((resolve) => socket.once(event, resolve));
+
+  const connectAndWait = async (cookie: string): Promise<ClientSocket> => {
+    const socket = connectSocket(cookie);
+    await once(socket, "connect");
+    return socket;
+  };
+
+  // @dev Join an auction room and wait for the server's ack so later assertions
+  // never race the room membership.
+  const joinAuctionRoom = async (socket: ClientSocket, auctionId: number) => {
+    const joined = once(socket, "auctions:auction_joined");
+    socket.emit("auctions:join_auction", { auction_id: auctionId });
+    await joined;
+  };
+
+  const registerUser = async (username: string) => {
     const response = await registerUserRequest(app, username);
     return {
       cookie: response.headers["set-cookie"][0] as string,
-      userId: response.body.data.id as number,
-      username
+      ...response.body.data
     };
   };
 
   const setupAuction = async () => {
-    const seller = await getAuthCookie("seller");
+    const seller = await registerUser("seller");
     const productResponse = await createProductRequest(app, seller.cookie);
-    const productId = productResponse.body.data.id;
-    const auction = await createActiveAuction(getTestClient(), seller.userId, productId);
+    const auction = await createActiveAuction(seller.id, productResponse.body.data.id);
     return { auction, seller };
   };
 
-  describe("bids:create_bid", () => {
-    it("should emit bids:bid_created back to sender on valid bid", (done) => {
-      (async () => {
-        try {
-          const { auction } = await setupAuction();
-          const bidder = await getAuthCookie("bidder");
-          const BID_AMOUNT_IN_CENTS = 5000;
-          const socket = connectSocket(bidder.cookie);
+  type CreateBidResult = { type: "created"; data: AuctionBid } | { type: "error"; message: string };
 
-          socket.on("bids:bid_created", (response) => {
-            expect(response.data).toMatchObject({
-              username: bidder.username,
-              amount_in_cents: BID_AMOUNT_IN_CENTS
-            });
-            done();
-          });
-
-          socket.on("bids:error", (err) => {
-            done(new Error(err.message));
-          });
-
-          socket.on("connect", () => {
-            socket.emit("bids:create_bid", {
-              auction_id: auction.id,
-              amount_in_cents: BID_AMOUNT_IN_CENTS
-            });
-          });
-        } catch (error) {
-          done(error);
-        }
-      })();
+  const placeBid = async (
+    socket: ClientSocket,
+    payload: CreateBidPayload
+  ): Promise<CreateBidResult> => {
+    return new Promise((resolve) => {
+      socket.once(constructBidEvent("bids", BidEvent.BID_CREATED), (res) =>
+        resolve({ type: "created", data: res.data })
+      );
+      socket.once("bids:error", (res) => resolve({ type: "error", message: res.message }));
+      socket.emit(constructBidEvent("bids", BidEvent.CREATE_BID), payload);
     });
+  };
 
-    it("should broadcast bids:bid_created to other users in the auction room", (done) => {
-      (async () => {
-        try {
-          const { auction } = await setupAuction();
-          const bidder = await getAuthCookie("bidder");
-          const BID_AMOUNT_IN_CENTS = 5000;
+  describe("Placing new bid", () => {
+    const VALID_BID_IN_CENTS = 5000;
 
-          const watcher = await getAuthCookie("watcher");
-          const watcherSocket = connectSocket(watcher.cookie);
+    it("emits bids:bid_created back to the sender on a valid bid", async () => {
+      const { auction } = await setupAuction();
+      const bidder = await registerUser("bidder");
+      const socket = await connectAndWait(bidder.cookie);
 
-          watcherSocket.on("bids:bid_created", (response) => {
-            expect(response.data).toMatchObject({
-              username: bidder.username,
-              amount_in_cents: BID_AMOUNT_IN_CENTS
-            });
-            done();
-          });
-
-          watcherSocket.on("bids:error", (err) => {
-            done(new Error(err.message));
-          });
-
-          // Wait for watcher to connect, join the room, then connect bidder
-          watcherSocket.on("connect", () => {
-            watcherSocket.emit("auctions:join_auction", { auction_id: auction.id });
-
-            // Allow server to process the room join before bidder connects
-            setTimeout(() => {
-              const bidderSocket = connectSocket(bidder.cookie);
-
-              bidderSocket.on("connect", () => {
-                bidderSocket.emit("bids:create_bid", {
-                  auction_id: auction.id,
-                  amount_in_cents: BID_AMOUNT_IN_CENTS
-                });
-              });
-            }, 200);
-          });
-        } catch (error) {
-          done(error);
-        }
-      })();
-    });
-
-    it("should emit bids:error when user is not authenticated", (done) => {
-      const socket = connectSocket("invalid_cookie=abc");
-
-      socket.on("connect", () => {
-        socket.emit("bids:create_bid", {
-          auction_id: 1,
-          amount_in_cents: 5000
-        });
+      const result = await placeBid(socket, {
+        auction_id: auction.id,
+        amount_in_cents: VALID_BID_IN_CENTS
       });
 
-      socket.on("bids:error", (response) => {
-        expect(response.message).toBeDefined();
-        done();
+      expect(result).toMatchObject({
+        data: { username: bidder.username, amount_in_cents: VALID_BID_IN_CENTS }
       });
     });
 
-    it("should emit bids:error when payload is invalid", (done) => {
-      (async () => {
-        try {
-          const bidder = await getAuthCookie("bidder");
-          const socket = connectSocket(bidder.cookie);
+    it("broadcasts bids:bid_created to other users in the auction room", async () => {
+      const { auction } = await setupAuction();
+      const bidder = await registerUser("bidder");
+      const watcher = await registerUser("watcher");
 
-          socket.on("connect", () => {
-            socket.emit("bids:create_bid", { invalid: "payload" });
-          });
+      // Watcher joins and waits for the ack so the broadcast cannot race the join.
+      const watcherSocket = await connectAndWait(watcher.cookie);
+      await joinAuctionRoom(watcherSocket, auction.id);
+      const broadcast = once<{ data: AuctionBid }>(watcherSocket, "bids:bid_created");
 
-          socket.on("bids:error", (response) => {
-            expect(response.message).toBeDefined();
-            done();
-          });
-        } catch (error) {
-          done(error);
-        }
-      })();
+      const bidderSocket = await connectAndWait(bidder.cookie);
+      await placeBid(bidderSocket, {
+        auction_id: auction.id,
+        amount_in_cents: VALID_BID_IN_CENTS
+      });
+
+      const response = await broadcast;
+      expect(response.data).toMatchObject({
+        username: bidder.username,
+        amount_in_cents: VALID_BID_IN_CENTS
+      });
     });
 
-    it("should emit bids:error when auction does not exist", (done) => {
-      (async () => {
-        try {
-          const bidder = await getAuthCookie("bidder");
-          const socket = connectSocket(bidder.cookie);
+    it("emits bids:error when the user is not authenticated", async () => {
+      const socket = await connectAndWait("invalid_cookie=abc");
 
-          socket.on("connect", () => {
-            socket.emit("bids:create_bid", {
-              auction_id: 99999,
-              amount_in_cents: 5000
-            });
-          });
+      const result = await placeBid(socket, {
+        auction_id: 1,
+        amount_in_cents: VALID_BID_IN_CENTS
+      });
 
-          socket.on("bids:error", (response) => {
-            expect(response.message).toBeDefined();
-            done();
-          });
-        } catch (error) {
-          done(error);
-        }
-      })();
+      expect(result.type).toBe("error");
     });
 
-    it("should emit bids:error when bid amount is too low", (done) => {
-      (async () => {
-        try {
-          const { auction } = await setupAuction();
-          const bidder = await getAuthCookie("bidder");
-          const socket = connectSocket(bidder.cookie);
+    it("emits bids:error when the payload is invalid", async () => {
+      const bidder = await registerUser("bidder");
+      const socket = await connectAndWait(bidder.cookie);
 
-          socket.on("connect", () => {
-            // Auction starting price is 1000 cents with 10% minimum increase = 1100 minimum
-            socket.emit("bids:create_bid", {
-              auction_id: auction.id,
-              amount_in_cents: auction.starting_price_in_cents + 99 // 1099
-            });
-          });
+      const result = await new Promise<{ message: string }>((resolve) => {
+        socket.once("bids:error", resolve);
+        socket.emit("bids:create_bid", { invalid: "payload" });
+      });
 
-          socket.on("bids:error", (response) => {
-            expect(response.message).toBeDefined();
-            done();
-          });
-        } catch (error) {
-          done(error);
-        }
-      })();
+      expect(result.message).toBeDefined();
+    });
+
+    it("emits bids:error when the auction does not exist", async () => {
+      const bidder = await registerUser("bidder");
+      const socket = await connectAndWait(bidder.cookie);
+
+      const result = await placeBid(socket, {
+        auction_id: 99999,
+        amount_in_cents: VALID_BID_IN_CENTS
+      });
+
+      expect(result.type).toBe("error");
+    });
+
+    it("emits bids:error when the bid is below the minimum (starting price + 10%)", async () => {
+      const { auction } = await setupAuction();
+      const bidder = await registerUser("bidder");
+      const socket = await connectAndWait(bidder.cookie);
+
+      // Starting price 1000c, +10% => minimum 1100c. 1099c must be rejected.
+      const result = await placeBid(socket, {
+        auction_id: auction.id,
+        amount_in_cents: auction.starting_price_in_cents + 99
+      });
+
+      expect(result.type).toBe("error");
+    });
+
+    it("enforces the minimum increase above the current highest bid across sequential bids", async () => {
+      const { auction } = await setupAuction();
+      const firstBidder = await registerUser("bidder");
+      const secondBidder = await registerUser("bidder2");
+
+      const firstSocket = await connectAndWait(firstBidder.cookie);
+      const firstResult = await placeBid(firstSocket, {
+        auction_id: auction.id,
+        amount_in_cents: VALID_BID_IN_CENTS // 5000c becomes the highest bid
+      });
+      expect(firstResult.type).toBe("created");
+
+      const secondSocket = await connectAndWait(secondBidder.cookie);
+
+      // Highest is 5000c, minimum increase is +100c => 5100c. 5099c is too low.
+      const tooLow = await placeBid(secondSocket, {
+        auction_id: auction.id,
+        amount_in_cents: VALID_BID_IN_CENTS + 99
+      });
+      expect(tooLow.type).toBe("error");
+
+      // Exactly at the threshold is accepted.
+      const accepted = await placeBid(secondSocket, {
+        auction_id: auction.id,
+        amount_in_cents: VALID_BID_IN_CENTS + 100
+      });
+      expect(accepted).toMatchObject({
+        type: "created",
+        data: { username: secondBidder.username, amount_in_cents: VALID_BID_IN_CENTS + 100 }
+      });
     });
   });
 });
