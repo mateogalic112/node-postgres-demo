@@ -1,5 +1,5 @@
 import { DatabaseService } from "interfaces/database.interface";
-import { Bid, CreateBidPayload } from "./bids.validation";
+import { AuctionBid, Bid, CreateBidPayload } from "./bids.validation";
 import { Auction } from "auctions/auctions.validation";
 import { NotFoundError } from "api/api.errors";
 import { PoolClient } from "pg";
@@ -37,6 +37,20 @@ export class BidRepository {
     return result.rows[0];
   }
 
+  public async getAuctionBid(bidId: number) {
+    const result = await this.DB.query<AuctionBid>(
+      `SELECT u.username, b.id, b.amount_in_cents, b.created_at 
+	FROM bids b
+	  JOIN users u ON b.user_id = u.id	
+WHERE b.id = $1`,
+      [bidId]
+    );
+    if (result.rows.length === 0) {
+      throw new NotFoundError("Bid not found");
+    }
+    return result.rows[0];
+  }
+
   public async getHighestBidAmountForAuction(
     client: PoolClient,
     auctionId: number
@@ -55,9 +69,12 @@ export class BidRepository {
     return result.rows[0].amount_in_cents;
   }
 
-  public async getBidsByAuctionId(auctionId: number) {
-    const result = await this.DB.query<Bid>(
-      "SELECT * FROM bids WHERE auction_id = $1 ORDER BY created_at DESC",
+  public async getAuctionBids(auctionId: number) {
+    const result = await this.DB.query<AuctionBid>(
+      `SELECT u.username, b.id, b.amount_in_cents, b.created_at 
+	FROM bids b 
+	  JOIN users u ON b.user_id = u.id 
+	WHERE auction_id = $1 ORDER BY created_at DESC`,
       [auctionId]
     );
     return result.rows;

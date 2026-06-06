@@ -1,5 +1,5 @@
 import { BidRepository } from "./bids.repository";
-import { bidSchema, CreateBidPayload } from "./bids.validation";
+import { AuctionBid, auctionBidSchema, Bid, bidSchema, CreateBidPayload } from "./bids.validation";
 import { User } from "users/users.validation";
 import { BadRequestError, InternalServerError } from "api/api.errors";
 import { DatabaseService } from "interfaces/database.interface";
@@ -22,7 +22,6 @@ export class BidService {
 
     const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${payload.amount_in_cents}`;
 
-    // @dev Retry the transaction if it fails due to serialization failure or deadlock detected
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       // @dev MUST use the same client instance for all statements within a transaction!
       // @link https://node-postgres.com/features/transactions
@@ -50,11 +49,11 @@ export class BidService {
           highestBidInCents
         });
 
-        const newBid = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
+        const result = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
 
         await client.query("COMMIT");
 
-        return bidSchema.parse(newBid);
+        return this.toBid(result);
       } catch (error) {
         await client.query("ROLLBACK");
 
@@ -101,8 +100,25 @@ export class BidService {
     }
   }
 
-  public async getBidsByAuctionId(auctionId: number) {
-    const auctionBids = await this.bidRepository.getBidsByAuctionId(auctionId);
-    return auctionBids.map((bid) => bidSchema.parse(bid));
+  public async getAuctionBid(bidId: number) {
+    const result = await this.bidRepository.getAuctionBid(bidId);
+    return this.toAuctionBid(result);
+  }
+
+  public async getAuctionBids(auctionId: number) {
+    const result = await this.bidRepository.getAuctionBids(auctionId);
+    return this.toAuctionBids(result);
+  }
+
+  private toBid(data: unknown): Bid {
+    return bidSchema.parse(data);
+  }
+
+  private toAuctionBid(data: unknown): AuctionBid {
+    return auctionBidSchema.parse(data);
+  }
+
+  private toAuctionBids(data: Array<unknown>): Array<AuctionBid> {
+    return data.map(this.toAuctionBid);
   }
 }
