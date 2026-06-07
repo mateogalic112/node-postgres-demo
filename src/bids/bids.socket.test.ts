@@ -90,7 +90,6 @@ describe("BidSocketController", () => {
     return socket;
   };
 
-  // @dev Resolve on the first matching event (no implicit rejection).
   const once = <T>(socket: ClientSocket, event: string): Promise<T> =>
     new Promise((resolve) => socket.once(event, resolve));
 
@@ -100,7 +99,6 @@ describe("BidSocketController", () => {
     return socket;
   };
 
-  // @dev Join an auction room and wait for the server's ack so later assertions
   // never race the room membership.
   const joinAuctionRoom = async (socket: ClientSocket, auctionId: number) => {
     const joined = once(socket, "auctions:auction_joined");
@@ -123,6 +121,9 @@ describe("BidSocketController", () => {
     return { auction, seller };
   };
 
+  const bidCreated = constructBidEvent("bids", BidEvent.BID_CREATED);
+  const createBidEvent = constructBidEvent("bids", BidEvent.CREATE_BID);
+
   type CreateBidResult = { type: "created"; data: AuctionBid } | { type: "error"; message: string };
 
   const placeBid = async (
@@ -130,11 +131,9 @@ describe("BidSocketController", () => {
     payload: CreateBidPayload
   ): Promise<CreateBidResult> => {
     return new Promise((resolve) => {
-      socket.once(constructBidEvent("bids", BidEvent.BID_CREATED), (res) =>
-        resolve({ type: "created", data: res.data })
-      );
+      socket.once(bidCreated, (res) => resolve({ type: "created", data: res.data }));
       socket.once("bids:error", (res) => resolve({ type: "error", message: res.message }));
-      socket.emit(constructBidEvent("bids", BidEvent.CREATE_BID), payload);
+      socket.emit(createBidEvent, payload);
     });
   };
 
@@ -143,6 +142,7 @@ describe("BidSocketController", () => {
 
     it("emits bids:bid_created back to the sender on a valid bid", async () => {
       const { auction } = await setupAuction();
+
       const bidder = await registerUser("bidder");
       const socket = await connectAndWait(bidder.cookie);
 
@@ -158,6 +158,7 @@ describe("BidSocketController", () => {
 
     it("broadcasts bids:bid_created to other users in the auction room", async () => {
       const { auction } = await setupAuction();
+
       const bidder = await registerUser("bidder");
       const watcher = await registerUser("watcher");
 
@@ -186,20 +187,22 @@ describe("BidSocketController", () => {
         auction_id: 1,
         amount_in_cents: VALID_BID_IN_CENTS
       });
-
-      expect(result.type).toBe("error");
+      expect(result).toMatchObject({
+        message: "Token not found"
+      });
     });
 
     it("emits bids:error when the payload is invalid", async () => {
       const bidder = await registerUser("bidder");
       const socket = await connectAndWait(bidder.cookie);
 
-      const result = await new Promise<{ message: string }>((resolve) => {
+      const result = await new Promise((resolve) => {
         socket.once("bids:error", resolve);
         socket.emit("bids:create_bid", { invalid: "payload" });
       });
-
-      expect(result.message).toBeDefined();
+      expect(result).toMatchObject({
+        message: /invalid input/i
+      });
     });
 
     it("emits bids:error when the auction does not exist", async () => {
@@ -210,8 +213,9 @@ describe("BidSocketController", () => {
         auction_id: 99999,
         amount_in_cents: VALID_BID_IN_CENTS
       });
-
-      expect(result.type).toBe("error");
+      expect(result).toMatchObject({
+        message: "Auction not active"
+      });
     });
 
     it("emits bids:error when the bid is below the minimum (starting price + 10%)", async () => {
@@ -224,12 +228,14 @@ describe("BidSocketController", () => {
         auction_id: auction.id,
         amount_in_cents: auction.starting_price_in_cents + 99
       });
-
-      expect(result.type).toBe("error");
+      expect(result).toMatchObject({
+        message: /bid must be at least €11/i
+      });
     });
 
     it("enforces the minimum increase above the current highest bid across sequential bids", async () => {
       const { auction } = await setupAuction();
+
       const firstBidder = await registerUser("bidder");
       const secondBidder = await registerUser("bidder2");
 
