@@ -29,7 +29,6 @@ import {
   getTestClient,
   registerUserRequest
 } from "__tests__/setup";
-import { BidEvent, constructBidEvent } from "./bids.events";
 import { AuctionBid, CreateBidPayload } from "./bids.validation";
 
 describe("BidSocketController", () => {
@@ -121,9 +120,6 @@ describe("BidSocketController", () => {
     return { auction, seller };
   };
 
-  const bidCreated = constructBidEvent("bids", BidEvent.BID_CREATED);
-  const createBidEvent = constructBidEvent("bids", BidEvent.CREATE_BID);
-
   type CreateBidResult = { type: "created"; data: AuctionBid } | { type: "error"; message: string };
 
   const placeBid = async (
@@ -131,9 +127,11 @@ describe("BidSocketController", () => {
     payload: CreateBidPayload
   ): Promise<CreateBidResult> => {
     return new Promise((resolve) => {
-      socket.once(bidCreated, (res) => resolve({ type: "created", data: res.data }));
-      socket.once("bids:error", (res) => resolve({ type: "error", message: res.message }));
-      socket.emit(createBidEvent, payload);
+      socket.once("bids:bid_created", (res) => resolve({ type: "created", data: res.data }));
+      socket.once("bids:create_bid_failed", (res) =>
+        resolve({ type: "error", message: res.message })
+      );
+      socket.emit("bids:create_bid", payload);
     });
   };
 
@@ -180,7 +178,7 @@ describe("BidSocketController", () => {
       });
     });
 
-    it("emits bids:error when the user is not authenticated", async () => {
+    it("emits bids:create_bid_failed when the user is not authenticated", async () => {
       const socket = await connectAndWait("invalid_cookie=abc");
 
       const result = await placeBid(socket, {
@@ -192,12 +190,12 @@ describe("BidSocketController", () => {
       });
     });
 
-    it("emits bids:error when the payload is invalid", async () => {
+    it("emits bids:create_bid_failed when the payload is invalid", async () => {
       const bidder = await registerUser("bidder");
       const socket = await connectAndWait(bidder.cookie);
 
       const result = await new Promise((resolve) => {
-        socket.once("bids:error", resolve);
+        socket.once("bids:create_bid_failed", resolve);
         socket.emit("bids:create_bid", { invalid: "payload" });
       });
       expect(result).toMatchObject({
@@ -205,7 +203,7 @@ describe("BidSocketController", () => {
       });
     });
 
-    it("emits bids:error when the auction does not exist", async () => {
+    it("emits bids:create_bid_failed when the auction does not exist", async () => {
       const bidder = await registerUser("bidder");
       const socket = await connectAndWait(bidder.cookie);
 
@@ -218,7 +216,7 @@ describe("BidSocketController", () => {
       });
     });
 
-    it("emits bids:error when the bid is below the minimum (starting price + 10%)", async () => {
+    it("emits bids:create_bid_failed when the bid is below the minimum (starting price + 10%)", async () => {
       const { auction } = await setupAuction();
       const bidder = await registerUser("bidder");
       const socket = await connectAndWait(bidder.cookie);

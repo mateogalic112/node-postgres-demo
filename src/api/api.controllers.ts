@@ -11,15 +11,7 @@ export abstract class HttpController {
   protected abstract initializeRoutes(): void;
 }
 
-enum SocketEvents {
-  ERROR = "ERROR"
-}
-
 export abstract class SocketController {
-  protected events: Record<SocketEvents, string> = {
-    [SocketEvents.ERROR]: `${this.namespace}:${SocketEvents.ERROR.toLowerCase()}`
-  };
-
   constructor(protected readonly namespace: string) {}
 
   public abstract initializeEventHandlers(socket: Socket): void;
