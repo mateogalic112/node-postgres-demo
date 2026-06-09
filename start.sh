@@ -27,18 +27,15 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     docker start ${CONTAINER_NAME} > /dev/null
 
     echo "Waiting for PostgreSQL to be ready..."
-    until docker exec ${CONTAINER_NAME} pg_isready -U postgres >/dev/null 2>&1; do
+    until docker exec ${CONTAINER_NAME} pg_isready -U ${POSTGRES_USER_NAME} >/dev/null 2>&1; do
       sleep 1
     done
 
     echo "'${CONTAINER_NAME}' is now running."
   fi
 else
-  echo "Stopping all containers except '${CONTAINER_NAME}'..."
-  docker ps -q | xargs -r docker inspect --format '{{.Name}} {{.Id}}' 2>/dev/null \
-    | grep -v "/${CONTAINER_NAME}" \
-    | awk '{print $2}' \
-    | xargs -r docker stop > /dev/null 2>&1
+  echo "Freeing port 5432 if in use..."
+  docker ps -q --filter "publish=5432" | xargs -r docker stop > /dev/null 2>&1
 
   echo "Creating and starting new '${CONTAINER_NAME}' container..."
   echo "Using database: ${POSTGRES_DB_NAME}"
@@ -51,7 +48,7 @@ else
     pgvector/pgvector:pg17 > /dev/null
 
   echo "Waiting for PostgreSQL to be ready..."
-  until docker exec ${CONTAINER_NAME} pg_isready -U postgres >/dev/null 2>&1; do
+  until docker exec ${CONTAINER_NAME} pg_isready -U ${POSTGRES_USER_NAME} >/dev/null 2>&1; do
     sleep 1
   done
 
