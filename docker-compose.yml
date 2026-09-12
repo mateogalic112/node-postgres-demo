@@ -36,7 +36,7 @@ services:
       POSTGRES_HOST: db
       NODE_ENV: production
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     networks:
       - app-network
     depends_on:
