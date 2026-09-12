@@ -15,7 +15,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    restart: unless-stopped“
+    restart: unless-stopped
 
   migrate:
     build: .
