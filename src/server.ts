@@ -11,11 +11,11 @@ const logger = WinstonService.getInstance();
 
 const app = createApp({
   db,
-  files: new AWSService(logger),
-  embeddings: new OpenAIService(logger),
-  mail: new ResendService(logger),
-  payments: new StripeService(logger),
-  logger
+  logger,
+  filesService: new AWSService(logger),
+  embeddingsService: new OpenAIService(logger),
+  mailService: new ResendService(logger),
+  paymentsService: new StripeService(logger)
 });
 
 app.listen();

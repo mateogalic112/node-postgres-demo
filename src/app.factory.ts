@@ -31,21 +31,32 @@ import { UsersService } from "users/users.service";
 
 export interface AppDependencies {
   db: DatabaseService;
-  files: FilesService;
-  embeddings: EmbeddingsService;
-  mail: MailService;
-  payments: PaymentsService;
+  filesService: FilesService;
+  embeddingsService: EmbeddingsService;
+  mailService: MailService;
+  paymentsService: PaymentsService;
   logger: LoggerService;
 }
 
-export function createApp({ db, files, embeddings, mail, payments, logger }: AppDependencies) {
+export function createApp({
+  db,
+  filesService,
+  embeddingsService,
+  mailService,
+  paymentsService,
+  logger
+}: AppDependencies) {
   const productsService = new ProductsService(
     new ProductsRepository(db, logger),
-    files,
-    embeddings,
+    filesService,
+    embeddingsService,
     logger
   );
-  const usersService = new UsersService(new UsersRepository(db), new RolesRepository(db), payments);
+  const usersService = new UsersService(
+    new UsersRepository(db),
+    new RolesRepository(db),
+    paymentsService
+  );
   const authService = new AuthService(usersService);
   const auctionsService = new AuctionsService(new AuctionsRepository(db));
   const bidsService = new BidsService(new BidsRepository(db), db, logger);
@@ -55,13 +66,13 @@ export function createApp({ db, files, embeddings, mail, payments, logger }: App
   return new App(
     [
       new AuthHttpController(authService),
-      new ProductsHttpController(productsService, authService, mail),
-      new AuctionsHttpController(auctionsService, authService, mail),
+      new ProductsHttpController(productsService, authService, mailService),
+      new AuctionsHttpController(auctionsService, authService, mailService),
       new BidsHttpController(bidsService),
       new UsersHttpController(authService, rolesService, usersService),
       new BotHttpController(productsService, logger),
-      new OrdersHttpController(authService, usersService, ordersService, payments),
-      new PaymentsHttpController(payments, ordersService, logger)
+      new OrdersHttpController(authService, usersService, ordersService, paymentsService),
+      new PaymentsHttpController(paymentsService, ordersService, logger)
     ],
     [
       new AuctionsSocketController(auctionsService),

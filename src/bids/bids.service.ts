@@ -4,7 +4,7 @@ import { User } from "users/users.validation";
 import { BadRequestError, InternalServerError } from "api/api.errors";
 import { DatabaseService } from "interfaces/database.interface";
 import { PgError } from "database/errors";
-import { Currency } from "utils/currency";
+import { Currency } from "money/currency";
 import { LoggerService } from "interfaces/logger.interface";
 
 export class BidsService {
