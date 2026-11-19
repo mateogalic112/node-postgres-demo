@@ -22,7 +22,7 @@ describe("OrdersController", () => {
     });
 
     it("should throw an error when customer creation fails", async () => {
-      (paymentsService.createCustomer as jest.Mock).mockResolvedValueOnce(null);
+      paymentsService.createCustomer.mockResolvedValueOnce(null);
 
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
       const productResponse = await createProductRequest(app, authCookie);
@@ -38,7 +38,7 @@ describe("OrdersController", () => {
     });
 
     it("should throw an error when checkout session is not created", async () => {
-      (paymentsService.createCheckoutSession as jest.Mock).mockResolvedValueOnce(null);
+      paymentsService.createCheckoutSession.mockResolvedValueOnce(null);
 
       const authCookie = await getAuthCookieAfterRegister(app, "testuser");
       const productResponse = await createProductRequest(app, authCookie);
