@@ -1,15 +1,13 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { env } from "config/env";
-import { LoggerService } from "./logger.service";
+import { LoggerService } from "interfaces/logger.interface";
 import { FilesService } from "interfaces/files.interface";
 import { getMimeType } from "api/api.validations";
 
 export class AWSService implements FilesService {
-  private static instance: AWSService;
   private readonly s3Client: S3Client;
-  private readonly logger: LoggerService;
 
-  private constructor() {
+  constructor(private readonly logger: LoggerService) {
     this.s3Client = new S3Client({
       region: env.AWS_REGION,
       credentials: {
@@ -17,14 +15,6 @@ export class AWSService implements FilesService {
         secretAccessKey: env.AWS_SECRET_ACCESS_KEY
       }
     });
-    this.logger = LoggerService.getInstance();
-  }
-
-  public static getInstance(): AWSService {
-    if (!AWSService.instance) {
-      AWSService.instance = new AWSService();
-    }
-    return AWSService.instance;
   }
 
   public async uploadFile(

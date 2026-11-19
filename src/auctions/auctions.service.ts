@@ -1,20 +1,20 @@
 import { PaginatedRequestParams } from "api/api.validations";
-import { AuctionRepository } from "./auctions.repository";
+import { AuctionsRepository } from "./auctions.repository";
 import { Auction, auctionSchema, CreateAuctionPayload } from "./auctions.validation";
 import { BadRequestError, ForbiddenError, NotFoundError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { addHours, isPast } from "date-fns";
 
-export class AuctionService {
-  constructor(private readonly auctionRepository: AuctionRepository) {}
+export class AuctionsService {
+  constructor(private readonly auctionsRepository: AuctionsRepository) {}
 
   public async getAuctions(params: PaginatedRequestParams) {
-    const result = await this.auctionRepository.getAuctions(params);
+    const result = await this.auctionsRepository.getAuctions(params);
     return this.toAuctions(result);
   }
 
   public async getAuctionById(id: number) {
-    const result = await this.auctionRepository.findAuctionById(id);
+    const result = await this.auctionsRepository.findAuctionById(id);
     if (!result) {
       throw new NotFoundError(`Auction with id ${id} not found`);
     }
@@ -22,17 +22,17 @@ export class AuctionService {
   }
 
   public async createAuction(user: User, payload: CreateAuctionPayload) {
-    const result = await this.auctionRepository.createAuction(user, payload);
+    const result = await this.auctionsRepository.createAuction(user, payload);
     return this.toAuction(result);
   }
 
   public async cancelAuction(user: User, auctionId: number) {
-    const updatedAuction = await this.auctionRepository.cancelAuction(user, auctionId);
+    const updatedAuction = await this.auctionsRepository.cancelAuction(user, auctionId);
     if (updatedAuction) {
       return this.toAuction(updatedAuction);
     }
 
-    const foundAuction = await this.auctionRepository.findAuctionById(auctionId);
+    const foundAuction = await this.auctionsRepository.findAuctionById(auctionId);
     if (!foundAuction) {
       throw new NotFoundError("Auction not found");
     }

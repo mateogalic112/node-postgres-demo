@@ -1,21 +1,13 @@
 import { embed, EmbeddingModel, embedMany } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { LoggerService } from "./logger.service";
-import { EmbeddingService } from "interfaces/embeddings.interface";
+import { LoggerService } from "interfaces/logger.interface";
+import { EmbeddingsService } from "interfaces/embeddings.interface";
 
-export class OpenAIService implements EmbeddingService {
-  private static instance: OpenAIService;
+export class OpenAIService implements EmbeddingsService {
   private readonly embeddingModel: EmbeddingModel<string>;
 
-  private constructor() {
+  constructor(private readonly logger: LoggerService) {
     this.embeddingModel = openai.embedding("text-embedding-ada-002");
-  }
-
-  public static getInstance() {
-    if (!OpenAIService.instance) {
-      OpenAIService.instance = new OpenAIService();
-    }
-    return OpenAIService.instance;
   }
 
   public async generateEmbeddings(value: string) {
@@ -26,7 +18,7 @@ export class OpenAIService implements EmbeddingService {
       });
       return embeddings;
     } catch (error) {
-      LoggerService.getInstance().error(String(error));
+      this.logger.error(String(error));
       return [];
     }
   }
@@ -39,7 +31,7 @@ export class OpenAIService implements EmbeddingService {
         value: input
       });
     } catch (error) {
-      LoggerService.getInstance().error(String(error));
+      this.logger.error(String(error));
       return null;
     }
   }

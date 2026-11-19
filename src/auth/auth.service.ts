@@ -5,11 +5,11 @@ import { env } from "config/env";
 import { CookieOptions } from "express";
 import { User, userSchema } from "users/users.validation";
 import { BadRequestError, UnauthenticatedError } from "api/api.errors";
-import { UserService } from "users/users.service";
+import { UsersService } from "users/users.service";
 import { AUTH_COOKIE_NAME } from "./auth.constants";
 
 export class AuthService {
-  constructor(private readonly usersService: UserService) {}
+  constructor(private readonly usersService: UsersService) {}
 
   public async register(payload: RegisterPayload) {
     const foundUser = await this.usersService.findUserByEmail(payload.email);

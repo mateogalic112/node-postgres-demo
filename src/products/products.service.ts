@@ -1,28 +1,29 @@
-import { ProductRepository } from "./products.repository";
+import { ProductsRepository } from "./products.repository";
 import { CreateProductPayload, Product, productSchema } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { User } from "users/users.validation";
 import { FilesService } from "interfaces/files.interface";
 import { NotFoundError } from "api/api.errors";
-import { EmbeddingService } from "interfaces/embeddings.interface";
-import { LoggerService } from "services/logger.service";
+import { EmbeddingsService } from "interfaces/embeddings.interface";
+import { LoggerService } from "interfaces/logger.interface";
 
-export class ProductService {
+export class ProductsService {
   private readonly MAX_RELEVANT_PRODUCTS = 3;
 
   constructor(
-    private readonly productRepository: ProductRepository,
+    private readonly productsRepository: ProductsRepository,
     private readonly filesService: FilesService,
-    private readonly embeddingService: EmbeddingService
+    private readonly embeddingsService: EmbeddingsService,
+    private readonly logger: LoggerService
   ) {}
 
   public async getProducts(params: PaginatedRequestParams) {
-    const result = await this.productRepository.getProducts(params);
+    const result = await this.productsRepository.getProducts(params);
     return this.toProducts(result);
   }
 
   public async getProductById(id: number) {
-    const result = await this.productRepository.findProductById(id);
+    const result = await this.productsRepository.findProductById(id);
     if (!result) {
       throw new NotFoundError(`Product with id ${id} not found`);
     }
@@ -30,27 +31,27 @@ export class ProductService {
   }
 
   public async getProductsByIds(ids: number[]) {
-    const result = await this.productRepository.findProductsByIds(ids);
+    const result = await this.productsRepository.findProductsByIds(ids);
     return this.toProducts(result);
   }
 
   public async findRelevantProducts(query: string) {
-    const embeddedQuery = await this.embeddingService.generateEmbedding(query);
+    const embeddedQuery = await this.embeddingsService.generateEmbedding(query);
     if (!embeddedQuery || !embeddedQuery.embedding) {
       return [];
     }
-    const relevantProducts = await this.productRepository.findRelevantProducts(
+    const relevantProducts = await this.productsRepository.findRelevantProducts(
       embeddedQuery.embedding,
       this.MAX_RELEVANT_PRODUCTS
     );
-    const result = await this.productRepository.findProductsByIds(
+    const result = await this.productsRepository.findProductsByIds(
       relevantProducts.map((product) => product.product_id)
     );
     return this.toProducts(result);
   }
 
   public async createProduct(user: User, payload: CreateProductPayload) {
-    const result = await this.productRepository.createProduct(user, {
+    const result = await this.productsRepository.createProduct(user, {
       ...payload.body,
       imageUrl: await this.getProductImageUrl(payload.file)
     });
@@ -59,10 +60,10 @@ export class ProductService {
 
   public async createProductEmbedding(product: Product) {
     try {
-      const embedding = await this.embeddingService.generateEmbeddings(product.description);
-      await this.productRepository.attachEmbedding(product.id, embedding);
+      const embedding = await this.embeddingsService.generateEmbeddings(product.description);
+      await this.productsRepository.attachEmbedding(product.id, embedding);
     } catch (error) {
-      LoggerService.getInstance().error(String(error));
+      this.logger.error(String(error));
     }
   }
 

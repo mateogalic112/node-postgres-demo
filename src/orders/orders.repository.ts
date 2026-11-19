@@ -4,7 +4,7 @@ import { DatabaseService } from "interfaces/database.interface";
 import { NotFoundError } from "api/api.errors";
 import { PaymentLineItem } from "interfaces/payments.interface";
 
-export class OrderRepository {
+export class OrdersRepository {
   constructor(private readonly DB: DatabaseService) {}
 
   public async createOrderWithOrderDetails(user: User, payload: CreateOrderPayload) {

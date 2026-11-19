@@ -3,10 +3,13 @@ import { CreateProductPayload, Product, ProductEmbedding } from "./products.vali
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
 import { User } from "users/users.validation";
-import { LoggerService } from "services/logger.service";
+import { LoggerService } from "interfaces/logger.interface";
 
-export class ProductRepository {
-  constructor(private readonly DB: DatabaseService) {}
+export class ProductsRepository {
+  constructor(
+    private readonly DB: DatabaseService,
+    private readonly logger: LoggerService
+  ) {}
 
   public async getProducts(params: PaginatedRequestParams) {
     const result = await this.DB.query<Product>(
@@ -58,8 +61,6 @@ export class ProductRepository {
       [productId, ...embeddings.map((embedding) => `[${embedding.join(",")}]`)]
     );
 
-    LoggerService.getInstance().log(
-      `Created ${embeddings.length} embeddings for product ${productId}`
-    );
+    this.logger.log(`Created ${embeddings.length} embeddings for product ${productId}`);
   }
 }

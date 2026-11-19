@@ -6,6 +6,7 @@ import { faker } from "@faker-js/faker";
 import { dbConnectionConfig } from "./connection";
 import { CreateRolePayload, RoleName } from "roles/roles.validation";
 import { OpenAIService } from "services/openai";
+import { WinstonService } from "services/winston.service";
 
 const roles: Array<CreateRolePayload["body"]> = [
   {
@@ -96,13 +97,13 @@ const products: Array<CreateProductPayload["body"] & { image_url: string | null 
 
 export async function seedDatabase() {
   const client = new Client(dbConnectionConfig);
+  const embeddingsService = new OpenAIService(WinstonService.getInstance());
 
   try {
     await client.connect();
 
     await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
-    // Insert roles
     for (const { name, description } of roles) {
       await client.query(`INSERT INTO roles (name, description) VALUES ($1, $2)`, [
         name,
@@ -114,7 +115,6 @@ export async function seedDatabase() {
       RoleName.USER
     ]);
 
-    // Insert users
     for (const { username, email, password } of users) {
       const hashedPassword = await bcrypt.hash(password, 10);
       await client.query(
@@ -125,13 +125,12 @@ export async function seedDatabase() {
 
     const user = await client.query("SELECT id FROM users WHERE email = $1", [users[0].email]);
 
-    // Insert products
     for (const { name, description, image_url, price_in_cents } of products) {
       const result = await client.query(
         `INSERT INTO products (name, description, image_url, owner_id, price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
         [name, description, image_url, user.rows[0].id, price_in_cents]
       );
-      const embeddings = await OpenAIService.getInstance().generateEmbeddings(description);
+      const embeddings = await embeddingsService.generateEmbeddings(description);
       await client.query(
         `INSERT INTO products_embeddings (product_id, embedding) VALUES ${embeddings.map((_, index) => `($1, $${index + 2}::vector)`).join(", ")}`,
         [result.rows[0].id, ...embeddings.map((embedding) => `[${embedding.join(",")}]`)]
@@ -147,7 +146,6 @@ export async function seedDatabase() {
   }
 }
 
-// Execute the seeding function
 seedDatabase()
   .then(() => {
     process.exit(0);

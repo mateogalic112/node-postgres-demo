@@ -9,7 +9,7 @@ import { Server } from "http";
 import { io as clientIo, Socket as ClientSocket } from "socket.io-client";
 import { AuctionBid, CreateBidPayload } from "./bids.validation";
 
-describe("BidSocketController", () => {
+describe("BidsSocketController", () => {
   let app: App;
   let server: Server;
   let address: string;

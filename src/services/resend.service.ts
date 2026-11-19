@@ -1,23 +1,13 @@
 import { env } from "config/env";
 import { Resend } from "resend";
 import { MailService, MailTemplate } from "interfaces/mail.interface";
-import { LoggerService } from "./logger.service";
+import { LoggerService } from "interfaces/logger.interface";
 
 export class ResendService implements MailService {
-  private static instance: ResendService;
-  private readonly logger: LoggerService;
   private resend: Resend;
 
-  private constructor() {
+  constructor(private readonly logger: LoggerService) {
     this.resend = new Resend(env.RESEND_API_KEY);
-    this.logger = LoggerService.getInstance();
-  }
-
-  public static getInstance() {
-    if (!ResendService.instance) {
-      ResendService.instance = new ResendService();
-    }
-    return ResendService.instance;
   }
 
   public async sendEmail({

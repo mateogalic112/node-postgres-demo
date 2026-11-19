@@ -4,7 +4,7 @@ import { Auction } from "auctions/auctions.validation";
 import { NotFoundError } from "api/api.errors";
 import { PoolClient } from "pg";
 
-export class BidRepository {
+export class BidsRepository {
   constructor(private readonly DB: DatabaseService) {}
 
   public async createBid(

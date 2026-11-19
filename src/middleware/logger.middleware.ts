@@ -1,34 +1,41 @@
 import type { RequestHandler } from "express";
-import { LoggerService } from "services/logger.service";
+import { LoggerService } from "interfaces/logger.interface";
 
-export const loggerMiddleware: RequestHandler = (request, response, next) => {
-  if (process.env.NODE_ENV === "test") return next();
+const REDACTED_FIELDS = ["password", "token", "secret", "authorization"];
 
-  const start = process.hrtime();
-  const logger = LoggerService.getInstance();
-
-  logger.log(
-    `[START] ${request.method} ${request.url}: ${JSON.stringify(logger.redactBody(request.body))}`
+const redactBody = (body: unknown): unknown => {
+  if (!body || typeof body !== "object") return body;
+  return Object.fromEntries(
+    Object.entries(body).map(([key, value]) => [
+      key,
+      REDACTED_FIELDS.includes(key.toLowerCase()) ? "[REDACTED]" : value
+    ])
   );
-
-  const finishHandler = () => {
-    const [seconds, nanoseconds] = process.hrtime(start);
-    const duration = seconds * 1000 + nanoseconds / 1000000;
-
-    logger.log(
-      `[FINISH] ${request.method} ${request.url}: ${response.statusCode} ${duration.toFixed(2)}ms`
-    );
-  };
-
-  // Add event listeners
-  response.on("finish", finishHandler);
-
-  // Clean up event listeners when the response is done
-  response.on("close", () => {
-    response.removeListener("finish", finishHandler);
-  });
-
-  next();
 };
 
-export default loggerMiddleware;
+export const createLoggerMiddleware =
+  (logger: LoggerService): RequestHandler =>
+  (request, response, next) => {
+    const start = process.hrtime();
+
+    logger.log(
+      `[START] ${request.method} ${request.url}: ${JSON.stringify(redactBody(request.body))}`
+    );
+
+    const finishHandler = () => {
+      const [seconds, nanoseconds] = process.hrtime(start);
+      const duration = seconds * 1000 + nanoseconds / 1000000;
+
+      logger.log(
+        `[FINISH] ${request.method} ${request.url}: ${response.statusCode} ${duration.toFixed(2)}ms`
+      );
+    };
+
+    response.on("finish", finishHandler);
+
+    response.on("close", () => {
+      response.removeListener("finish", finishHandler);
+    });
+
+    next();
+  };

@@ -4,10 +4,9 @@ import App from "app";
 import { createApp } from "app.factory";
 import { Auction } from "auctions/auctions.validation";
 import { RoleName } from "roles/roles.validation";
-import { LoggerService } from "services/logger.service";
 import { PostgresService } from "services/postgres.service";
 import request from "supertest";
-import { embeddingService, filesService, mailService, paymentsService } from "./mocks";
+import { embeddingsService, filesService, logger, mailService, paymentsService } from "./mocks";
 
 export const db = PostgresService.getInstance();
 
@@ -21,10 +20,10 @@ export const createTestApp = () =>
   createApp({
     db,
     files: filesService,
-    embeddings: embeddingService,
+    embeddings: embeddingsService,
     mail: mailService,
     payments: paymentsService,
-    logger: LoggerService.getInstance()
+    logger
   });
 
 export const registerUserRequest = async (app: App, username: string) => {

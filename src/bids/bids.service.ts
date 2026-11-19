@@ -1,18 +1,19 @@
-import { BidRepository } from "./bids.repository";
+import { BidsRepository } from "./bids.repository";
 import { AuctionBid, auctionBidSchema, Bid, bidSchema, CreateBidPayload } from "./bids.validation";
 import { User } from "users/users.validation";
 import { BadRequestError, InternalServerError } from "api/api.errors";
 import { DatabaseService } from "interfaces/database.interface";
 import { PgError } from "database/errors";
 import { Currency } from "utils/currency";
-import { LoggerService } from "services/logger.service";
+import { LoggerService } from "interfaces/logger.interface";
 
-export class BidService {
+export class BidsService {
   private readonly MINIMUM_BID_INCREASE_PERCENTAGE = 10;
 
   constructor(
-    private readonly bidRepository: BidRepository,
-    private readonly DB: DatabaseService
+    private readonly bidsRepository: BidsRepository,
+    private readonly DB: DatabaseService,
+    private readonly logger: LoggerService
   ) {}
 
   public async createBid(user: User, payload: CreateBidPayload) {
@@ -34,12 +35,12 @@ export class BidService {
         // @dev SERIALIZABLE isolation for maximum consistency (required for real money)
         await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
-        const auction = await this.bidRepository.getBiddingAuction(
+        const auction = await this.bidsRepository.getBiddingAuction(
           client,
           payload.auction_id,
           user.id
         );
-        const highestBidInCents = await this.bidRepository.getHighestBidAmountForAuction(
+        const highestBidInCents = await this.bidsRepository.getHighestBidAmountForAuction(
           client,
           auction.id
         );
@@ -49,7 +50,12 @@ export class BidService {
           highestBidInCents
         });
 
-        const result = await this.bidRepository.createBid(client, user.id, payload, idempotencyKey);
+        const result = await this.bidsRepository.createBid(
+          client,
+          user.id,
+          payload,
+          idempotencyKey
+        );
 
         await client.query("COMMIT");
 
@@ -62,7 +68,7 @@ export class BidService {
 
         if (shouldRetryError && attempt < MAX_RETRIES - 1) {
           const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
-          LoggerService.getInstance().log(
+          this.logger.log(
             `[MONEY_BID_RETRY] Serialization failure, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}) [Key: ${idempotencyKey}]`
           );
           await new Promise((resolve) => setTimeout(resolve, delay));
@@ -101,12 +107,12 @@ export class BidService {
   }
 
   public async getAuctionBid(bidId: number) {
-    const result = await this.bidRepository.getAuctionBid(bidId);
+    const result = await this.bidsRepository.getAuctionBid(bidId);
     return this.toAuctionBid(result);
   }
 
   public async getAuctionBids(auctionId: number) {
-    const result = await this.bidRepository.getAuctionBids(auctionId);
+    const result = await this.bidsRepository.getAuctionBids(auctionId);
     return this.toAuctionBids(result);
   }
 

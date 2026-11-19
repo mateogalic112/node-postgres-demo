@@ -2,21 +2,13 @@ import { env } from "config/env";
 import Stripe from "stripe";
 import { PaymentLineItem, PaymentsService } from "interfaces/payments.interface";
 import { User } from "users/users.validation";
-import { LoggerService } from "./logger.service";
+import { LoggerService } from "interfaces/logger.interface";
 
 export class StripeService implements PaymentsService {
-  private static instance: StripeService;
   private readonly stripe: Stripe;
 
-  private constructor() {
+  constructor(private readonly logger: LoggerService) {
     this.stripe = new Stripe(env.STRIPE_SECRET_KEY);
-  }
-
-  public static getInstance(): StripeService {
-    if (!StripeService.instance) {
-      StripeService.instance = new StripeService();
-    }
-    return StripeService.instance;
   }
 
   public async createCustomer(user: User) {
@@ -28,7 +20,7 @@ export class StripeService implements PaymentsService {
         }
       });
     } catch (err) {
-      LoggerService.getInstance().error(String(err));
+      this.logger.error(String(err));
       return null;
     }
   }
@@ -64,7 +56,7 @@ export class StripeService implements PaymentsService {
         cancel_url: `${env.FRONTEND_URL}/orders/canceled?canceled=true`
       });
     } catch (err) {
-      LoggerService.getInstance().error(String(err));
+      this.logger.error(String(err));
       return null;
     }
   }

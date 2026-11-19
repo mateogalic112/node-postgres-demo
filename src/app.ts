@@ -1,10 +1,11 @@
 import express from "express";
 import cors from "cors";
 import { env } from "config/env";
-import errorMiddleware from "middleware/error.middleware";
+import { createErrorMiddleware } from "middleware/error.middleware";
 import { SocketController, type HttpController } from "api/api.controllers";
 import cookieParser from "cookie-parser";
-import loggerMiddleware from "middleware/logger.middleware";
+import { createLoggerMiddleware } from "middleware/logger.middleware";
+import { LoggerService } from "interfaces/logger.interface";
 import { Server as SocketServer } from "socket.io";
 import { createServer, Server } from "http";
 
@@ -13,7 +14,11 @@ class App {
   private server: Server;
   private io: SocketServer;
 
-  constructor(httpControllers: HttpController[], socketControllers: SocketController[]) {
+  constructor(
+    httpControllers: HttpController[],
+    socketControllers: SocketController[],
+    private readonly logger: LoggerService
+  ) {
     this.app = express();
     this.server = createServer(this.app);
     this.io = new SocketServer(this.server, {
@@ -28,7 +33,7 @@ class App {
     this.initializeControllers(httpControllers);
     this.initializeSocketHandlers(socketControllers);
 
-    this.app.use(errorMiddleware);
+    this.app.use(createErrorMiddleware(this.logger));
   }
 
   private initializeHealthCheck() {
@@ -38,15 +43,14 @@ class App {
   }
 
   private initializeMiddlewares() {
-    // Apply raw body parsing for Stripe webhook endpoint before JSON parsing
+    // Stripe verifies webhook signatures against the raw body, so it must be parsed before JSON.
     this.app.use("/api/v1/payments/orders", express.raw({ type: "application/json" }));
 
-    // Apply JSON parsing to all other routes
     this.app.use(express.json());
 
     this.app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
     this.app.use(cookieParser());
-    this.app.use(loggerMiddleware);
+    this.app.use(createLoggerMiddleware(this.logger));
   }
 
   private initializeControllers(controllers: HttpController[]) {

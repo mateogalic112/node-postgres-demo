@@ -1,5 +1,6 @@
-import { EmbeddingService } from "interfaces/embeddings.interface";
+import { EmbeddingsService } from "interfaces/embeddings.interface";
 import { FilesService } from "interfaces/files.interface";
+import { LoggerService } from "interfaces/logger.interface";
 import { MailService } from "interfaces/mail.interface";
 import { PaymentsService } from "interfaces/payments.interface";
 
@@ -13,7 +14,7 @@ export const filesService: FilesService = {
 
 const mockEmbedding = Array.from({ length: 1536 }, (_) => Math.random());
 
-export const embeddingService: EmbeddingService = {
+export const embeddingsService: EmbeddingsService = {
   generateEmbeddings: jest.fn().mockResolvedValue([mockEmbedding]),
   generateEmbedding: jest
     .fn()
@@ -24,4 +25,9 @@ export const paymentsService: PaymentsService = {
   createCustomer: jest.fn().mockResolvedValue({ id: "cus_test123" }),
   createCheckoutSession: jest.fn().mockResolvedValue({ url: "https://checkout.stripe.com/test" }),
   constructEvent: jest.fn()
+};
+
+export const logger: LoggerService = {
+  log: jest.fn(),
+  error: jest.fn()
 };

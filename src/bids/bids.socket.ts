@@ -1,17 +1,17 @@
 import { Socket } from "socket.io";
 import { createBidSchema } from "./bids.validation";
 import { SocketController } from "api/api.controllers";
-import { BidService } from "./bids.service";
+import { BidsService } from "./bids.service";
 import { AuthService } from "auth/auth.service";
 import { formatResponse } from "api/api.formats";
-import { AuctionService } from "auctions/auctions.service";
+import { AuctionsService } from "auctions/auctions.service";
 import { getErrorMessage } from "api/api.errors";
 
-export class BidSocketController extends SocketController {
+export class BidsSocketController extends SocketController {
   constructor(
-    private readonly bidService: BidService,
+    private readonly bidsService: BidsService,
     private readonly authService: AuthService,
-    private readonly auctionService: AuctionService
+    private readonly auctionsService: AuctionsService
   ) {
     super("bids");
   }
@@ -26,13 +26,13 @@ export class BidSocketController extends SocketController {
         const user = await this.authService.extractUserFromCookie(socket.handshake.headers.cookie);
 
         const payload = createBidSchema.parse(rawPayload);
-        const newBid = await this.bidService.createBid(user, payload);
+        const newBid = await this.bidsService.createBid(user, payload);
 
-        const auctionBid = await this.bidService.getAuctionBid(newBid.id);
+        const auctionBid = await this.bidsService.getAuctionBid(newBid.id);
 
         //@dev sends event to everyone EXCEPT sender
         socket
-          .to(this.auctionService.getAuctionRoomName("auctions", newBid.auction_id))
+          .to(this.auctionsService.getAuctionRoomName("auctions", newBid.auction_id))
           .emit(`${this.namespace}:bid_created`, formatResponse(auctionBid));
 
         //@dev sends event ONLY to sender

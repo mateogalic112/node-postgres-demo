@@ -1,19 +1,17 @@
 import { getErrorMessage, getErrorStatus } from "api/api.errors";
 import type { ErrorRequestHandler } from "express";
-import { LoggerService } from "services/logger.service";
+import { LoggerService } from "interfaces/logger.interface";
 
-export const errorMiddleware: ErrorRequestHandler = (error, _request, response, _next) => {
-  const status = getErrorStatus(error);
-  const message = getErrorMessage(error);
+export const createErrorMiddleware =
+  (logger: LoggerService): ErrorRequestHandler =>
+  (error, _request, response, _next) => {
+    const status = getErrorStatus(error);
+    const message = getErrorMessage(error);
 
-  LoggerService.getInstance().error(
-    `[ERROR] ${error.name} ${status}: ${error.message} ${error.stack}`
-  );
+    logger.error(`[ERROR] ${error.name} ${status}: ${error.message} ${error.stack}`);
 
-  response.status(status).json({
-    status,
-    message
-  });
-};
-
-export default errorMiddleware;
+    response.status(status).json({
+      status,
+      message
+    });
+  };

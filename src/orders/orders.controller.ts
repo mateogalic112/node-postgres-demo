@@ -2,19 +2,19 @@ import { HttpController } from "api/api.controllers";
 import { AuthService } from "auth/auth.service";
 import asyncMiddleware from "middleware/async.middleware";
 import authMiddleware from "middleware/auth.middleware";
-import { OrderService } from "./orders.service";
+import { OrdersService } from "./orders.service";
 import { userSchema } from "users/users.validation";
 import { createOrderSchema } from "./orders.validation";
 import { formatResponse } from "api/api.formats";
 import { PaymentsService } from "interfaces/payments.interface";
 import { InternalServerError } from "api/api.errors";
-import { UserService } from "users/users.service";
+import { UsersService } from "users/users.service";
 
-export class OrderHttpController extends HttpController {
+export class OrdersHttpController extends HttpController {
   constructor(
     private readonly authService: AuthService,
-    private readonly usersService: UserService,
-    private readonly orderService: OrderService,
+    private readonly usersService: UsersService,
+    private readonly ordersService: OrdersService,
     private readonly paymentsService: PaymentsService
   ) {
     super("/orders");
@@ -28,8 +28,8 @@ export class OrderHttpController extends HttpController {
   private createOrder = asyncMiddleware(async (request, response) => {
     const user = userSchema.parse(response.locals.user);
     const payload = createOrderSchema.parse(request.body);
-    const order = await this.orderService.createOrderWithOrderDetails(user, payload);
-    const lineItems = await this.orderService.getPaymentLineItems(order.id);
+    const order = await this.ordersService.createOrderWithOrderDetails(user, payload);
+    const lineItems = await this.ordersService.getPaymentLineItems(order.id);
     const customer = await this.usersService.findOrCreateCustomer(response.locals.user);
     const checkoutSession = await this.paymentsService.createCheckoutSession(
       order.id,

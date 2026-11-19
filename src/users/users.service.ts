@@ -7,7 +7,7 @@ import { RoleName } from "roles/roles.validation";
 import { InternalServerError } from "api/api.errors";
 import { PaymentsService } from "interfaces/payments.interface";
 
-export class UserService {
+export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly rolesRepository: RolesRepository,

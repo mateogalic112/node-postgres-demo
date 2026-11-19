@@ -4,7 +4,7 @@ import * as bcrypt from "bcrypt";
 import { BadRequestError, UnauthenticatedError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { DatabaseService } from "interfaces/database.interface";
-import { UserService } from "users/users.service";
+import { UsersService } from "users/users.service";
 import { RolesRepository } from "roles/roles.repository";
 import { RoleName } from "roles/roles.validation";
 import { paymentsService } from "__tests__/mocks";
@@ -49,7 +49,7 @@ describe("AuthService", () => {
     });
 
     authService = new AuthService(
-      new UserService(mockUsersRepository, mockRolesRepository, paymentsService)
+      new UsersService(mockUsersRepository, mockRolesRepository, paymentsService)
     );
   });
 

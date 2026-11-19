@@ -5,7 +5,7 @@ import { User } from "users/users.validation";
 import { PgError } from "database/errors";
 import { BadRequestError } from "api/api.errors";
 
-export class AuctionRepository {
+export class AuctionsRepository {
   constructor(private readonly DB: DatabaseService) {}
 
   public async getAuctions(params: PaginatedRequestParams) {

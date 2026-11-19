@@ -1,11 +1,11 @@
 import { Socket } from "socket.io";
 import { SocketController } from "api/api.controllers";
 import { auctionRoomSchema } from "./auctions.validation";
-import { AuctionService } from "./auctions.service";
+import { AuctionsService } from "./auctions.service";
 import { getErrorMessage } from "api/api.errors";
 
-export class AuctionSocketController extends SocketController {
-  constructor(private readonly auctionService: AuctionService) {
+export class AuctionsSocketController extends SocketController {
+  constructor(private readonly auctionsService: AuctionsService) {
     super("auctions");
   }
 
@@ -18,7 +18,7 @@ export class AuctionSocketController extends SocketController {
     return async (payload: unknown) => {
       try {
         const { auction_id } = auctionRoomSchema.parse(payload);
-        await socket.join(this.auctionService.getAuctionRoomName(this.namespace, auction_id));
+        await socket.join(this.auctionsService.getAuctionRoomName(this.namespace, auction_id));
         socket.emit(`${this.namespace}:auction_joined`, { auction_id });
       } catch (error) {
         socket.emit(`${this.namespace}:join_auction_failed`, { message: getErrorMessage(error) });
@@ -30,7 +30,7 @@ export class AuctionSocketController extends SocketController {
     return async (payload: unknown) => {
       try {
         const { auction_id } = auctionRoomSchema.parse(payload);
-        const auctionRoom = this.auctionService.getAuctionRoomName(this.namespace, auction_id);
+        const auctionRoom = this.auctionsService.getAuctionRoomName(this.namespace, auction_id);
         await socket.leave(auctionRoom);
         socket.emit(`${this.namespace}:auction_left`, { auction_id });
       } catch (error) {

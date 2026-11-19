@@ -1,11 +1,11 @@
 import { HttpController } from "api/api.controllers";
-import { BidService } from "./bids.service";
+import { BidsService } from "./bids.service";
 import asyncMiddleware from "middleware/async.middleware";
 import { idSchema } from "api/api.validations";
 import { formatResponse } from "api/api.formats";
 
-export class BidHttpController extends HttpController {
-  constructor(private readonly bidService: BidService) {
+export class BidsHttpController extends HttpController {
+  constructor(private readonly bidsService: BidsService) {
     super("/bids");
     this.initializeRoutes();
   }
@@ -16,7 +16,7 @@ export class BidHttpController extends HttpController {
 
   private getAuctionBids = asyncMiddleware(async (request, response) => {
     const { id: auctionId } = idSchema.parse(request.params);
-    const auctionBids = await this.bidService.getAuctionBids(auctionId);
+    const auctionBids = await this.bidsService.getAuctionBids(auctionId);
     response.json(formatResponse(auctionBids));
   });
 }

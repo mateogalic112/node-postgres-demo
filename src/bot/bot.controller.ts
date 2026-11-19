@@ -2,14 +2,14 @@ import { openai } from "@ai-sdk/openai";
 import { stepCountIs, streamText, tool, convertToModelMessages, UIMessage } from "ai";
 import { HttpController } from "api/api.controllers";
 import asyncMiddleware from "middleware/async.middleware";
-import { ProductService } from "products/products.service";
-import { LoggerService } from "services/logger.service";
+import { ProductsService } from "products/products.service";
+import { LoggerService } from "interfaces/logger.interface";
 import z from "zod";
 import { SYSTEM_PROMPT } from "./bot.prompts";
 
 export class BotHttpController extends HttpController {
   constructor(
-    private readonly productsService: ProductService,
+    private readonly productsService: ProductsService,
     private readonly logger: LoggerService
   ) {
     super("/chat");

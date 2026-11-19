@@ -1,5 +1,5 @@
 import { HttpController } from "api/api.controllers";
-import { ProductService } from "./products.service";
+import { ProductsService } from "./products.service";
 import {
   createProductSchema,
   getRelevantProductsSchema,
@@ -14,9 +14,9 @@ import { formatPaginatedResponse, formatResponse } from "api/api.formats";
 import { AuthService } from "auth/auth.service";
 import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
 
-export class ProductHttpController extends HttpController {
+export class ProductsHttpController extends HttpController {
   constructor(
-    private readonly productService: ProductService,
+    private readonly productsService: ProductsService,
     private readonly authService: AuthService,
     private readonly mailService: MailService
   ) {
@@ -41,28 +41,28 @@ export class ProductHttpController extends HttpController {
 
   private getProducts = asyncMiddleware(async (request, response) => {
     const { limit, cursor } = paginatedRequestSchema.parse(request.query);
-    const products = await this.productService.getProducts({ limit, cursor });
+    const products = await this.productsService.getProducts({ limit, cursor });
     response.json(formatPaginatedResponse(products, limit));
   });
 
   private getProductById = asyncMiddleware(async (request, response) => {
     const { id } = idSchema.parse(request.params);
-    const product = await this.productService.getProductById(id);
+    const product = await this.productsService.getProductById(id);
     response.json(formatResponse(product));
   });
 
   private findRelevantProducts = asyncMiddleware(async (request, response) => {
     const { query } = getRelevantProductsSchema.parse(request.query);
-    const products = await this.productService.findRelevantProducts(query);
+    const products = await this.productsService.findRelevantProducts(query);
     response.json(formatResponse(products));
   });
 
   private createProduct = asyncMiddleware(async (request, response) => {
     const user = userSchema.parse(response.locals.user);
     const payload = createProductSchema.parse(request);
-    const newProduct = await this.productService.createProduct(user, payload);
+    const newProduct = await this.productsService.createProduct(user, payload);
 
-    await this.productService.createProductEmbedding(newProduct);
+    await this.productsService.createProductEmbedding(newProduct);
     await this.mailService.sendEmail({
       to: user.email,
       template: CreateProductTemplate.getTemplate(newProduct)

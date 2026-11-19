@@ -6,14 +6,14 @@ import authMiddleware from "middleware/auth.middleware";
 import { authorizationMiddleware } from "middleware/authorization.middleware";
 import { RolesService } from "roles/roles.service";
 import { RoleName } from "roles/roles.validation";
-import { UserService } from "./users.service";
+import { UsersService } from "./users.service";
 import { formatPaginatedResponse } from "api/api.formats";
 
 export class UsersHttpController extends HttpController {
   constructor(
     private readonly authService: AuthService,
     private readonly rolesService: RolesService,
-    private readonly userService: UserService
+    private readonly usersService: UsersService
   ) {
     super("/users");
     this.initializeRoutes();
@@ -30,7 +30,7 @@ export class UsersHttpController extends HttpController {
 
   private getUsers = asyncMiddleware(async (request, response) => {
     const query = paginatedRequestSchema.parse(request.query);
-    const users = await this.userService.getUsers(query);
+    const users = await this.usersService.getUsers(query);
     response.json(formatPaginatedResponse(users, query.limit));
   });
 }

@@ -1,5 +1,6 @@
-import { BidService } from "./bids.service";
-import { BidRepository } from "./bids.repository";
+import { logger } from "__tests__/mocks";
+import { BidsService } from "./bids.service";
+import { BidsRepository } from "./bids.repository";
 import { BadRequestError } from "api/api.errors";
 import { DatabaseService } from "interfaces/database.interface";
 import { PoolClient } from "pg";
@@ -18,13 +19,13 @@ const createMockDB = (
   getClient: jest.fn().mockResolvedValue(client as unknown as PoolClient)
 });
 
-const createMockBidRepository = () =>
+const createMockBidsRepository = () =>
   ({
     getBiddingAuction: jest.fn(),
     getHighestBidAmountForAuction: jest.fn(),
     createBid: jest.fn(),
     getBidsByAuctionId: jest.fn()
-  }) as unknown as jest.Mocked<BidRepository>;
+  }) as unknown as jest.Mocked<BidsRepository>;
 
 const makePgError = (code: string) => {
   const error = new Error("pg error") as Error & { code: string };
@@ -46,9 +47,9 @@ const makeBidRow = (userId: number, overrides?: Partial<Bid>): Bid => {
   };
 };
 
-describe("BidService", () => {
-  let bidService: BidService;
-  let mockBidRepository: jest.Mocked<BidRepository>;
+describe("BidsService", () => {
+  let bidsService: BidsService;
+  let mockBidsRepository: jest.Mocked<BidsRepository>;
   let mockDB: jest.Mocked<DatabaseService>;
   let mockClient: ReturnType<typeof createMockClient>;
 
@@ -58,8 +59,8 @@ describe("BidService", () => {
     jest.useFakeTimers();
     mockClient = createMockClient();
     mockDB = createMockDB(mockClient);
-    mockBidRepository = createMockBidRepository();
-    bidService = new BidService(mockBidRepository, mockDB);
+    mockBidsRepository = createMockBidsRepository();
+    bidsService = new BidsService(mockBidsRepository, mockDB, logger);
   });
 
   afterEach(() => {
@@ -71,7 +72,7 @@ describe("BidService", () => {
 
     beforeEach(() => {
       const now = new Date();
-      mockBidRepository.getBiddingAuction.mockResolvedValue({
+      mockBidsRepository.getBiddingAuction.mockResolvedValue({
         id: 10,
         product_id: 1,
         creator_id: 99,
@@ -83,12 +84,12 @@ describe("BidService", () => {
         created_at: now,
         updated_at: now
       });
-      mockBidRepository.getHighestBidAmountForAuction.mockResolvedValue(0);
-      mockBidRepository.createBid.mockResolvedValue(makeBidRow(mockUser.id));
+      mockBidsRepository.getHighestBidAmountForAuction.mockResolvedValue(0);
+      mockBidsRepository.createBid.mockResolvedValue(makeBidRow(mockUser.id));
     });
 
     it("should create a bid and return the parsed result", async () => {
-      const result = await bidService.createBid(mockUser, payload);
+      const result = await bidsService.createBid(mockUser, payload);
 
       expect(result).toMatchObject({
         id: expect.any(Number),
@@ -99,9 +100,9 @@ describe("BidService", () => {
     });
 
     it("should ROLLBACK the transaction on error", async () => {
-      mockBidRepository.createBid.mockRejectedValue(new Error("insert failed"));
+      mockBidsRepository.createBid.mockRejectedValue(new Error("insert failed"));
 
-      await expect(bidService.createBid(mockUser, payload)).rejects.toThrow("insert failed");
+      await expect(bidsService.createBid(mockUser, payload)).rejects.toThrow("insert failed");
       expect(mockClient.query).toHaveBeenCalledWith("ROLLBACK");
     });
 
@@ -110,57 +111,57 @@ describe("BidService", () => {
         // starting_price_in_cents = 1000, 10% = 100, minimum = 1100
         const lowPayload = { auction_id: 10, amount_in_cents: 1099 };
 
-        await expect(bidService.createBid(mockUser, lowPayload)).rejects.toThrow(BadRequestError);
+        await expect(bidsService.createBid(mockUser, lowPayload)).rejects.toThrow(BadRequestError);
       });
 
       it("should accept bid at exactly the minimum threshold", async () => {
         // starting_price_in_cents = 1000, 10% = 100, minimum = 1100
         const exactPayload = { auction_id: 10, amount_in_cents: 1100 };
-        mockBidRepository.createBid.mockResolvedValue(
+        mockBidsRepository.createBid.mockResolvedValue(
           makeBidRow(mockUser.id, { amount_in_cents: 1100, idempotency_key: "bid_1_10_1100" })
         );
 
-        const result = await bidService.createBid(mockUser, exactPayload);
+        const result = await bidsService.createBid(mockUser, exactPayload);
 
         expect(result.amount_in_cents).toBe(1100);
       });
 
       it("should enforce minimum increase above the highest existing bid", async () => {
         // highest bid = 3000, starting price = 1000, 10% of starting = 100, minimum = 3100
-        mockBidRepository.getHighestBidAmountForAuction.mockResolvedValue(3000);
+        mockBidsRepository.getHighestBidAmountForAuction.mockResolvedValue(3000);
         const lowPayload = { auction_id: 10, amount_in_cents: 3099 };
 
-        await expect(bidService.createBid(mockUser, lowPayload)).rejects.toThrow(BadRequestError);
+        await expect(bidsService.createBid(mockUser, lowPayload)).rejects.toThrow(BadRequestError);
       });
 
       it("should accept bid above the highest existing bid + minimum increase", async () => {
-        mockBidRepository.getHighestBidAmountForAuction.mockResolvedValue(3000);
+        mockBidsRepository.getHighestBidAmountForAuction.mockResolvedValue(3000);
         const validPayload = { auction_id: 10, amount_in_cents: 3100 };
-        mockBidRepository.createBid.mockResolvedValue(
+        mockBidsRepository.createBid.mockResolvedValue(
           makeBidRow(mockUser.id, { amount_in_cents: 3100, idempotency_key: "bid_1_10_3100" })
         );
 
-        const result = await bidService.createBid(mockUser, validPayload);
+        const result = await bidsService.createBid(mockUser, validPayload);
 
         expect(result.amount_in_cents).toBe(3100);
       });
 
       it("should use starting price as the base when it exceeds highest bid", async () => {
         // highest bid = 500 (below starting price of 1000), minimum = 1000 + 100 = 1100
-        mockBidRepository.getHighestBidAmountForAuction.mockResolvedValue(500);
+        mockBidsRepository.getHighestBidAmountForAuction.mockResolvedValue(500);
         const lowPayload = { auction_id: 10, amount_in_cents: 1099 };
 
-        await expect(bidService.createBid(mockUser, lowPayload)).rejects.toThrow(BadRequestError);
+        await expect(bidsService.createBid(mockUser, lowPayload)).rejects.toThrow(BadRequestError);
       });
     });
 
     describe("retry logic", () => {
       it("should retry on serialization failure (40001)", async () => {
-        mockBidRepository.createBid
+        mockBidsRepository.createBid
           .mockRejectedValueOnce(makePgError("40001"))
           .mockResolvedValueOnce(makeBidRow(mockUser.id));
 
-        const promise = bidService.createBid(mockUser, payload);
+        const promise = bidsService.createBid(mockUser, payload);
         await jest.advanceTimersByTimeAsync(100); // first retry delay: 100ms
 
         const result = await promise;
@@ -170,11 +171,11 @@ describe("BidService", () => {
       });
 
       it("should retry on deadlock detected (40P01)", async () => {
-        mockBidRepository.createBid
+        mockBidsRepository.createBid
           .mockRejectedValueOnce(makePgError("40P01"))
           .mockResolvedValueOnce(makeBidRow(mockUser.id));
 
-        const promise = bidService.createBid(mockUser, payload);
+        const promise = bidsService.createBid(mockUser, payload);
         await jest.advanceTimersByTimeAsync(100);
 
         const result = await promise;
@@ -184,12 +185,12 @@ describe("BidService", () => {
       });
 
       it("should use exponential backoff for retries", async () => {
-        mockBidRepository.createBid
+        mockBidsRepository.createBid
           .mockRejectedValueOnce(makePgError("40001"))
           .mockRejectedValueOnce(makePgError("40001"))
           .mockResolvedValueOnce(makeBidRow(mockUser.id));
 
-        const promise = bidService.createBid(mockUser, payload);
+        const promise = bidsService.createBid(mockUser, payload);
         await jest.advanceTimersByTimeAsync(100); // 100 * 2^0 = 100ms
         await jest.advanceTimersByTimeAsync(200); // 100 * 2^1 = 200ms
 
@@ -200,27 +201,27 @@ describe("BidService", () => {
 
       it("should rethrow after exhausting all retries", async () => {
         jest.useRealTimers();
-        mockBidRepository.createBid.mockRejectedValue(makePgError("40001"));
+        mockBidsRepository.createBid.mockRejectedValue(makePgError("40001"));
 
-        await expect(bidService.createBid(mockUser, payload)).rejects.toThrow("pg error");
+        await expect(bidsService.createBid(mockUser, payload)).rejects.toThrow("pg error");
         expect(mockDB.getClient).toHaveBeenCalledTimes(5);
         jest.useFakeTimers();
       });
 
       it("should not retry on non-retryable errors", async () => {
         const error = new Error("some other error");
-        mockBidRepository.createBid.mockRejectedValue(error);
+        mockBidsRepository.createBid.mockRejectedValue(error);
 
-        await expect(bidService.createBid(mockUser, payload)).rejects.toThrow("some other error");
+        await expect(bidsService.createBid(mockUser, payload)).rejects.toThrow("some other error");
         expect(mockDB.getClient).toHaveBeenCalledTimes(1);
       });
 
       it("should ROLLBACK on each failed attempt before retrying", async () => {
-        mockBidRepository.createBid
+        mockBidsRepository.createBid
           .mockRejectedValueOnce(makePgError("40001"))
           .mockResolvedValueOnce(makeBidRow(mockUser.id));
 
-        const promise = bidService.createBid(mockUser, payload);
+        const promise = bidsService.createBid(mockUser, payload);
         await jest.advanceTimersByTimeAsync(100);
         await promise;
 
@@ -236,11 +237,11 @@ describe("BidService", () => {
         mockDB.getClient
           .mockResolvedValueOnce(client1 as unknown as PoolClient)
           .mockResolvedValueOnce(client2 as unknown as PoolClient);
-        mockBidRepository.createBid
+        mockBidsRepository.createBid
           .mockRejectedValueOnce(makePgError("40001"))
           .mockResolvedValueOnce(makeBidRow(mockUser.id));
 
-        const promise = bidService.createBid(mockUser, payload);
+        const promise = bidsService.createBid(mockUser, payload);
         await jest.advanceTimersByTimeAsync(100);
         await promise;
 
