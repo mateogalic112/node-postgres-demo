@@ -1,54 +1,21 @@
-import { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import { Client } from "pg";
-import { TEST_ADMIN_USER } from "./mocks";
+import { PostgresService } from "services/postgres.service";
 
-let client: Client;
+const TABLES_KEPT_BETWEEN_TESTS = ["_migrations", "roles"];
+
+const db = PostgresService.getInstance();
+let truncateAllSql: string;
 
 beforeAll(async () => {
-  const container = (globalThis as unknown as Record<string, unknown>)
-    .__POSTGRES_CONTAINER__ as StartedPostgreSqlContainer;
-
-  if (!container) {
-    throw new Error(
-      "PostgreSQL container not found. Make sure globalSetup is configured correctly."
-    );
-  }
-
-  client = new Client({ connectionString: container.getConnectionUri() });
-  await client.connect();
-
-  // Store shared state globally
-  (globalThis as Record<string, unknown>).__TEST_CLIENT__ = client;
+  const { rows } = await db.query<{ tablename: string }>(
+    `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> ALL($1)`,
+    [TABLES_KEPT_BETWEEN_TESTS]
+  );
+  const tables = rows.map(({ tablename }) => `"${tablename}"`).join(", ");
+  truncateAllSql = `TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE`;
 });
 
 beforeEach(async () => {
-  // Reset database to clean state before each test using a transaction for atomicity
-  try {
-    await client.query("BEGIN");
-    await client.query(`
-      TRUNCATE TABLE
-        bids,
-        auctions,
-        products,
-        orders,
-        order_details,
-        user_customers
-      RESTART IDENTITY CASCADE
-    `);
-    await client.query(`DELETE FROM users WHERE email != $1`, [TEST_ADMIN_USER.email]);
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw new Error(`Database reset failed - aborting test: ${error}`);
-  }
+  await db.query(truncateAllSql);
 });
 
-afterAll(async () => {
-  try {
-    await client.end();
-  } catch (error) {
-    console.warn("Error ending client:", error);
-  } finally {
-    delete (globalThis as Record<string, unknown>).__TEST_CLIENT__;
-  }
-});
+afterAll(() => db.close());

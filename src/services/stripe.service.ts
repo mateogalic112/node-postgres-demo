@@ -1,18 +1,22 @@
 import { env } from "config/env";
 import Stripe from "stripe";
-import { PaymentsService } from "interfaces/payments.interface";
-import { ProductRepository } from "products/products.repository";
-import { OrderWithOrderDetails } from "orders/orders.validation";
+import { PaymentLineItem, PaymentsService } from "interfaces/payments.interface";
 import { User } from "users/users.validation";
 import { LoggerService } from "./logger.service";
 
 export class StripeService implements PaymentsService {
+  private static instance: StripeService;
   private readonly stripe: Stripe;
-  private readonly productRepository: ProductRepository;
 
-  constructor(productRepository: ProductRepository) {
+  private constructor() {
     this.stripe = new Stripe(env.STRIPE_SECRET_KEY);
-    this.productRepository = productRepository;
+  }
+
+  public static getInstance(): StripeService {
+    if (!StripeService.instance) {
+      StripeService.instance = new StripeService();
+    }
+    return StripeService.instance;
   }
 
   public async createCustomer(user: User) {
@@ -29,33 +33,32 @@ export class StripeService implements PaymentsService {
     }
   }
 
-  public async createCheckoutSession(order: OrderWithOrderDetails, customerId: string) {
+  public async createCheckoutSession(
+    orderId: number,
+    lineItems: PaymentLineItem[],
+    customerId: string
+  ) {
     try {
-      const products = await this.productRepository.findProductsByIds(
-        order.order_details.map((item) => item.product_id)
-      );
-
       return await this.stripe.checkout.sessions.create({
         customer: customerId,
-        line_items: products.map((product) => ({
+        line_items: lineItems.map((item) => ({
           price_data: {
             currency: "eur",
             product_data: {
-              name: product.name,
-              description: product.description,
-              images: product.image_url ? [product.image_url] : undefined,
+              name: item.name,
+              description: item.description,
+              images: item.image_url ? [item.image_url] : undefined,
               metadata: {
-                product_id: product.id
+                product_id: item.product_id
               }
             },
-            unit_amount: product.price_in_cents
+            unit_amount: item.price_in_cents
           },
-          quantity:
-            order.order_details.find((item) => item.product_id === product.id)?.quantity ?? 1
+          quantity: item.quantity
         })),
         mode: "payment",
         metadata: {
-          order_id: order.id
+          order_id: orderId
         },
         success_url: `${env.FRONTEND_URL}/orders/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${env.FRONTEND_URL}/orders/canceled?canceled=true`

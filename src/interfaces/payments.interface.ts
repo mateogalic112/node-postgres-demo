@@ -1,4 +1,3 @@
-import { OrderWithOrderDetails } from "orders/orders.validation";
 import { User } from "users/users.validation";
 
 export interface PaymentLineItem {
@@ -12,9 +11,12 @@ export interface PaymentLineItem {
 
 export interface PaymentsService {
   createCheckoutSession: (
-    order: OrderWithOrderDetails,
+    orderId: number,
+    lineItems: PaymentLineItem[],
     customerId: string
   ) => Promise<{ id: string; url: string | null } | null>;
 
   createCustomer: (user: User) => Promise<{ id: string } | null>;
+
+  constructEvent: (payload: string | Buffer, signature: string) => { type: string };
 }

@@ -7,14 +7,11 @@ import { DatabaseService } from "interfaces/database.interface";
 import { UserService } from "users/users.service";
 import { RolesRepository } from "roles/roles.repository";
 import { RoleName } from "roles/roles.validation";
-import { StripeService } from "services/stripe.service";
-import { ProductRepository } from "products/products.repository";
+import { paymentsService } from "__tests__/mocks";
 
-// Mock the repositories
 jest.mock("users/users.repository");
 jest.mock("roles/roles.repository");
 
-// Mock the bcrypt module
 jest.mock("bcrypt", () => ({
   compare: jest.fn(),
   hash: jest.fn()
@@ -36,7 +33,6 @@ describe("AuthService", () => {
   };
 
   beforeEach(() => {
-    // Clear all mocks before each test
     jest.clearAllMocks();
 
     mockRolesRepository = new RolesRepository(
@@ -47,24 +43,20 @@ describe("AuthService", () => {
       {} as DatabaseService
     ) as jest.Mocked<UsersRepository>;
 
-    // Mock the findRoleByName method
     mockRolesRepository.findRoleByName = jest.fn().mockResolvedValue({
       id: 1,
       name: RoleName.USER
     });
 
-    const stripeService = new StripeService(new ProductRepository({} as DatabaseService));
     authService = new AuthService(
-      new UserService(mockUsersRepository, mockRolesRepository, stripeService)
+      new UserService(mockUsersRepository, mockRolesRepository, paymentsService)
     );
   });
 
   describe("user registration", () => {
     it("should successfully register a new user", async () => {
-      // Mock repository methods
       mockUsersRepository.findUserByEmail.mockResolvedValue(null);
       mockUsersRepository.createUser.mockResolvedValue(mockUser);
-      // Mock the bcrypt.hash method
       (bcrypt.hash as jest.Mock).mockResolvedValue(mockUser.password);
 
       const result = await authService.register({

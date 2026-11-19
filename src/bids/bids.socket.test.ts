@@ -1,34 +1,12 @@
-import App from "app";
-import { Server } from "http";
-import { io as clientIo, Socket as ClientSocket } from "socket.io-client";
-import { AuthHttpController } from "auth/auth.controller";
-import { AuthService } from "auth/auth.service";
-import { UsersRepository } from "users/users.repository";
-import { UserService } from "users/users.service";
-import { AuctionService } from "auctions/auctions.service";
-import { AuctionRepository } from "auctions/auctions.repository";
-import { AuctionHttpController } from "auctions/auctions.controller";
-import { AuctionSocketController } from "auctions/auctions.socket";
-import { BidSocketController } from "./bids.socket";
-import { BidService } from "./bids.service";
-import { BidRepository } from "./bids.repository";
-import { ProductHttpController } from "products/products.controller";
-import { ProductService } from "products/products.service";
-import { ProductRepository } from "products/products.repository";
-import { RolesRepository } from "roles/roles.repository";
-import { StripeService } from "services/stripe.service";
-import {
-  createMockDatabaseService,
-  embeddingService,
-  filesService,
-  mailService
-} from "__tests__/mocks";
 import {
   createActiveAuction,
   createProductRequest,
-  getTestClient,
+  createTestApp,
   registerUserRequest
 } from "__tests__/setup";
+import App from "app";
+import { Server } from "http";
+import { io as clientIo, Socket as ClientSocket } from "socket.io-client";
 import { AuctionBid, CreateBidPayload } from "./bids.validation";
 
 describe("BidSocketController", () => {
@@ -38,30 +16,7 @@ describe("BidSocketController", () => {
   const sockets: ClientSocket[] = [];
 
   beforeAll((done) => {
-    const DB = createMockDatabaseService(getTestClient());
-
-    const productService = new ProductService(
-      new ProductRepository(DB),
-      filesService,
-      embeddingService
-    );
-    const bidService = new BidService(new BidRepository(DB), DB);
-    const stripeService = new StripeService(new ProductRepository(DB));
-    const authService = new AuthService(
-      new UserService(new UsersRepository(DB), new RolesRepository(DB), stripeService)
-    );
-    const auctionService = new AuctionService(new AuctionRepository(DB));
-    app = new App(
-      [
-        new AuthHttpController(authService),
-        new AuctionHttpController(auctionService, authService, mailService),
-        new ProductHttpController(productService, authService, mailService)
-      ],
-      [
-        new AuctionSocketController(auctionService),
-        new BidSocketController(bidService, authService, auctionService)
-      ]
-    );
+    app = createTestApp();
 
     server = app.getServer();
     server.listen(0, () => {

@@ -1,30 +1,13 @@
-import App from "app";
-import request from "supertest";
-import { AuthHttpController } from "auth/auth.controller";
-import { AuthService } from "auth/auth.service";
-import { UsersRepository } from "users/users.repository";
-import { UserService } from "users/users.service";
-import { AuctionService } from "./auctions.service";
-import { AuctionRepository } from "./auctions.repository";
-import { AuctionHttpController } from "./auctions.controller";
-import { ProductHttpController } from "products/products.controller";
-import { ProductService } from "products/products.service";
-import { ProductRepository } from "products/products.repository";
-import {
-  createMockDatabaseService,
-  embeddingService,
-  filesService,
-  mailService
-} from "__tests__/mocks";
 import {
   createProductRequest,
+  createTestApp,
+  db,
   getAuthCookieAfterRegister,
-  getTestClient,
   registerUserRequest
 } from "__tests__/setup";
+import App from "app";
 import { addDays, subDays } from "date-fns";
-import { RolesRepository } from "roles/roles.repository";
-import { StripeService } from "services/stripe.service";
+import request from "supertest";
 import { CreateAuctionPayload } from "./auctions.validation";
 
 export const createMockedAuctionPayload = (productId: number): CreateAuctionPayload => ({
@@ -38,27 +21,7 @@ describe("AuctionsController", () => {
   let app: App;
 
   beforeAll(() => {
-    const DB = createMockDatabaseService(getTestClient());
-    const stripeService = new StripeService(new ProductRepository(DB));
-
-    const authService = new AuthService(
-      new UserService(new UsersRepository(DB), new RolesRepository(DB), stripeService)
-    );
-    const auctionService = new AuctionService(new AuctionRepository(DB));
-    const productService = new ProductService(
-      new ProductRepository(DB),
-      filesService,
-      embeddingService
-    );
-
-    app = new App(
-      [
-        new AuthHttpController(authService),
-        new AuctionHttpController(auctionService, authService, mailService),
-        new ProductHttpController(productService, authService, mailService)
-      ],
-      []
-    );
+    app = createTestApp();
   });
 
   describe("POST /api/v1/auctions", () => {
@@ -219,9 +182,7 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when auction has finished", async () => {
-      // Backdate the auction in the DB so it has already ended
-      const client = getTestClient();
-      await client.query(
+      await db.query(
         `UPDATE auctions
          SET start_time = NOW() - INTERVAL '5 days',
              created_at = NOW() - INTERVAL '10 days',

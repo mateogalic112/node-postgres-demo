@@ -34,4 +34,8 @@ export class PostgresService implements DatabaseService {
   public async getClient() {
     return this.pool.connect();
   }
+
+  public async close() {
+    await this.pool.end();
+  }
 }

@@ -5,6 +5,7 @@ export default {
   testMatch: ["**/*.test.ts"],
   globalSetup: "<rootDir>/src/__tests__/globalSetup.ts",
   globalTeardown: "<rootDir>/src/__tests__/globalTeardown.ts",
+  setupFiles: ["<rootDir>/src/__tests__/workerDatabase.ts"],
   setupFilesAfterEnv: ["<rootDir>/src/__tests__/jestSetup.ts"],
   modulePaths: ["<rootDir>/src"],
   collectCoverageFrom: [

@@ -1,38 +1,17 @@
-import { createMockDatabaseService, TEST_ADMIN_USER } from "__tests__/mocks";
+import {
+  createTestApp,
+  getAdminAuthCookie,
+  getAuthCookieAfterRegister,
+  registerUserRequest
+} from "__tests__/setup";
 import App from "app";
-import { UsersHttpController } from "./users.controller";
-import { AuthService } from "auth/auth.service";
-import { UserService } from "./users.service";
-import { UsersRepository } from "./users.repository";
-import { getAuthCookieAfterRegister, getTestClient, registerUserRequest } from "__tests__/setup";
-import { RolesService } from "roles/roles.service";
-import { RolesRepository } from "roles/roles.repository";
 import request from "supertest";
-import { AuthHttpController } from "auth/auth.controller";
-import { StripeService } from "services/stripe.service";
-import { ProductRepository } from "products/products.repository";
 
 describe("UsersController", () => {
   let app: App;
 
   beforeAll(() => {
-    const DB = createMockDatabaseService(getTestClient());
-    const stripeService = new StripeService(new ProductRepository(DB));
-    const usersService = new UserService(
-      new UsersRepository(DB),
-      new RolesRepository(DB),
-      stripeService
-    );
-    const authService = new AuthService(usersService);
-    const rolesService = new RolesService(new RolesRepository(DB));
-
-    app = new App(
-      [
-        new AuthHttpController(authService),
-        new UsersHttpController(authService, rolesService, usersService)
-      ],
-      []
-    );
+    app = createTestApp();
   });
 
   describe("GET /api/v1/users", () => {
@@ -54,12 +33,7 @@ describe("UsersController", () => {
         await registerUserRequest(app, `mocked-user-${i}`);
       }
 
-      const userResponse = await request(app.getServer()).post("/api/v1/auth/login").send({
-        email: TEST_ADMIN_USER.email,
-        password: TEST_ADMIN_USER.password
-      });
-
-      const authCookie = userResponse.headers["set-cookie"][0];
+      const authCookie = await getAdminAuthCookie(app);
 
       const response = await request(app.getServer())
         .get("/api/v1/users")
@@ -68,8 +42,7 @@ describe("UsersController", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.length).toBe(10);
-      // The nextCursor should be the ID of the 10th user in the response
-      const expectedNextCursorId = response.body.data[9].id; // 0-indexed, so 9th element is 10th user
+      const expectedNextCursorId = response.body.data[9].id;
       expect(response.body.nextCursor).toMatchObject({ id: expectedNextCursorId });
     });
 
@@ -78,12 +51,7 @@ describe("UsersController", () => {
         await registerUserRequest(app, `mocked-user-${i}`);
       }
 
-      const userResponse = await request(app.getServer()).post("/api/v1/auth/login").send({
-        email: TEST_ADMIN_USER.email,
-        password: TEST_ADMIN_USER.password
-      });
-
-      const authCookie = userResponse.headers["set-cookie"][0];
+      const authCookie = await getAdminAuthCookie(app);
 
       const response = await request(app.getServer())
         .get("/api/v1/users")
@@ -91,7 +59,7 @@ describe("UsersController", () => {
         .set("Cookie", authCookie);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.length).toBe(9); // 8 users + 1 admin user
+      expect(response.body.data.length).toBe(9); // 8 users + the admin
       expect(response.body.nextCursor).toBeNull();
     });
   });

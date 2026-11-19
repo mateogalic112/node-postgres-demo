@@ -16,6 +16,10 @@ export class OrderService {
     return this.toOrderWithOrderDetails(result);
   }
 
+  async getPaymentLineItems(orderId: number) {
+    return this.orderRepository.findPaymentLineItems(orderId);
+  }
+
   async confirmOrder(orderId: number) {
     const result = await this.orderRepository.confirmOrder(orderId);
     return this.toOrder(result);

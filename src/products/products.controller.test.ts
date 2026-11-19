@@ -1,55 +1,19 @@
-import { faker } from "@faker-js/faker/.";
-import {
-  createMockDatabaseService,
-  embeddingService,
-  filesService,
-  mailService
-} from "__tests__/mocks";
-import { getTestClient, registerUserRequest, seedProducts } from "__tests__/setup";
+import { faker } from "@faker-js/faker";
+import { createTestApp, registerUserRequest, seedProducts } from "__tests__/setup";
 import App from "app";
-import { AuthHttpController } from "auth/auth.controller";
-import { AuthService } from "auth/auth.service";
-import { RolesRepository } from "roles/roles.repository";
-import { StripeService } from "services/stripe.service";
 import request from "supertest";
-import { UsersRepository } from "users/users.repository";
-import { UserService } from "users/users.service";
-import { ProductHttpController } from "./products.controller";
-import { ProductRepository } from "./products.repository";
-import { ProductService } from "./products.service";
 
 describe("ProductsController", () => {
   let app: App;
 
   beforeAll(() => {
-    const DB = createMockDatabaseService(getTestClient());
-
-    const stripeService = new StripeService(new ProductRepository(DB));
-    const usersService = new UserService(
-      new UsersRepository(DB),
-      new RolesRepository(DB),
-      stripeService
-    );
-    const authService = new AuthService(usersService);
-
-    const productService = new ProductService(
-      new ProductRepository(DB),
-      filesService,
-      embeddingService
-    );
-
-    app = new App(
-      [
-        new AuthHttpController(authService),
-        new ProductHttpController(productService, authService, mailService)
-      ],
-      []
-    );
+    app = createTestApp();
   });
 
   describe("GET /api/v1/products", () => {
     it("should return paginated products WITH next cursor", async () => {
-      await seedProducts(21);
+      const owner = await registerUserRequest(app, "owner");
+      await seedProducts(21, owner.body.data.id);
 
       const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
 
@@ -59,7 +23,8 @@ describe("ProductsController", () => {
     });
 
     it("should return paginated products WITHOUT next cursor", async () => {
-      await seedProducts(8);
+      const owner = await registerUserRequest(app, "owner");
+      await seedProducts(8, owner.body.data.id);
 
       const response = await request(app.getServer()).get("/api/v1/products").query({ limit: 10 });
 

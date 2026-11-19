@@ -28,13 +28,12 @@ export class OrderHttpController extends HttpController {
   private createOrder = asyncMiddleware(async (request, response) => {
     const user = userSchema.parse(response.locals.user);
     const payload = createOrderSchema.parse(request.body);
-    const orderWithOrderDetails = await this.orderService.createOrderWithOrderDetails(
-      user,
-      payload
-    );
+    const order = await this.orderService.createOrderWithOrderDetails(user, payload);
+    const lineItems = await this.orderService.getPaymentLineItems(order.id);
     const customer = await this.usersService.findOrCreateCustomer(response.locals.user);
     const checkoutSession = await this.paymentsService.createCheckoutSession(
-      orderWithOrderDetails,
+      order.id,
+      lineItems,
       customer.customer_id
     );
     if (!checkoutSession) {

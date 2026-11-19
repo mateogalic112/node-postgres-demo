@@ -1,37 +1,39 @@
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { Client } from "pg";
 import { migrate } from "../database/setup";
-import bcrypt from "bcrypt";
-import { RoleName } from "../roles/roles.validation";
-import { TEST_ADMIN_USER } from "./constants";
+import { workerDatabaseName } from "./workerDatabase";
 
-export default async function globalSetup() {
-  const postgresContainer = await new PostgreSqlContainer("pgvector/pgvector:pg15").start();
+export default async function globalSetup({ maxWorkers }: { maxWorkers: number }) {
+  const container = await new PostgreSqlContainer("pgvector/pgvector:pg15").start();
 
-  // Store connection string in global for other test files
-  (globalThis as unknown as Record<string, unknown>).__POSTGRES_CONTAINER__ = postgresContainer;
+  // Jest globals set here are only visible to globalTeardown; tests get the connection via env.
+  (globalThis as Record<string, unknown>).__POSTGRES_CONTAINER__ = container;
+  Object.assign(process.env, {
+    POSTGRES_HOST: container.getHost(),
+    POSTGRES_PORT: String(container.getPort()),
+    POSTGRES_USER: container.getUsername(),
+    POSTGRES_PASSWORD: container.getPassword()
+  });
 
-  const client = new Client({ connectionString: postgresContainer.getConnectionUri() });
-  await client.connect();
+  const templateDatabase = container.getDatabase();
+  const templateClient = new Client({ connectionString: container.getConnectionUri() });
+  await templateClient.connect();
+  await migrate(templateClient);
+  await templateClient.end();
 
-  await migrate(client);
-
-  await insertAdmin(client);
-
-  await client.end();
-
-  console.log("Global test setup complete - PostgreSQL container started");
-}
-
-async function insertAdmin(client: Client) {
-  const adminRole = await client.query(`SELECT id FROM roles WHERE name = $1`, [RoleName.ADMIN]);
-  const roleId = adminRole.rows[0].id;
-
-  const { username, email, password } = TEST_ADMIN_USER;
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  await client.query(
-    `INSERT INTO users (username, email, password, role_id) VALUES ($1, $2, $3, $4)`,
-    [username, email, hashedPassword, roleId]
-  );
+  // Copying a template requires no open connections to it, so copies run sequentially from another DB.
+  const adminClient = new Client({
+    host: container.getHost(),
+    port: container.getPort(),
+    user: container.getUsername(),
+    password: container.getPassword(),
+    database: "postgres"
+  });
+  await adminClient.connect();
+  for (let workerId = 1; workerId <= maxWorkers; workerId++) {
+    await adminClient.query(
+      `CREATE DATABASE "${workerDatabaseName(workerId)}" TEMPLATE "${templateDatabase}"`
+    );
+  }
+  await adminClient.end();
 }

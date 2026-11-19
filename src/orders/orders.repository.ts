@@ -2,6 +2,7 @@ import { User } from "users/users.validation";
 import { CreateOrderPayload, Order, OrderDetail } from "./orders.validation";
 import { DatabaseService } from "interfaces/database.interface";
 import { NotFoundError } from "api/api.errors";
+import { PaymentLineItem } from "interfaces/payments.interface";
 
 export class OrderRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -54,6 +55,19 @@ export class OrderRepository {
     } finally {
       client.release();
     }
+  }
+
+  async findPaymentLineItems(orderId: number) {
+    const result = await this.DB.query<PaymentLineItem>(
+      `SELECT od.product_id, p.name, p.description, p.image_url, od.quantity,
+              od.unit_price_in_cents AS price_in_cents
+       FROM order_details od
+       JOIN products p ON p.id = od.product_id
+       WHERE od.order_id = $1
+       ORDER BY od.id`,
+      [orderId]
+    );
+    return result.rows;
   }
 
   async confirmOrder(orderId: number) {

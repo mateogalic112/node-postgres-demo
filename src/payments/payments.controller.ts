@@ -3,12 +3,12 @@ import asyncMiddleware from "middleware/async.middleware";
 import { BadRequestError } from "api/api.errors";
 import { OrderService } from "orders/orders.service";
 import { processOrderSchema } from "./payments.validation";
-import { StripeService } from "services/stripe.service";
+import { PaymentsService } from "interfaces/payments.interface";
 import { LoggerService } from "services/logger.service";
 
 export class PaymentsHttpController extends HttpController {
   constructor(
-    private readonly stripeService: StripeService,
+    private readonly paymentsService: PaymentsService,
     private readonly orderService: OrderService,
     private readonly logger: LoggerService
   ) {
@@ -25,7 +25,7 @@ export class PaymentsHttpController extends HttpController {
     if (!sig) {
       throw new BadRequestError("Stripe signature is required");
     }
-    const rawEvent = this.stripeService.constructEvent(request.body, sig as string);
+    const rawEvent = this.paymentsService.constructEvent(request.body, sig as string);
     this.logger.log(`[STRIPE] Webhook received: ${rawEvent.type}`);
     if (
       rawEvent.type === "checkout.session.completed" ||
