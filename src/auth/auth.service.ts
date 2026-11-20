@@ -12,16 +12,10 @@ export class AuthService {
   constructor(private readonly usersService: UsersService) {}
 
   public async register(payload: RegisterPayload) {
-    const foundUser = await this.usersService.findUserByEmail(payload.email);
-    if (foundUser) {
-      throw new BadRequestError("User with that email already exists");
-    }
-
     const user = await this.usersService.createUser({
       ...payload,
-      password: await bcrypt.hash(payload.password, 10) // Hash password
+      password: await bcrypt.hash(payload.password, 10)
     });
-
     return this.removePassword(user);
   }
 
