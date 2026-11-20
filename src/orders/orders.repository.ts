@@ -57,7 +57,7 @@ export class OrdersRepository {
     }
   }
 
-  async findPaymentLineItems(orderId: number) {
+  async getPaymentLineItems(orderId: number) {
     const result = await this.DB.query<PaymentLineItem>(
       `SELECT od.product_id, p.name, p.description, p.image_url, od.quantity,
               od.unit_price_in_cents AS price_in_cents

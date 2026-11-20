@@ -1,5 +1,5 @@
 import { DatabaseService } from "interfaces/database.interface";
-import { User, UserCustomer } from "./users.validation";
+import { User } from "./users.validation";
 import { RegisterPayload } from "auth/auth.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { RoleName } from "roles/roles.validation";
@@ -38,25 +38,6 @@ export class UsersRepository {
    RETURNING *`,
       [payload.username, payload.email, payload.password, RoleName.USER]
     );
-    return result.rows[0];
-  }
-
-  public async createUserCustomer(userId: number, customerId: string) {
-    const result = await this.DB.query<UserCustomer>(
-      "INSERT INTO user_customers (user_id, customer_id) VALUES ($1, $2) RETURNING *",
-      [userId, customerId]
-    );
-    return result.rows[0];
-  }
-
-  public async findUserCustomerByUserId(userId: number) {
-    const result = await this.DB.query<UserCustomer>(
-      "SELECT * FROM user_customers WHERE user_id = $1",
-      [userId]
-    );
-    if (result.rowCount === 0) {
-      return null;
-    }
     return result.rows[0];
   }
 }

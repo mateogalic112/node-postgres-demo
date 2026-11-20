@@ -10,6 +10,8 @@ import { BidsRepository } from "bids/bids.repository";
 import { BidsService } from "bids/bids.service";
 import { BidsSocketController } from "bids/bids.socket";
 import { BotHttpController } from "bot/bot.controller";
+import { CustomersRepository } from "customers/customers.repository";
+import { CustomersService } from "customers/customers.service";
 import { DatabaseService } from "interfaces/database.interface";
 import { EmbeddingsService } from "interfaces/embeddings.interface";
 import { FilesService } from "interfaces/files.interface";
@@ -18,7 +20,6 @@ import { MailService } from "interfaces/mail.interface";
 import { PaymentsService } from "interfaces/payments.interface";
 import { OrdersHttpController } from "orders/orders.controller";
 import { OrdersRepository } from "orders/orders.repository";
-import { OrdersService } from "orders/orders.service";
 import { PaymentsHttpController } from "payments/payments.controller";
 import { ProductsHttpController } from "products/products.controller";
 import { ProductsRepository } from "products/products.repository";
@@ -27,7 +28,6 @@ import { RolesRepository } from "roles/roles.repository";
 import { RolesService } from "roles/roles.service";
 import { UsersHttpController } from "users/users.controller";
 import { UsersRepository } from "users/users.repository";
-import { UsersService } from "users/users.service";
 
 export interface AppDependencies {
   db: DatabaseService;
@@ -54,12 +54,12 @@ export function createApp({
   );
 
   const usersRepository = new UsersRepository(db);
-  const usersService = new UsersService(new UsersRepository(db), paymentsService);
   const authService = new AuthService(usersRepository);
   const auctionsService = new AuctionsService(new AuctionsRepository(db));
   const bidsService = new BidsService(new BidsRepository(db), db, logger);
   const rolesService = new RolesService(new RolesRepository(db));
-  const ordersService = new OrdersService(new OrdersRepository(db));
+  const ordersRepository = new OrdersRepository(db);
+  const customersService = new CustomersService(new CustomersRepository(db), paymentsService);
 
   return new App(
     [
@@ -69,8 +69,8 @@ export function createApp({
       new BidsHttpController(bidsService),
       new UsersHttpController(authService, rolesService, usersRepository),
       new BotHttpController(productsService, logger),
-      new OrdersHttpController(authService, usersService, ordersService, paymentsService),
-      new PaymentsHttpController(paymentsService, ordersService, logger)
+      new OrdersHttpController(authService, ordersRepository, customersService),
+      new PaymentsHttpController(paymentsService, ordersRepository, logger)
     ],
     [
       new AuctionsSocketController(auctionsService),

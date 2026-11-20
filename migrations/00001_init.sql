@@ -93,7 +93,7 @@ CREATE INDEX idx_embeddings_hnsw_cosine
 CREATE INDEX idx_embeddings_product_id
   ON products_embeddings (product_id);
 
-CREATE TABLE IF NOT EXISTS user_customers (
+CREATE TABLE IF NOT EXISTS stripe_customers (
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   customer_id TEXT NOT NULL UNIQUE,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -125,7 +125,7 @@ CREATE TRIGGER trg_order_details_updated_at BEFORE UPDATE ON order_details
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_products_embeddings_updated_at BEFORE UPDATE ON products_embeddings
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-CREATE TRIGGER trg_user_customers_updated_at BEFORE UPDATE ON user_customers
+CREATE TRIGGER trg_stripe_customers_updated_at BEFORE UPDATE ON stripe_customers
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 INSERT INTO roles (name, description)
