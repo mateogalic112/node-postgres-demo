@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS user_customers;
+DROP TABLE IF EXISTS stripe_customers;
 DROP INDEX IF EXISTS idx_embeddings_product_id;
 DROP INDEX IF EXISTS idx_embeddings_hnsw_cosine;
 DROP TABLE IF EXISTS products_embeddings;
