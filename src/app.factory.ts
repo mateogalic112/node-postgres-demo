@@ -52,6 +52,8 @@ export function createApp({
     embeddingsService,
     logger
   );
+
+  const usersRepository = new UsersRepository(db);
   const usersService = new UsersService(new UsersRepository(db), paymentsService);
   const authService = new AuthService(usersService);
   const auctionsService = new AuctionsService(new AuctionsRepository(db));
@@ -65,7 +67,7 @@ export function createApp({
       new ProductsHttpController(productsService, authService, mailService),
       new AuctionsHttpController(auctionsService, authService, mailService),
       new BidsHttpController(bidsService),
-      new UsersHttpController(authService, rolesService, usersService),
+      new UsersHttpController(authService, rolesService, usersRepository),
       new BotHttpController(productsService, logger),
       new OrdersHttpController(authService, usersService, ordersService, paymentsService),
       new PaymentsHttpController(paymentsService, ordersService, logger)

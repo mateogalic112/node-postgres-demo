@@ -1,7 +1,6 @@
 import { RegisterPayload } from "auth/auth.validation";
 import { UsersRepository } from "./users.repository";
 import { User, userCustomerSchema, userSchema } from "./users.validation";
-import { PaginatedRequestParams } from "api/api.validations";
 import { InternalServerError } from "api/api.errors";
 import { PaymentsService } from "interfaces/payments.interface";
 
@@ -10,11 +9,6 @@ export class UsersService {
     private readonly usersRepository: UsersRepository,
     private readonly paymentsService: PaymentsService
   ) {}
-
-  public async getUsers(params: PaginatedRequestParams) {
-    const users = await this.usersRepository.getUsers(params);
-    return users.map(this.toUser);
-  }
 
   public async findUserById(id: number) {
     const result = await this.usersRepository.findUserById(id);
