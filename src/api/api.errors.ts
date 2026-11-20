@@ -1,3 +1,4 @@
+import { PgError } from "database/errors";
 import { TokenExpiredError } from "jsonwebtoken";
 import { MulterError } from "multer";
 import { DatabaseError } from "pg";
@@ -56,10 +57,8 @@ export const getErrorStatus = (error: unknown): number => {
   return 500;
 };
 
-const UNIQUE_VIOLATION_CODE = "23505";
-
 const getDatabaseErrorMessage = (error: DatabaseError) => {
-  if (error.code === UNIQUE_VIOLATION_CODE) {
+  if (PgError.isUniqueViolation(error)) {
     return "Resource already exists";
   }
   return error.detail || error.message;
