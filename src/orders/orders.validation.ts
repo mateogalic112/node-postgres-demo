@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export enum OrderStatus {
+enum OrderStatus {
   PENDING = "pending",
   PAID = "paid",
   FAILED = "failed"
@@ -25,7 +25,7 @@ export const orderSchema = z.object({
 });
 export type Order = z.infer<typeof orderSchema>;
 
-export const orderDetailSchema = z.object({
+const orderDetailSchema = z.object({
   id: z.number().int().positive(),
   order_id: z.number().int().positive(),
   product_id: z.number().int().positive(),

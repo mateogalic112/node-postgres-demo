@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-export const MINIMUM_USERNAME_CHARACTERS = 3;
-export const MINIMUM_PASSWORD_CHARACTERS = 6;
+const MINIMUM_USERNAME_CHARACTERS = 3;
+const MINIMUM_PASSWORD_CHARACTERS = 6;
 
 export const registerSchema = z.object({
   username: z

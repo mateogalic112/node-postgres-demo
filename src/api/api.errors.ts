@@ -4,7 +4,7 @@ import { MulterError } from "multer";
 import { DatabaseError } from "pg";
 import { ZodError } from "zod";
 
-export abstract class HttpError extends Error {
+abstract class HttpError extends Error {
   status: number;
   message: string;
 
