@@ -2,8 +2,7 @@ import { DatabaseService } from "interfaces/database.interface";
 import { User, UserCustomer } from "./users.validation";
 import { RegisterPayload } from "auth/auth.validation";
 import { PaginatedRequestParams } from "api/api.validations";
-import { RoleName, Role } from "roles/roles.validation";
-import assert from "node:assert";
+import { RoleName } from "roles/roles.validation";
 
 export class UsersRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -33,14 +32,11 @@ export class UsersRepository {
   }
 
   public async createUser(payload: RegisterPayload) {
-    const roleRows = await this.DB.query<Role>("SELECT * FROM roles WHERE name = $1", [
-      RoleName.USER
-    ]);
-    assert(roleRows.rowCount === 1);
-
     const result = await this.DB.query<User>(
-      "INSERT INTO users (username, email, password, role_id) VALUES ($1, $2, $3, $4) RETURNING *",
-      [payload.username, payload.email, payload.password, roleRows.rows[0].id]
+      `INSERT INTO users (username, email, password, role_id)
+   VALUES ($1, $2, $3, (SELECT id FROM roles WHERE name = $4))
+   RETURNING *`,
+      [payload.username, payload.email, payload.password, RoleName.USER]
     );
     return result.rows[0];
   }
