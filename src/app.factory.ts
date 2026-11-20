@@ -55,7 +55,7 @@ export function createApp({
 
   const usersRepository = new UsersRepository(db);
   const usersService = new UsersService(new UsersRepository(db), paymentsService);
-  const authService = new AuthService(usersService);
+  const authService = new AuthService(usersRepository);
   const auctionsService = new AuctionsService(new AuctionsRepository(db));
   const bidsService = new BidsService(new BidsRepository(db), db, logger);
   const rolesService = new RolesService(new RolesRepository(db));
