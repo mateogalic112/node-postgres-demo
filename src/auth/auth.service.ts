@@ -12,11 +12,10 @@ export class AuthService {
   constructor(private readonly usersService: UsersService) {}
 
   public async register(payload: RegisterPayload) {
-    const user = await this.usersService.createUser({
+    return this.usersService.createUser({
       ...payload,
       password: await bcrypt.hash(payload.password, 10)
     });
-    return this.removePassword(user);
   }
 
   public async login(payload: LoginPayload) {
@@ -26,14 +25,14 @@ export class AuthService {
     const isPasswordCorrect = await bcrypt.compare(payload.password, user.password);
     if (!isPasswordCorrect) throw new BadRequestError("Invalid email or password");
 
-    return this.removePassword(user);
+    return user;
   }
 
   public async isLoggedIn(user?: User) {
     if (!user) {
       throw new UnauthenticatedError("User not logged in");
     }
-    return this.removePassword(user);
+    return user;
   }
 
   public async extractUserFromToken(token: string | undefined) {
@@ -76,10 +75,5 @@ export class AuthService {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production"
     };
-  }
-
-  private removePassword(user: User) {
-    const { password: _password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
   }
 }

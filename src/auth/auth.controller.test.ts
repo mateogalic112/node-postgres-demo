@@ -16,6 +16,7 @@ describe("AuthController", () => {
       expect(response.status).toBe(201);
       expect(response.headers["set-cookie"]).toBeDefined();
       expect(response.body.data.username).toBe("testuser");
+      expect(response.body.data).toHaveProperty("password", "RESTRICTED");
     });
 
     it("should return 400 if user already exists", async () => {
@@ -27,7 +28,7 @@ describe("AuthController", () => {
       expect(response.body.data.username).toBe("testuser");
 
       expect(response2.status).toBe(400);
-      expect(response2.body).toHaveProperty("message", "User with that email already exists");
+      expect(response2.body).toHaveProperty("message", "Resource already exists");
     });
   });
 
@@ -64,6 +65,7 @@ describe("AuthController", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.username).toBe("testuser");
+      expect(response.body.data).toHaveProperty("password", "RESTRICTED");
     });
   });
 });

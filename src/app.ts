@@ -8,6 +8,7 @@ import { createLoggerMiddleware } from "middleware/logger.middleware";
 import { LoggerService } from "interfaces/logger.interface";
 import { Server as SocketServer } from "socket.io";
 import { createServer, Server } from "http";
+import { restrictFieldsReplacer } from "api/api.rules";
 
 class App {
   private app: express.Application;
@@ -47,6 +48,7 @@ class App {
     this.app.use("/api/v1/payments/orders", express.raw({ type: "application/json" }));
 
     this.app.use(express.json());
+    this.app.set("json replacer", restrictFieldsReplacer);
 
     this.app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
     this.app.use(cookieParser());

@@ -41,9 +41,8 @@ describe("AuthService", () => {
 
   describe("user registration", () => {
     it("should successfully register a new user", async () => {
-      mockUsersRepository.findUserByEmail.mockResolvedValue(null);
       mockUsersRepository.createUser.mockResolvedValue(mockUser);
-      (bcrypt.hash as jest.Mock).mockResolvedValue(mockUser.password);
+      (bcrypt.hash as jest.Mock).mockResolvedValue("hashedPassword");
 
       const result = await authService.register({
         username: "testuser",
@@ -51,20 +50,7 @@ describe("AuthService", () => {
         password: "password123"
       });
 
-      const { password: _password, ...userWithoutPassword } = mockUser;
-      expect(result).toMatchObject(userWithoutPassword);
-    });
-
-    it("should throw an error if email already exists", async () => {
-      mockUsersRepository.findUserByEmail.mockResolvedValue(mockUser);
-
-      await expect(
-        authService.register({
-          username: "testuser",
-          email: "test@example.com",
-          password: "password123"
-        })
-      ).rejects.toThrow(BadRequestError);
+      expect(result).toEqual(mockUser);
     });
   });
 
@@ -78,8 +64,7 @@ describe("AuthService", () => {
         password: "password123"
       });
 
-      const { password: _password, ...userWithoutPassword } = mockUser;
-      expect(result).toMatchObject(userWithoutPassword);
+      expect(result).toEqual(mockUser);
     });
 
     it("should throw an error if the user does not exist", async () => {
@@ -112,8 +97,7 @@ describe("AuthService", () => {
 
       const result = await authService.isLoggedIn(mockUser);
 
-      const { password: _password, ...userWithoutPassword } = mockUser;
-      expect(result).toMatchObject(userWithoutPassword);
+      expect(result).toEqual(mockUser);
     });
 
     it("should throw an error if no userId provided", async () => {

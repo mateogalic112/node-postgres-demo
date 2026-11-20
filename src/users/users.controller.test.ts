@@ -42,6 +42,7 @@ describe("UsersController", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.length).toBe(10);
+      expect(response.body.data[0]).toHaveProperty("password", "RESTRICTED");
       const expectedNextCursorId = response.body.data[9].id;
       expect(response.body.nextCursor).toMatchObject({ id: expectedNextCursorId });
     });
