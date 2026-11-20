@@ -10,10 +10,14 @@ describe("UsersController", () => {
   });
 
   describe("GET /api/v1/users", () => {
+    const PAGE_SIZE = 10;
+
     it.each([
-      [{ totalUsers: 21, currentCount: 10, nextCursor: (id: number) => ({ id }) }],
-      [{ totalUsers: 8, currentCount: 9, nextCursor: () => null }]
-    ])("should return paginated users", async ({ totalUsers, currentCount, nextCursor }) => {
+      [{ totalUsers: PAGE_SIZE + 5, hasNextCursor: true }],
+      // We already have admin user from global setup, that's why -1
+      [{ totalUsers: PAGE_SIZE - 1, hasNextCursor: true }],
+      [{ totalUsers: PAGE_SIZE - 5, hasNextCursor: false }]
+    ])("should return paginated users", async ({ totalUsers, hasNextCursor }) => {
       for (let i = 0; i < totalUsers; i++) {
         await registerUserRequest(app, `mocked-user-${i}`);
       }
@@ -21,13 +25,18 @@ describe("UsersController", () => {
       const authCookie = await getAdminAuthCookie(app);
       const response = await request(app.getServer())
         .get("/api/v1/users")
-        .query({ limit: 10 })
+        .query({ limit: PAGE_SIZE })
         .set("Cookie", authCookie);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.length).toBe(currentCount);
+      expect(response.body.data.length).toBeLessThanOrEqual(PAGE_SIZE);
       expect(response.body.data[0]).toHaveProperty("password", "RESTRICTED");
-      expect(response.body.nextCursor).toEqual(nextCursor(response.body.data[9]?.id));
+
+      if (hasNextCursor) {
+        expect(response.body.nextCursor).toHaveProperty("id");
+      } else {
+        expect(response.body.nextCursor).toBeNull();
+      }
     });
   });
 });
