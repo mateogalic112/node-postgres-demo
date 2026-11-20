@@ -2,6 +2,8 @@ import { DatabaseService } from "interfaces/database.interface";
 import { User, UserCustomer } from "./users.validation";
 import { RegisterPayload } from "auth/auth.validation";
 import { PaginatedRequestParams } from "api/api.validations";
+import { RoleName, Role } from "roles/roles.validation";
+import assert from "node:assert";
 
 export class UsersRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -30,10 +32,15 @@ export class UsersRepository {
     return result.rows[0];
   }
 
-  public async createUser(payload: RegisterPayload, roleId: number) {
+  public async createUser(payload: RegisterPayload) {
+    const roleRows = await this.DB.query<Role>("SELECT * FROM roles WHERE name = $1", [
+      RoleName.USER
+    ]);
+    assert(roleRows.rowCount === 1);
+
     const result = await this.DB.query<User>(
       "INSERT INTO users (username, email, password, role_id) VALUES ($1, $2, $3, $4) RETURNING *",
-      [payload.username, payload.email, payload.password, roleId]
+      [payload.username, payload.email, payload.password, roleRows.rows[0].id]
     );
     return result.rows[0];
   }

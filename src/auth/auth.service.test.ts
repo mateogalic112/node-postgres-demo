@@ -5,8 +5,6 @@ import { BadRequestError, UnauthenticatedError } from "api/api.errors";
 import { User } from "users/users.validation";
 import { DatabaseService } from "interfaces/database.interface";
 import { UsersService } from "users/users.service";
-import { RolesRepository } from "roles/roles.repository";
-import { RoleName } from "roles/roles.validation";
 import { paymentsService } from "__tests__/mocks";
 
 jest.mock("users/users.repository");
@@ -20,7 +18,6 @@ jest.mock("bcrypt", () => ({
 describe("AuthService", () => {
   let authService: AuthService;
   let mockUsersRepository: jest.Mocked<UsersRepository>;
-  let mockRolesRepository: jest.Mocked<RolesRepository>;
 
   const mockUser: User = {
     id: 123,
@@ -35,22 +32,11 @@ describe("AuthService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockRolesRepository = new RolesRepository(
-      {} as DatabaseService
-    ) as jest.Mocked<RolesRepository>;
-
     mockUsersRepository = new UsersRepository(
       {} as DatabaseService
     ) as jest.Mocked<UsersRepository>;
 
-    mockRolesRepository.findRoleByName = jest.fn().mockResolvedValue({
-      id: 1,
-      name: RoleName.USER
-    });
-
-    authService = new AuthService(
-      new UsersService(mockUsersRepository, mockRolesRepository, paymentsService)
-    );
+    authService = new AuthService(new UsersService(mockUsersRepository, paymentsService));
   });
 
   describe("user registration", () => {

@@ -2,15 +2,12 @@ import { RegisterPayload } from "auth/auth.validation";
 import { UsersRepository } from "./users.repository";
 import { User, userCustomerSchema, userSchema } from "./users.validation";
 import { PaginatedRequestParams } from "api/api.validations";
-import { RolesRepository } from "roles/roles.repository";
-import { RoleName } from "roles/roles.validation";
 import { InternalServerError } from "api/api.errors";
 import { PaymentsService } from "interfaces/payments.interface";
 
 export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
-    private readonly rolesRepository: RolesRepository,
     private readonly paymentsService: PaymentsService
   ) {}
 
@@ -36,12 +33,7 @@ export class UsersService {
   }
 
   public async createUser(payload: RegisterPayload) {
-    const role = await this.rolesRepository.findRoleByName(RoleName.USER);
-    if (!role) {
-      throw new InternalServerError("Role not found");
-    }
-
-    const user = await this.usersRepository.createUser(payload, role.id);
+    const user = await this.usersRepository.createUser(payload);
     return userSchema.parse(user);
   }
 

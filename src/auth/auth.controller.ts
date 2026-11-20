@@ -21,7 +21,8 @@ export class AuthHttpController extends HttpController {
   }
 
   private registerUser = asyncMiddleware(async (request, response) => {
-    const createdUser = await this.authService.register(registerSchema.parse(request.body));
+    const payload = registerSchema.parse(request.body);
+    const createdUser = await this.authService.register(payload);
     response
       .cookie(
         AUTH_COOKIE_NAME,
@@ -33,7 +34,8 @@ export class AuthHttpController extends HttpController {
   });
 
   private loginUser = asyncMiddleware(async (request, response) => {
-    const user = await this.authService.login(loginSchema.parse(request.body));
+    const payload = loginSchema.parse(request.body);
+    const user = await this.authService.login(payload);
     response
       .cookie(
         AUTH_COOKIE_NAME,

@@ -19,10 +19,10 @@ const ADMIN_USER = {
 export const createTestApp = () =>
   createApp({
     db,
-    files: filesService,
-    embeddings: embeddingsService,
-    mail: mailService,
-    payments: paymentsService,
+    filesService: filesService,
+    embeddingsService: embeddingsService,
+    mailService: mailService,
+    paymentsService: paymentsService,
     logger
   });
 
