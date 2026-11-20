@@ -13,28 +13,28 @@ export class UsersService {
 
   public async getUsers(params: PaginatedRequestParams) {
     const users = await this.usersRepository.getUsers(params);
-    return users.map((user) => userSchema.parse(user));
+    return users.map(this.toUser);
   }
 
   public async findUserById(id: number) {
-    const user = await this.usersRepository.findUserById(id);
-    if (!user) {
+    const result = await this.usersRepository.findUserById(id);
+    if (!result) {
       return null;
     }
-    return userSchema.parse(user);
+    return this.toUser(result);
   }
 
   public async findUserByEmail(email: string) {
-    const user = await this.usersRepository.findUserByEmail(email);
-    if (!user) {
+    const result = await this.usersRepository.findUserByEmail(email);
+    if (!result) {
       return null;
     }
-    return userSchema.parse(user);
+    return this.toUser(result);
   }
 
   public async createUser(payload: RegisterPayload) {
-    const user = await this.usersRepository.createUser(payload);
-    return userSchema.parse(user);
+    const result = await this.usersRepository.createUser(payload);
+    return this.toUser(result);
   }
 
   public async findOrCreateCustomer(user: User) {
@@ -48,5 +48,9 @@ export class UsersService {
     }
     const createdCustomer = await this.usersRepository.createUserCustomer(user.id, newCustomer.id);
     return userCustomerSchema.parse(createdCustomer);
+  }
+
+  private toUser(data: unknown): User {
+    return userSchema.parse(data);
   }
 }
