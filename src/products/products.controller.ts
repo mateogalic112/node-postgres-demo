@@ -13,12 +13,17 @@ import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
 import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
 import { UsersRepository } from "users/users.repository";
+import { ProductsRepository } from "./products.repository";
+import { FilesService } from "interfaces/files.interface";
+import { ProductFactory } from "./products.factory";
 
 export class ProductsHttpController extends HttpController {
   constructor(
     private readonly productsService: ProductsService,
+    private readonly productsRepository: ProductsRepository,
     private readonly usersRepository: UsersRepository,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly filesService: FilesService
   ) {
     super("/products");
     this.initializeRoutes();
@@ -41,7 +46,7 @@ export class ProductsHttpController extends HttpController {
 
   private getProducts = asyncMiddleware(async (request, response) => {
     const { limit, cursor } = paginatedRequestSchema.parse(request.query);
-    const products = await this.productsService.getProducts({ limit, cursor });
+    const products = await this.productsRepository.getProducts({ limit, cursor });
     response.json(formatPaginatedResponse(products, limit));
   });
 
@@ -59,8 +64,9 @@ export class ProductsHttpController extends HttpController {
 
   private createProduct = asyncMiddleware(async (request, response) => {
     const user = userSchema.parse(response.locals.user);
-    const payload = createProductSchema.parse(request);
-    const newProduct = await this.productsService.createProduct(user, payload);
+    const raw = createProductSchema.parse(request);
+    const payload = await new ProductFactory(this.filesService).createPayload(raw);
+    const newProduct = await this.productsRepository.createProduct(user.id, payload);
 
     await this.productsService.createProductEmbedding(newProduct);
     await this.mailService.sendEmail({

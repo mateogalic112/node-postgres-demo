@@ -1,8 +1,12 @@
 import { Embedding } from "ai";
-import { CreateProductPayload, Product, ProductEmbedding } from "./products.validation";
+import {
+  CreateProductPayload,
+  Product,
+  ProductEmbedding,
+  productSchema
+} from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
-import { User } from "users/users.validation";
 import { LoggerService } from "interfaces/logger.interface";
 
 export class ProductsRepository {
@@ -16,7 +20,7 @@ export class ProductsRepository {
       "SELECT * FROM products WHERE id > $1 ORDER BY id ASC LIMIT $2",
       [params.cursor ?? 0, params.limit]
     );
-    return result.rows;
+    return result.rows.map((product) => productSchema.parse(product));
   }
 
   public async findProductById(id: number) {
@@ -24,23 +28,23 @@ export class ProductsRepository {
     if (result.rowCount === 0) {
       return null;
     }
-    return result.rows[0];
+    return productSchema.parse(result.rows[0]);
   }
 
   public async findProductsByIds(ids: number[]) {
     const result = await this.DB.query<Product>("SELECT * FROM products WHERE id = ANY($1)", [ids]);
-    return result.rows;
+    return result.rows.map((product) => productSchema.parse(product));
   }
 
   public async createProduct(
-    user: User,
+    userId: number,
     payload: CreateProductPayload["body"] & { imageUrl: string | null }
   ) {
     const result = await this.DB.query<Product>(
       "INSERT INTO products (name, description, image_url, owner_id, price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [payload.name, payload.description, payload.imageUrl, user.id, payload.price_in_cents]
+      [payload.name, payload.description, payload.imageUrl, userId, payload.price_in_cents]
     );
-    return result.rows[0];
+    return productSchema.parse(result.rows[0]);
   }
 
   public async findRelevantProducts(embeddedQuery: Embedding, limit: number) {
@@ -60,7 +64,6 @@ export class ProductsRepository {
       `INSERT INTO products_embeddings (product_id, embedding) VALUES ${embeddings.map((_, index) => `($1, $${index + 2}::vector)`).join(", ")}`,
       [productId, ...embeddings.map((embedding) => `[${embedding.join(",")}]`)]
     );
-
     this.logger.log(`Created ${embeddings.length} embeddings for product ${productId}`);
   }
 }

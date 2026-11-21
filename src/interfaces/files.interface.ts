@@ -1,6 +1,8 @@
+export interface UploadPayload {
+  file: { buffer: Buffer; mimetype: string; originalname: string } | undefined;
+  key: string;
+}
+
 export interface FilesService {
-  uploadFile(
-    file: { buffer: Buffer; mimetype: string; originalname: string },
-    key: string
-  ): Promise<string | null>;
+  uploadFile(payload: UploadPayload): Promise<string | null>;
 }

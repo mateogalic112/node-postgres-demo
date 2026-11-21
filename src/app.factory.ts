@@ -44,12 +44,8 @@ export function createApp({
   paymentsService,
   logger
 }: AppDependencies) {
-  const productsService = new ProductsService(
-    new ProductsRepository(db, logger),
-    filesService,
-    embeddingsService,
-    logger
-  );
+  const productsRepository = new ProductsRepository(db, logger);
+  const productsService = new ProductsService(productsRepository, embeddingsService, logger);
   const usersRepository = new UsersRepository(db);
   const rolesRepository = new RolesRepository(db);
   const auctionsService = new AuctionsService(new AuctionsRepository(db));
@@ -60,7 +56,13 @@ export function createApp({
   return new App(
     [
       new AuthHttpController(usersRepository),
-      new ProductsHttpController(productsService, usersRepository, mailService),
+      new ProductsHttpController(
+        productsService,
+        productsRepository,
+        usersRepository,
+        mailService,
+        filesService
+      ),
       new AuctionsHttpController(auctionsService, usersRepository, mailService),
       new BidsHttpController(bidsService),
       new UsersHttpController(rolesRepository, usersRepository),
