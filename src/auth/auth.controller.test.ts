@@ -15,35 +15,35 @@ describe("AuthController", () => {
 
       expect(response.status).toBe(201);
       expect(response.headers["set-cookie"]).toBeDefined();
-      expect(response.body.data.username).toBe("testuser");
-      expect(response.body.data).toHaveProperty("password", "RESTRICTED");
+      expect(response.body.data).toMatchObject({
+        username: "testuser",
+        password: "RESTRICTED"
+      });
     });
 
     it("should return 400 if user already exists", async () => {
+      await registerUserRequest(app, "testuser");
       const response = await registerUserRequest(app, "testuser");
-      const response2 = await registerUserRequest(app, "testuser");
 
-      expect(response.status).toBe(201);
-      expect(response.headers["set-cookie"]).toBeDefined();
-      expect(response.body.data.username).toBe("testuser");
-
-      expect(response2.status).toBe(400);
-      expect(response2.body).toHaveProperty("message", "Resource already exists");
+      expect(response.status).toBe(400);
+      expect(response.headers["set-cookie"]).toBeUndefined();
+      expect(response.body).toHaveProperty("message", "Resource already exists");
     });
   });
 
   describe("POST /api/v1/auth/login", () => {
-    it("should NOT login a user if user does not exist", async () => {
+    it("should return 400 if user does not exist", async () => {
       const response = await request(app.getServer()).post("/api/v1/auth/login").send({
         email: "testuser@example.com",
         password: "password"
       });
 
       expect(response.status).toBe(400);
+      expect(response.headers["set-cookie"]).toBeUndefined();
       expect(response.body.message).toBe("Invalid credentials");
     });
 
-    it("should NOT login a user if password is incorrect", async () => {
+    it("should return 400 if password is incorrect", async () => {
       await registerUserRequest(app, "testuser");
 
       const response = await request(app.getServer()).post("/api/v1/auth/login").send({
@@ -52,10 +52,11 @@ describe("AuthController", () => {
       });
 
       expect(response.status).toBe(400);
+      expect(response.headers["set-cookie"]).toBeUndefined();
       expect(response.body.message).toBe("Invalid credentials");
     });
 
-    it("should login an existing user with correct credentials", async () => {
+    it("should login a user with correct credentials", async () => {
       await registerUserRequest(app, "testuser");
 
       const response = await request(app.getServer()).post("/api/v1/auth/login").send({
@@ -64,8 +65,11 @@ describe("AuthController", () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.body.data.username).toBe("testuser");
-      expect(response.body.data).toHaveProperty("password", "RESTRICTED");
+      expect(response.headers["set-cookie"]).toBeDefined();
+      expect(response.body.data).toMatchObject({
+        username: "testuser",
+        password: "RESTRICTED"
+      });
     });
   });
 });

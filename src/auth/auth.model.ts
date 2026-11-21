@@ -1,8 +1,10 @@
 import { UnauthenticatedError } from "api/api.errors";
+import bcrypt from "bcrypt";
 import { env } from "config/env";
 import { CookieOptions } from "express";
 import jwt from "jsonwebtoken";
 import { Socket } from "socket.io";
+import { RegisterPayload } from "./auth.validation";
 
 export class Auth {
   private static readonly TWENTY_FOUR_HOURS_IN_SECONDS = 24 * 60 * 60;
@@ -48,6 +50,21 @@ export class Auth {
   }
 
   private static createToken(userId: number) {
-    return jwt.sign({ _id: userId }, env.JWT_SECRET, { expiresIn: 60 * 60 * 24 }); // 24 hours
+    return jwt.sign({ _id: userId }, env.JWT_SECRET, {
+      expiresIn: this.TWENTY_FOUR_HOURS_IN_SECONDS
+    });
+  }
+
+  public static async getRegisterCredentials(credentials: RegisterPayload) {
+    const hashedPassword = await this.hashPassword(credentials.password);
+    return { ...credentials, password: hashedPassword };
+  }
+
+  private static async hashPassword(raw: string) {
+    return await bcrypt.hash(raw, 10);
+  }
+
+  public static async validatePassword(provided: string, encrypted: string) {
+    return await bcrypt.compare(provided, encrypted);
   }
 }

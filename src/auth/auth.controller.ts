@@ -6,7 +6,6 @@ import { HttpController } from "api/api.controllers";
 import { formatResponse } from "api/api.formats";
 import { BadRequestError } from "api/api.errors";
 import { UsersRepository } from "users/users.repository";
-import { User } from "users/users.model";
 import { Auth } from "./auth.model";
 
 export class AuthHttpController extends HttpController {
@@ -28,7 +27,7 @@ export class AuthHttpController extends HttpController {
 
   private registerUser = asyncMiddleware(async (request, response) => {
     const payload = registerSchema.parse(request.body);
-    const credentials = await User.getRegisterCredentials(payload);
+    const credentials = await Auth.getRegisterCredentials(payload);
     const createdUser = await this.usersRepository.createUser(credentials);
     response
       .cookie(...Auth.attachCookieParams(createdUser.id))
@@ -42,8 +41,7 @@ export class AuthHttpController extends HttpController {
     if (!found) {
       throw new BadRequestError("Invalid credentials");
     }
-    const user = new User(found.password);
-    const validCredentials = await user.validateLoginCredentials(payload);
+    const validCredentials = await Auth.validatePassword(payload.password, found.password);
     if (!validCredentials) {
       throw new BadRequestError("Invalid credentials");
     }
