@@ -63,7 +63,7 @@ export function createApp({
 
   return new App(
     [
-      new AuthHttpController(authService),
+      new AuthHttpController(authService, usersRepository),
       new ProductsHttpController(productsService, authService, mailService),
       new AuctionsHttpController(auctionsService, authService, mailService),
       new BidsHttpController(bidsService),

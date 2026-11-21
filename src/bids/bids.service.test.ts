@@ -4,7 +4,7 @@ import { BidsRepository } from "./bids.repository";
 import { BadRequestError } from "api/api.errors";
 import { DatabaseService } from "interfaces/database.interface";
 import { PoolClient } from "pg";
-import { User } from "users/users.validation";
+import { DatabaseUser } from "users/users.validation";
 import { Bid } from "./bids.validation";
 
 const createMockClient = () => ({
@@ -53,7 +53,7 @@ describe("BidsService", () => {
   let mockDB: jest.Mocked<DatabaseService>;
   let mockClient: ReturnType<typeof createMockClient>;
 
-  const mockUser = { id: 1 } as User;
+  const mockUser = { id: 1 } as DatabaseUser;
 
   beforeEach(() => {
     jest.useFakeTimers();

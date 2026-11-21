@@ -1,4 +1,4 @@
-import { User } from "users/users.validation";
+import { DatabaseUser } from "users/users.validation";
 import { RolesRepository } from "./roles.repository";
 import { RoleName } from "./roles.validation";
 
@@ -9,7 +9,7 @@ export class RolesService {
     user,
     allowedRoles
   }: {
-    user: User;
+    user: DatabaseUser;
     allowedRoles: Array<RoleName>;
   }) {
     if (allowedRoles.length === 0) {

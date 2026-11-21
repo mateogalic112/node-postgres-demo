@@ -1,7 +1,7 @@
 import { ProductsRepository } from "./products.repository";
 import { CreateProductPayload, Product, productSchema } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
-import { User } from "users/users.validation";
+import { DatabaseUser } from "users/users.validation";
 import { FilesService } from "interfaces/files.interface";
 import { NotFoundError } from "api/api.errors";
 import { EmbeddingsService } from "interfaces/embeddings.interface";
@@ -50,7 +50,7 @@ export class ProductsService {
     return this.toProducts(result);
   }
 
-  public async createProduct(user: User, payload: CreateProductPayload) {
+  public async createProduct(user: DatabaseUser, payload: CreateProductPayload) {
     const result = await this.productsRepository.createProduct(user, {
       ...payload.body,
       imageUrl: await this.getProductImageUrl(payload.file)

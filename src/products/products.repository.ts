@@ -2,7 +2,7 @@ import { Embedding } from "ai";
 import { CreateProductPayload, Product, ProductEmbedding } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
-import { User } from "users/users.validation";
+import { DatabaseUser } from "users/users.validation";
 import { LoggerService } from "interfaces/logger.interface";
 
 export class ProductsRepository {
@@ -33,7 +33,7 @@ export class ProductsRepository {
   }
 
   public async createProduct(
-    user: User,
+    user: DatabaseUser,
     payload: CreateProductPayload["body"] & { imageUrl: string | null }
   ) {
     const result = await this.DB.query<Product>(

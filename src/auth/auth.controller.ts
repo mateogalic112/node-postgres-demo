@@ -6,9 +6,15 @@ import { AUTH_COOKIE_NAME } from "./auth.constants";
 import { userSchema } from "users/users.validation";
 import { HttpController } from "api/api.controllers";
 import { formatResponse } from "api/api.formats";
+import { BadRequestError } from "api/api.errors";
+import { UsersRepository } from "users/users.repository";
+import { User } from "users/users.model";
 
 export class AuthHttpController extends HttpController {
-  constructor(private readonly authService: AuthService) {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersRepository: UsersRepository
+  ) {
     super("/auth");
     this.initializeRoutes();
   }
@@ -22,7 +28,8 @@ export class AuthHttpController extends HttpController {
 
   private registerUser = asyncMiddleware(async (request, response) => {
     const payload = registerSchema.parse(request.body);
-    const createdUser = await this.authService.register(payload);
+    const credentials = await User.getRegisterCredentials(payload);
+    const createdUser = await this.usersRepository.createUser(credentials);
     response
       .cookie(
         AUTH_COOKIE_NAME,
@@ -35,19 +42,25 @@ export class AuthHttpController extends HttpController {
 
   private loginUser = asyncMiddleware(async (request, response) => {
     const payload = loginSchema.parse(request.body);
-    const user = await this.authService.login(payload);
+    const found = await this.usersRepository.findUserByEmail(payload.email);
+    if (!found) throw new BadRequestError("Invalid credentials");
+
+    const user = new User(found.password);
+    const validCredentials = await user.validateLoginCredentials(payload);
+    if (!validCredentials) throw new BadRequestError("Invalid credentials");
+
     response
       .cookie(
         AUTH_COOKIE_NAME,
-        this.authService.createToken(user.id),
+        this.authService.createToken(found.id),
         this.authService.createCookieOptions()
       )
-      .json(formatResponse(user));
+      .json(formatResponse(found));
   });
 
   private me = asyncMiddleware(async (_, response) => {
-    const loggedUser = await this.authService.isLoggedIn(userSchema.parse(response.locals.user));
-    response.json(formatResponse(loggedUser));
+    const currentUser = userSchema.safeParse(response.locals.user);
+    response.json(formatResponse(currentUser));
   });
 
   private logoutUser = asyncMiddleware(async (_, response) => {

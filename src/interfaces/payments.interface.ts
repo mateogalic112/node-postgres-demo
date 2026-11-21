@@ -1,4 +1,4 @@
-import { User } from "users/users.validation";
+import { DatabaseUser } from "users/users.validation";
 
 export interface PaymentLineItem {
   product_id: number;
@@ -17,6 +17,6 @@ export interface PaymentDetails {
 
 export interface PaymentsService {
   pay: (payload: PaymentDetails) => Promise<{ id: string; url: string | null } | null>;
-  createCustomer: (user: User) => Promise<{ id: string } | null>;
+  createCustomer: (user: DatabaseUser) => Promise<{ id: string } | null>;
   constructEvent: (payload: string | Buffer, signature: string) => { type: string };
 }

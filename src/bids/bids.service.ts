@@ -1,6 +1,6 @@
 import { BidsRepository } from "./bids.repository";
 import { AuctionBid, auctionBidSchema, Bid, bidSchema, CreateBidPayload } from "./bids.validation";
-import { User } from "users/users.validation";
+import { DatabaseUser } from "users/users.validation";
 import { BadRequestError, InternalServerError } from "api/api.errors";
 import { DatabaseService } from "interfaces/database.interface";
 import { PgError } from "database/errors";
@@ -16,7 +16,7 @@ export class BidsService {
     private readonly logger: LoggerService
   ) {}
 
-  public async createBid(user: User, payload: CreateBidPayload) {
+  public async createBid(user: DatabaseUser, payload: CreateBidPayload) {
     const MAX_RETRIES = 5;
     const RETRY_DELAY_MS = 100;
     const QUERY_STATEMENT_TIMEOUT_MS = 10_000;

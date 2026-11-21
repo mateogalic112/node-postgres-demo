@@ -40,7 +40,7 @@ describe("AuthController", () => {
       });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe("Invalid email or password");
+      expect(response.body.message).toBe("Invalid credentials");
     });
 
     it("should NOT login a user if password is incorrect", async () => {
@@ -52,7 +52,7 @@ describe("AuthController", () => {
       });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe("Invalid email or password");
+      expect(response.body.message).toBe("Invalid credentials");
     });
 
     it("should login an existing user with correct credentials", async () => {

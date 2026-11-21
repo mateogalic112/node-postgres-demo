@@ -2,7 +2,7 @@ import { PaginatedRequestParams } from "api/api.validations";
 import { AuctionsRepository } from "./auctions.repository";
 import { Auction, auctionSchema, CreateAuctionPayload } from "./auctions.validation";
 import { BadRequestError, ForbiddenError, NotFoundError } from "api/api.errors";
-import { User } from "users/users.validation";
+import { DatabaseUser } from "users/users.validation";
 import { addHours, isPast } from "date-fns";
 
 export class AuctionsService {
@@ -21,12 +21,12 @@ export class AuctionsService {
     return this.toAuction(result);
   }
 
-  public async createAuction(user: User, payload: CreateAuctionPayload) {
+  public async createAuction(user: DatabaseUser, payload: CreateAuctionPayload) {
     const result = await this.auctionsRepository.createAuction(user, payload);
     return this.toAuction(result);
   }
 
-  public async cancelAuction(user: User, auctionId: number) {
+  public async cancelAuction(user: DatabaseUser, auctionId: number) {
     const updatedAuction = await this.auctionsRepository.cancelAuction(user, auctionId);
     if (updatedAuction) {
       return this.toAuction(updatedAuction);
