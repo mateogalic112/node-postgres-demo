@@ -1,6 +1,6 @@
 import { env } from "config/env";
 import Stripe from "stripe";
-import { PaymentLineItem, PaymentsService } from "interfaces/payments.interface";
+import { PaymentDetails, PaymentsService } from "interfaces/payments.interface";
 import { User } from "users/users.validation";
 import { LoggerService } from "interfaces/logger.interface";
 
@@ -25,11 +25,7 @@ export class StripeService implements PaymentsService {
     }
   }
 
-  public async createCheckoutSession(
-    orderId: number,
-    lineItems: PaymentLineItem[],
-    customerId: string
-  ) {
+  public async pay({ orderId, customerId, lineItems }: PaymentDetails) {
     try {
       return await this.stripe.checkout.sessions.create({
         customer: customerId,

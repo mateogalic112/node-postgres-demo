@@ -41,4 +41,3 @@ export const orderWithOrderDetailsSchema = z.object({
   created_at: z.date(),
   updated_at: z.date()
 });
-export type OrderWithOrderDetails = z.infer<typeof orderWithOrderDetailsSchema>;

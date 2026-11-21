@@ -56,7 +56,7 @@ describe("OrdersController", () => {
           unit_price_in_cents: product.price_in_cents
         })
       ]);
-      expect(paymentsService.createCheckoutSession).not.toHaveBeenCalled();
+      expect(paymentsService.pay).not.toHaveBeenCalled();
     });
 
     it("should freeze the line item price even if the product price later changes", async () => {
@@ -100,7 +100,7 @@ describe("OrdersController", () => {
 
     it("should throw an error when checkout session is not created", async () => {
       const { authCookie, order } = await createOrderForNewUser("testuser");
-      paymentsService.createCheckoutSession.mockResolvedValueOnce(null);
+      paymentsService.pay.mockResolvedValueOnce(null);
 
       const response = await checkoutRequest(authCookie, order.id);
 
@@ -133,9 +133,9 @@ describe("OrdersController", () => {
       const response = await checkoutRequest(authCookie, order.id);
       expect(response.status).toBe(201);
 
-      expect(paymentsService.createCheckoutSession).toHaveBeenLastCalledWith(
-        order.id,
-        [
+      expect(paymentsService.pay).toHaveBeenLastCalledWith({
+        orderId: order.id,
+        lineItems: [
           {
             product_id: product.id,
             name: product.name,
@@ -145,8 +145,8 @@ describe("OrdersController", () => {
             price_in_cents: product.price_in_cents
           }
         ],
-        "cus_test123"
-      );
+        customerId: "cus_test123"
+      });
     });
   });
 });

@@ -1,7 +1,8 @@
 import { InternalServerError } from "api/api.errors";
-import { User, userCustomerSchema } from "users/users.validation";
+import { User } from "users/users.validation";
 import { CustomersRepository } from "./customers.repository";
 import { PaymentLineItem, PaymentsService } from "interfaces/payments.interface";
+import { customerSchema } from "./customers.validation";
 
 export class CustomersService {
   constructor(
@@ -22,16 +23,16 @@ export class CustomersService {
       user.id,
       newCustomer.id
     );
-    return userCustomerSchema.parse(createdCustomer);
+    return customerSchema.parse(createdCustomer);
   }
 
   public async getCheckoutUrl(orderId: number, user: User, lineItems: Array<PaymentLineItem>) {
-    const customer = await this.findOrCreateStripeCustomer(user);
-    const checkoutSession = await this.paymentsService.createCheckoutSession(
+    const { customer_id } = await this.findOrCreateStripeCustomer(user);
+    const checkoutSession = await this.paymentsService.pay({
       orderId,
-      lineItems,
-      customer.customer_id
-    );
+      customerId: customer_id,
+      lineItems
+    });
     if (!checkoutSession || checkoutSession.url === null) {
       throw new InternalServerError("Checkout session couldn't be created!");
     }

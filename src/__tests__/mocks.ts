@@ -23,7 +23,7 @@ export const embeddingsService: jest.Mocked<EmbeddingsService> = {
 
 export const paymentsService: jest.Mocked<PaymentsService> = {
   createCustomer: jest.fn().mockResolvedValue({ id: "cus_test123" }),
-  createCheckoutSession: jest.fn().mockResolvedValue({ url: "https://checkout.stripe.com/test" }),
+  pay: jest.fn().mockResolvedValue({ url: "https://checkout.stripe.com/test" }),
   constructEvent: jest.fn()
 };
 

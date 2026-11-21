@@ -9,14 +9,14 @@ export interface PaymentLineItem {
   price_in_cents: number;
 }
 
+export interface PaymentDetails {
+  orderId: number;
+  customerId: string;
+  lineItems: PaymentLineItem[];
+}
+
 export interface PaymentsService {
-  createCheckoutSession: (
-    orderId: number,
-    lineItems: PaymentLineItem[],
-    customerId: string
-  ) => Promise<{ id: string; url: string | null } | null>;
-
+  pay: (payload: PaymentDetails) => Promise<{ id: string; url: string | null } | null>;
   createCustomer: (user: User) => Promise<{ id: string } | null>;
-
   constructEvent: (payload: string | Buffer, signature: string) => { type: string };
 }
