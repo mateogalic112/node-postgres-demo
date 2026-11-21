@@ -1,5 +1,4 @@
 import { HttpController } from "api/api.controllers";
-import { AuthService } from "auth/auth.service";
 import asyncMiddleware from "middleware/async.middleware";
 import authMiddleware from "middleware/auth.middleware";
 import { userSchema } from "users/users.validation";
@@ -8,10 +7,11 @@ import { formatResponse } from "api/api.formats";
 import { idSchema } from "api/api.validations";
 import { OrdersRepository } from "./orders.repository";
 import { CustomersService } from "customers/customers.service";
+import { UsersRepository } from "users/users.repository";
 
 export class OrdersHttpController extends HttpController {
   constructor(
-    private readonly authService: AuthService,
+    private readonly usersRepository: UsersRepository,
     private readonly ordersRepository: OrdersRepository,
     private readonly customersService: CustomersService
   ) {
@@ -20,10 +20,10 @@ export class OrdersHttpController extends HttpController {
   }
 
   protected initializeRoutes() {
-    this.router.post(`${this.path}`, authMiddleware(this.authService), this.createOrder);
+    this.router.post(`${this.path}`, authMiddleware(this.usersRepository), this.createOrder);
     this.router.post(
       `${this.path}/:id/checkout`,
-      authMiddleware(this.authService),
+      authMiddleware(this.usersRepository),
       this.orderCheckout
     );
   }

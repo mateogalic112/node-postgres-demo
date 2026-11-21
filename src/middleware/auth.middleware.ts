@@ -1,10 +1,17 @@
+import { UnauthenticatedError } from "api/api.errors";
+import { Auth } from "auth/auth.model";
 import type { RequestHandler } from "express";
-import { AuthService } from "auth/auth.service";
+import { UsersRepository } from "users/users.repository";
 
 const authMiddleware =
-  (authService: AuthService): RequestHandler =>
+  (usersRepository: UsersRepository): RequestHandler =>
   async (request, response, next) => {
-    response.locals.user = await authService.extractUserFromToken(request.cookies.Authentication);
+    const userId = await Auth.extractUserIdFromCookies(request.cookies);
+    const user = await usersRepository.findUserById(userId);
+    if (!user) {
+      throw new UnauthenticatedError("User not found");
+    }
+    response.locals.user = user;
     next();
   };
 

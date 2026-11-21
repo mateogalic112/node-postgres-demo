@@ -1,6 +1,5 @@
 import { HttpController } from "api/api.controllers";
 import { paginatedRequestSchema } from "api/api.validations";
-import { AuthService } from "auth/auth.service";
 import asyncMiddleware from "middleware/async.middleware";
 import authMiddleware from "middleware/auth.middleware";
 import { authorizationMiddleware } from "middleware/authorization.middleware";
@@ -12,7 +11,6 @@ import { userSchema } from "./users.validation";
 
 export class UsersHttpController extends HttpController {
   constructor(
-    private readonly authService: AuthService,
     private readonly rolesService: RolesService,
     private readonly usersRepository: UsersRepository
   ) {
@@ -23,7 +21,7 @@ export class UsersHttpController extends HttpController {
   protected initializeRoutes() {
     this.router.get(
       `${this.path}`,
-      authMiddleware(this.authService),
+      authMiddleware(this.usersRepository),
       authorizationMiddleware(this.rolesService, [RoleName.ADMIN]),
       this.getUsers
     );

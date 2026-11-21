@@ -6,13 +6,13 @@ import { createAuctionSchema } from "./auctions.validation";
 import authMiddleware from "middleware/auth.middleware";
 import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
-import { AuthService } from "auth/auth.service";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
+import { UsersRepository } from "users/users.repository";
 
 export class AuctionsHttpController extends HttpController {
   constructor(
     private readonly auctionsService: AuctionsService,
-    private readonly authService: AuthService,
+    private readonly usersRepository: UsersRepository,
     private readonly mailService: MailService
   ) {
     super("/auctions");
@@ -22,10 +22,10 @@ export class AuctionsHttpController extends HttpController {
   protected initializeRoutes() {
     this.router.get(`${this.path}`, this.getAuctions);
     this.router.get(`${this.path}/:id`, this.getAuctionById);
-    this.router.post(`${this.path}`, authMiddleware(this.authService), this.createAuction);
+    this.router.post(`${this.path}`, authMiddleware(this.usersRepository), this.createAuction);
     this.router.patch(
       `${this.path}/:id/cancel`,
-      authMiddleware(this.authService),
+      authMiddleware(this.usersRepository),
       this.cancelAuction
     );
   }

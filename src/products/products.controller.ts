@@ -11,13 +11,13 @@ import { idSchema, paginatedRequestSchema } from "api/api.validations";
 import { fileMiddleware } from "middleware/file.middleware";
 import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
-import { AuthService } from "auth/auth.service";
 import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
+import { UsersRepository } from "users/users.repository";
 
 export class ProductsHttpController extends HttpController {
   constructor(
     private readonly productsService: ProductsService,
-    private readonly authService: AuthService,
+    private readonly usersRepository: UsersRepository,
     private readonly mailService: MailService
   ) {
     super("/products");
@@ -30,7 +30,7 @@ export class ProductsHttpController extends HttpController {
     this.router.get(`${this.path}/:id`, this.getProductById);
     this.router.post(
       `${this.path}`,
-      authMiddleware(this.authService),
+      authMiddleware(this.usersRepository),
       fileMiddleware({
         limitMB: productImageSchema.maxSizeMB,
         allowedFormats: productImageSchema.allowedFormats

@@ -4,7 +4,6 @@ import { AuctionsRepository } from "auctions/auctions.repository";
 import { AuctionsService } from "auctions/auctions.service";
 import { AuctionsSocketController } from "auctions/auctions.socket";
 import { AuthHttpController } from "auth/auth.controller";
-import { AuthService } from "auth/auth.service";
 import { BidsHttpController } from "bids/bids.controller";
 import { BidsRepository } from "bids/bids.repository";
 import { BidsService } from "bids/bids.service";
@@ -54,7 +53,6 @@ export function createApp({
   );
 
   const usersRepository = new UsersRepository(db);
-  const authService = new AuthService(usersRepository);
   const auctionsService = new AuctionsService(new AuctionsRepository(db));
   const bidsService = new BidsService(new BidsRepository(db), db, logger);
   const rolesService = new RolesService(new RolesRepository(db));
@@ -63,18 +61,18 @@ export function createApp({
 
   return new App(
     [
-      new AuthHttpController(authService, usersRepository),
-      new ProductsHttpController(productsService, authService, mailService),
-      new AuctionsHttpController(auctionsService, authService, mailService),
+      new AuthHttpController(usersRepository),
+      new ProductsHttpController(productsService, usersRepository, mailService),
+      new AuctionsHttpController(auctionsService, usersRepository, mailService),
       new BidsHttpController(bidsService),
-      new UsersHttpController(authService, rolesService, usersRepository),
+      new UsersHttpController(rolesService, usersRepository),
       new BotHttpController(productsService, logger),
-      new OrdersHttpController(authService, ordersRepository, customersService),
+      new OrdersHttpController(usersRepository, ordersRepository, customersService),
       new PaymentsHttpController(paymentsService, ordersRepository, logger)
     ],
     [
       new AuctionsSocketController(auctionsService),
-      new BidsSocketController(bidsService, authService, auctionsService)
+      new BidsSocketController(bidsService, usersRepository, auctionsService)
     ],
     logger
   );
