@@ -2,14 +2,16 @@ import { openai } from "@ai-sdk/openai";
 import { stepCountIs, streamText, tool, convertToModelMessages, UIMessage } from "ai";
 import { HttpController } from "api/api.controllers";
 import asyncMiddleware from "middleware/async.middleware";
-import { ProductsService } from "products/products.service";
 import { LoggerService } from "interfaces/logger.interface";
 import z from "zod";
 import { SYSTEM_PROMPT } from "./bot.prompts";
+import { ProductsRepository } from "products/products.repository";
+import { EmbeddingsService } from "interfaces/embeddings.interface";
 
 export class BotHttpController extends HttpController {
   constructor(
-    private readonly productsService: ProductsService,
+    private readonly productsRepository: ProductsRepository,
+    private readonly embeddingsService: EmbeddingsService,
     private readonly logger: LoggerService
   ) {
     super("/chat");
@@ -35,14 +37,26 @@ export class BotHttpController extends HttpController {
           inputSchema: z.object({
             query: z.string().describe("The query to find relevant products")
           }),
-          execute: async ({ query }) => this.productsService.findRelevantProducts(query)
+          execute: async ({ query }) => {
+            const embeddedQuery = await this.embeddingsService.generateEmbedding(query);
+            if (!embeddedQuery || !embeddedQuery.embedding) {
+              return [];
+            }
+            const relevantProducts = await this.productsRepository.findRelevantProducts(
+              embeddedQuery.embedding,
+              3
+            );
+            return this.productsRepository.findProductsByIds(
+              relevantProducts.map((product) => product.product_id)
+            );
+          }
         }),
         recommend_product: tool({
           description: "Recommend product to the user.",
           inputSchema: z.object({
             productId: z.number().describe("The product id to recommend")
           }),
-          execute: async ({ productId }) => this.productsService.getProductById(productId)
+          execute: async ({ productId }) => this.productsRepository.findProductById(productId)
         })
       },
       onStepFinish: async ({ toolResults }) => {

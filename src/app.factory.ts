@@ -22,7 +22,6 @@ import { OrdersRepository } from "orders/orders.repository";
 import { PaymentsHttpController } from "payments/payments.controller";
 import { ProductsHttpController } from "products/products.controller";
 import { ProductsRepository } from "products/products.repository";
-import { ProductsService } from "products/products.service";
 import { RolesRepository } from "roles/roles.repository";
 import { UsersHttpController } from "users/users.controller";
 import { UsersRepository } from "users/users.repository";
@@ -44,8 +43,7 @@ export function createApp({
   paymentsService,
   logger
 }: AppDependencies) {
-  const productsRepository = new ProductsRepository(db, logger);
-  const productsService = new ProductsService(productsRepository, embeddingsService, logger);
+  const productsRepository = new ProductsRepository(db);
   const usersRepository = new UsersRepository(db);
   const rolesRepository = new RolesRepository(db);
   const auctionsService = new AuctionsService(new AuctionsRepository(db));
@@ -57,16 +55,16 @@ export function createApp({
     [
       new AuthHttpController(usersRepository),
       new ProductsHttpController(
-        productsService,
         productsRepository,
         usersRepository,
         mailService,
-        filesService
+        filesService,
+        embeddingsService
       ),
       new AuctionsHttpController(auctionsService, usersRepository, mailService),
       new BidsHttpController(bidsService),
       new UsersHttpController(rolesRepository, usersRepository),
-      new BotHttpController(productsService, logger),
+      new BotHttpController(productsRepository, embeddingsService, logger),
       new OrdersHttpController(usersRepository, ordersRepository, customersService),
       new PaymentsHttpController(paymentsService, ordersRepository, logger)
     ],

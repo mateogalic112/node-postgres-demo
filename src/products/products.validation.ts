@@ -39,7 +39,3 @@ export const productEmbeddingSchema = z.object({
 });
 
 export type ProductEmbedding = z.infer<typeof productEmbeddingSchema>;
-
-export const getRelevantProductsSchema = z.object({
-  query: z.string().min(3)
-});

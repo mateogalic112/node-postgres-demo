@@ -7,13 +7,9 @@ import {
 } from "./products.validation";
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
-import { LoggerService } from "interfaces/logger.interface";
 
 export class ProductsRepository {
-  constructor(
-    private readonly DB: DatabaseService,
-    private readonly logger: LoggerService
-  ) {}
+  constructor(private readonly DB: DatabaseService) {}
 
   public async getProducts(params: PaginatedRequestParams) {
     const result = await this.DB.query<Product>(
@@ -64,6 +60,5 @@ export class ProductsRepository {
       `INSERT INTO products_embeddings (product_id, embedding) VALUES ${embeddings.map((_, index) => `($1, $${index + 2}::vector)`).join(", ")}`,
       [productId, ...embeddings.map((embedding) => `[${embedding.join(",")}]`)]
     );
-    this.logger.log(`Created ${embeddings.length} embeddings for product ${productId}`);
   }
 }
