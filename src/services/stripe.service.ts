@@ -1,7 +1,7 @@
 import { env } from "config/env";
 import Stripe from "stripe";
 import { PaymentDetails, PaymentsService } from "interfaces/payments.interface";
-import { DatabaseUser } from "users/users.validation";
+import { User } from "users/users.validation";
 import { LoggerService } from "interfaces/logger.interface";
 
 export class StripeService implements PaymentsService {
@@ -11,7 +11,7 @@ export class StripeService implements PaymentsService {
     this.stripe = new Stripe(env.STRIPE_SECRET_KEY);
   }
 
-  public async createCustomer(user: DatabaseUser) {
+  public async createCustomer(user: User) {
     try {
       return await this.stripe.customers.create({
         email: user.email,

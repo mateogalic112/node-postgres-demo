@@ -3,7 +3,7 @@ import { DatabaseService } from "interfaces/database.interface";
 import { Auction, CreateAuctionPayload } from "./auctions.validation";
 import { PgError } from "database/errors";
 import { BadRequestError } from "api/api.errors";
-import { DatabaseUser } from "users/users.validation";
+import { User } from "users/users.validation";
 
 export class AuctionsRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -24,7 +24,7 @@ export class AuctionsRepository {
     return result.rows[0];
   }
 
-  public async createAuction(user: DatabaseUser, payload: CreateAuctionPayload) {
+  public async createAuction(user: User, payload: CreateAuctionPayload) {
     try {
       const result = await this.DB.query<Auction>(
         "INSERT INTO auctions (creator_id, product_id, start_time, duration_hours, starting_price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
@@ -48,7 +48,7 @@ export class AuctionsRepository {
     }
   }
 
-  public async cancelAuction(user: DatabaseUser, auctionId: number) {
+  public async cancelAuction(user: User, auctionId: number) {
     const result = await this.DB.query<Auction>(
       `UPDATE auctions 
        SET is_cancelled = TRUE

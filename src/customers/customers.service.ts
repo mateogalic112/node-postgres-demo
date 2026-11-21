@@ -1,5 +1,5 @@
 import { InternalServerError } from "api/api.errors";
-import { DatabaseUser } from "users/users.validation";
+import { User } from "users/users.validation";
 import { CustomersRepository } from "./customers.repository";
 import { PaymentLineItem, PaymentsService } from "interfaces/payments.interface";
 import { customerSchema } from "./customers.validation";
@@ -10,7 +10,7 @@ export class CustomersService {
     private readonly paymentsService: PaymentsService
   ) {}
 
-  private async findOrCreateStripeCustomer(user: DatabaseUser) {
+  private async findOrCreateStripeCustomer(user: User) {
     const customer = await this.customersRepository.findStripeCustomerBy(user.id);
     if (customer) return customer;
 
@@ -26,11 +26,7 @@ export class CustomersService {
     return customerSchema.parse(createdCustomer);
   }
 
-  public async getCheckoutUrl(
-    orderId: number,
-    user: DatabaseUser,
-    lineItems: Array<PaymentLineItem>
-  ) {
+  public async getCheckoutUrl(orderId: number, user: User, lineItems: Array<PaymentLineItem>) {
     const { customer_id } = await this.findOrCreateStripeCustomer(user);
     const checkoutSession = await this.paymentsService.pay({
       orderId,

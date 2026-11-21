@@ -1,4 +1,4 @@
-import { DatabaseUser } from "users/users.validation";
+import { User } from "users/users.validation";
 import { CreateOrderPayload, Order, OrderDetail } from "./orders.validation";
 import { DatabaseService } from "interfaces/database.interface";
 import { NotFoundError } from "api/api.errors";
@@ -7,7 +7,7 @@ import { PaymentLineItem } from "interfaces/payments.interface";
 export class OrdersRepository {
   constructor(private readonly DB: DatabaseService) {}
 
-  public async createOrderWithOrderDetails(user: DatabaseUser, payload: CreateOrderPayload) {
+  public async createOrderWithOrderDetails(user: User, payload: CreateOrderPayload) {
     const client = await this.DB.getClient();
     try {
       await client.query("BEGIN");

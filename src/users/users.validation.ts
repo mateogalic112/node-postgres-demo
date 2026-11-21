@@ -9,4 +9,4 @@ export const userSchema = z.object({
   created_at: z.date(),
   updated_at: z.date()
 });
-export type DatabaseUser = z.infer<typeof userSchema>;
+export type User = z.infer<typeof userSchema>;
