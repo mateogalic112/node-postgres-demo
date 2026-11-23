@@ -3,7 +3,6 @@ import { createBidSchema } from "./bids.validation";
 import { SocketController } from "api/api.controllers";
 import { BidsService } from "./bids.service";
 import { formatResponse } from "api/api.formats";
-import { AuctionsService } from "auctions/auctions.service";
 import { getErrorMessage, UnauthenticatedError } from "api/api.errors";
 import { UsersRepository } from "users/users.repository";
 import { Auth } from "auth/auth.model";
@@ -11,8 +10,7 @@ import { Auth } from "auth/auth.model";
 export class BidsSocketController extends SocketController {
   constructor(
     private readonly bidsService: BidsService,
-    private readonly usersRepository: UsersRepository,
-    private readonly auctionsService: AuctionsService
+    private readonly usersRepository: UsersRepository
   ) {
     super("bids");
   }
@@ -36,7 +34,7 @@ export class BidsSocketController extends SocketController {
 
         //@dev sends event to everyone EXCEPT sender
         socket
-          .to(this.auctionsService.getAuctionRoomName("auctions", newBid.auction_id))
+          .to(`auctions-${newBid.auction_id}`)
           .emit(`${this.namespace}:bid_created`, formatResponse(auctionBid));
 
         //@dev sends event ONLY to sender

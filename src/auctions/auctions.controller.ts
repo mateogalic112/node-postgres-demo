@@ -1,17 +1,17 @@
 import { HttpController } from "api/api.controllers";
 import { idSchema, paginatedRequestSchema } from "api/api.validations";
 import asyncMiddleware from "middleware/async.middleware";
-import { AuctionsService } from "./auctions.service";
 import { createAuctionSchema } from "./auctions.validation";
 import authMiddleware from "middleware/auth.middleware";
 import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
 import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
 import { UsersRepository } from "users/users.repository";
+import { AuctionsRepository } from "./auctions.repository";
 
 export class AuctionsHttpController extends HttpController {
   constructor(
-    private readonly auctionsService: AuctionsService,
+    private readonly auctionsRepository: AuctionsRepository,
     private readonly usersRepository: UsersRepository,
     private readonly mailService: MailService
   ) {
@@ -32,20 +32,20 @@ export class AuctionsHttpController extends HttpController {
 
   private getAuctions = asyncMiddleware(async (request, response) => {
     const query = paginatedRequestSchema.parse(request.query);
-    const auctions = await this.auctionsService.getAuctions(query);
+    const auctions = await this.auctionsRepository.getAuctions(query);
     response.json(formatPaginatedResponse(auctions, query.limit));
   });
 
   private getAuctionById = asyncMiddleware(async (request, response) => {
     const { id: auctionId } = idSchema.parse(request.params);
-    const auction = await this.auctionsService.getAuctionById(auctionId);
+    const auction = await this.auctionsRepository.getAuctionById(auctionId);
     response.json(formatResponse(auction));
   });
 
   private createAuction = asyncMiddleware(async (request, response) => {
     const user = userSchema.parse(response.locals.user);
     const payload = createAuctionSchema.parse(request.body);
-    const auction = await this.auctionsService.createAuction(user, payload);
+    const auction = await this.auctionsRepository.createAuction(user.id, payload);
     await this.mailService.sendEmail({
       to: user.email,
       template: CreateAuctionTemplate.getTemplate(auction)
@@ -56,7 +56,7 @@ export class AuctionsHttpController extends HttpController {
   private cancelAuction = asyncMiddleware(async (request, response) => {
     const { id: auctionId } = idSchema.parse(request.params);
     const user = userSchema.parse(response.locals.user);
-    const auction = await this.auctionsService.cancelAuction(user, auctionId);
+    const auction = await this.auctionsRepository.cancelAuction(auctionId, user.id);
     response.json(formatResponse(auction));
   });
 }

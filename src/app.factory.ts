@@ -1,7 +1,6 @@
 import App from "app";
 import { AuctionsHttpController } from "auctions/auctions.controller";
 import { AuctionsRepository } from "auctions/auctions.repository";
-import { AuctionsService } from "auctions/auctions.service";
 import { AuctionsSocketController } from "auctions/auctions.socket";
 import { AuthHttpController } from "auth/auth.controller";
 import { BidsHttpController } from "bids/bids.controller";
@@ -46,7 +45,7 @@ export function createApp({
   const productsRepository = new ProductsRepository(db);
   const usersRepository = new UsersRepository(db);
   const rolesRepository = new RolesRepository(db);
-  const auctionsService = new AuctionsService(new AuctionsRepository(db));
+  const auctionsRepository = new AuctionsRepository(db);
   const bidsService = new BidsService(new BidsRepository(db), db, logger);
   const ordersRepository = new OrdersRepository(db);
   const customersService = new CustomersService(new CustomersRepository(db), paymentsService);
@@ -61,17 +60,14 @@ export function createApp({
         filesService,
         embeddingsService
       ),
-      new AuctionsHttpController(auctionsService, usersRepository, mailService),
+      new AuctionsHttpController(auctionsRepository, usersRepository, mailService),
       new BidsHttpController(bidsService),
       new UsersHttpController(rolesRepository, usersRepository),
       new BotHttpController(productsRepository, embeddingsService, logger),
       new OrdersHttpController(usersRepository, ordersRepository, customersService),
       new PaymentsHttpController(paymentsService, ordersRepository, logger)
     ],
-    [
-      new AuctionsSocketController(auctionsService),
-      new BidsSocketController(bidsService, usersRepository, auctionsService)
-    ],
+    [new AuctionsSocketController(), new BidsSocketController(bidsService, usersRepository)],
     logger
   );
 }

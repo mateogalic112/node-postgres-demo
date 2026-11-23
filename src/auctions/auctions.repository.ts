@@ -1,9 +1,6 @@
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
-import { Auction, CreateAuctionPayload } from "./auctions.validation";
-import { PgError } from "database/errors";
-import { BadRequestError } from "api/api.errors";
-import { User } from "users/users.validation";
+import { Auction, auctionSchema, CreateAuctionPayload } from "./auctions.validation";
 
 export class AuctionsRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -13,42 +10,29 @@ export class AuctionsRepository {
       "SELECT * FROM auctions WHERE id > $1 ORDER BY id ASC LIMIT $2",
       [params.cursor ?? 0, params.limit]
     );
-    return result.rows;
+    return result.rows.map((data) => auctionSchema.parse(data));
   }
 
-  public async findAuctionById(id: number) {
+  public async getAuctionById(id: number) {
     const result = await this.DB.query<Auction>("SELECT * FROM auctions WHERE id = $1", [id]);
-    if (result.rows.length === 0) {
-      return null;
-    }
-    return result.rows[0];
+    return auctionSchema.parse(result.rows[0], { error: () => "Product not found" });
   }
 
-  public async createAuction(user: User, payload: CreateAuctionPayload) {
-    try {
-      const result = await this.DB.query<Auction>(
-        "INSERT INTO auctions (creator_id, product_id, start_time, duration_hours, starting_price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        [
-          user.id,
-          payload.product_id,
-          payload.start_time,
-          payload.duration_hours,
-          payload.starting_price_in_cents
-        ]
-      );
-      return result.rows[0];
-    } catch (error) {
-      if (PgError.isUniqueViolation(error)) {
-        throw new BadRequestError("Product already auctioned. Please try again.");
-      }
-      if (PgError.isViolatingForeignKeyConstraint(error)) {
-        throw new BadRequestError("Product not found. Please try again.");
-      }
-      throw error;
-    }
+  public async createAuction(userId: number, payload: CreateAuctionPayload) {
+    const result = await this.DB.query<Auction>(
+      "INSERT INTO auctions (creator_id, product_id, start_time, duration_hours, starting_price_in_cents) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [
+        userId,
+        payload.product_id,
+        payload.start_time,
+        payload.duration_hours,
+        payload.starting_price_in_cents
+      ]
+    );
+    return auctionSchema.parse(result.rows[0]);
   }
 
-  public async cancelAuction(user: User, auctionId: number) {
+  public async cancelAuction(auctionId: number, userId: number) {
     const result = await this.DB.query<Auction>(
       `UPDATE auctions 
        SET is_cancelled = TRUE
@@ -57,8 +41,8 @@ export class AuctionsRepository {
          AND is_cancelled = FALSE 
          AND NOW() < start_time + INTERVAL '1 hour' * duration_hours
        RETURNING *`,
-      [auctionId, user.id]
+      [auctionId, userId]
     );
-    return result.rows[0];
+    return auctionSchema.parse(result.rows[0], { error: () => "Failed to cancel!" });
   }
 }

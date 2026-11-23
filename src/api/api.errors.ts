@@ -57,7 +57,7 @@ export const getErrorStatus = (error: unknown): number => {
   return 500;
 };
 
-const getDatabaseErrorMessage = (error: DatabaseError) => {
+const formatDatabaseErrorMessage = (error: DatabaseError) => {
   if (PgError.isUniqueViolation(error)) {
     return "Resource already exists";
   }
@@ -68,7 +68,7 @@ export const getErrorMessage = (error: unknown): string => {
   if (error instanceof TokenExpiredError) return error.message;
   if (error instanceof ZodError) return error.issues.map((e) => e.message).join(", ");
   if (error instanceof HttpError) return error.message;
-  if (error instanceof DatabaseError) return getDatabaseErrorMessage(error);
+  if (error instanceof DatabaseError) return formatDatabaseErrorMessage(error);
   if (error instanceof MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") return "File size too large";
     return error.message;
