@@ -1,7 +1,7 @@
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
 import { Auction, auctionSchema, CreateAuctionPayload } from "./auctions.validation";
-import { BadRequestError, NotFoundError } from "api/api.errors";
+import { BadRequestError, InternalServerError, NotFoundError } from "api/api.errors";
 
 export class AuctionsRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -33,6 +33,9 @@ export class AuctionsRepository {
         payload.starting_price_in_cents
       ]
     );
+    if (!result.rows[0]) {
+      throw new InternalServerError("Auction not created");
+    }
     return auctionSchema.parse(result.rows[0]);
   }
 

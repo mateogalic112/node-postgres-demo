@@ -9,11 +9,18 @@ import { addDays, subDays } from "date-fns";
 import request from "supertest";
 import { CreateAuctionPayload } from "./auctions.validation";
 
-export const createMockedAuctionPayload = (productId: number): CreateAuctionPayload => ({
-  product_id: productId,
-  start_time: addDays(new Date(), 1),
-  duration_hours: 24,
-  starting_price_in_cents: 1000
+type AuctionPayload = {
+  product_id: number;
+  start_time?: Date;
+  duration_hours?: number;
+  starting_price_in_cents?: number;
+};
+
+export const createMockedAuctionPayload = (payload: AuctionPayload): CreateAuctionPayload => ({
+  product_id: payload.product_id,
+  start_time: payload.start_time ?? addDays(new Date(), 1),
+  duration_hours: payload.duration_hours ?? 24,
+  starting_price_in_cents: payload.starting_price_in_cents ?? 100
 });
 
 describe("AuctionsController", () => {
@@ -24,100 +31,95 @@ describe("AuctionsController", () => {
   });
 
   describe("POST /api/v1/auctions", () => {
-    it("should NOT create an auction when product is not found", async () => {
-      const seller = await getAuthCookieAfterRegister(app, "testuser");
-      const nonExistentProductId = 12345;
+    let seller: string = "";
+    let productId: number = 0;
 
-      const mockedAuctionPayload = createMockedAuctionPayload(nonExistentProductId);
+    beforeEach(async () => {
+      seller = await getAuthCookieAfterRegister(app, "creator");
+
+      const productResponse = await createProductRequest(app, seller);
+      productId = productResponse.body.data.id;
+    });
+
+    it("should create an auction", async () => {
+      const payload = createMockedAuctionPayload({ product_id: productId });
+
       const response = await request(app.getServer())
         .post("/api/v1/auctions")
         .set("Cookie", seller)
-        .send(mockedAuctionPayload);
+        .send(payload);
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.product_id).toBe(productId);
+    });
+
+    it("should NOT create an auction when product is not found", async () => {
+      const nonExistentProductId = 12345;
+      const payload = createMockedAuctionPayload({ product_id: nonExistentProductId });
+
+      const response = await request(app.getServer())
+        .post("/api/v1/auctions")
+        .set("Cookie", seller)
+        .send(payload);
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBeDefined();
     });
 
     it("should NOT create an auction when starting time is in the past", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const payload = createMockedAuctionPayload({
+        product_id: productId,
+        start_time: subDays(new Date(), 1)
+      });
 
-      const productResponse = await createProductRequest(app, authCookie);
-      const productId = productResponse.body.data.id;
-
-      const mockedAuctionPayload = createMockedAuctionPayload(productId);
       const response = await request(app.getServer())
         .post("/api/v1/auctions")
-        .set("Cookie", authCookie)
-        .send({ ...mockedAuctionPayload, start_time: subDays(new Date(), 1) });
+        .set("Cookie", seller)
+        .send(payload);
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe("Auction start time must be in the future");
     });
 
     it("should NOT create an auction when duration is less than 24 hours", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const payload = createMockedAuctionPayload({ product_id: productId, duration_hours: 23 });
 
-      const productResponse = await createProductRequest(app, authCookie);
-      const productId = productResponse.body.data.id;
-
-      const mockedAuctionPayload = createMockedAuctionPayload(productId);
       const response = await request(app.getServer())
         .post("/api/v1/auctions")
-        .set("Cookie", authCookie)
-        .send({ ...mockedAuctionPayload, duration_hours: 23 });
+        .set("Cookie", seller)
+        .send(payload);
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe("Auction duration must be at least 24 hours");
     });
 
     it("should NOT create an auction when starting price is less than 100 cents", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const payload = createMockedAuctionPayload({
+        product_id: productId,
+        starting_price_in_cents: 99
+      });
 
-      const productResponse = await createProductRequest(app, authCookie);
-      const productId = productResponse.body.data.id;
-
-      const mockedAuctionPayload = createMockedAuctionPayload(productId);
       const response = await request(app.getServer())
         .post("/api/v1/auctions")
-        .set("Cookie", authCookie)
-        .send({ ...mockedAuctionPayload, starting_price_in_cents: 99 });
+        .set("Cookie", seller)
+        .send(payload);
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe("Starting price must be at least 100 cents");
     });
 
-    it("should create an auction when authenticated", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
-
-      const productResponse = await createProductRequest(app, authCookie);
-      const productId = productResponse.body.data.id;
-
-      const mockedAuctionPayload = createMockedAuctionPayload(productId);
-      const response = await request(app.getServer())
-        .post("/api/v1/auctions")
-        .set("Cookie", authCookie)
-        .send(mockedAuctionPayload);
-
-      expect(response.status).toBe(201);
-      expect(response.body.data.product_id).toBe(productId);
-    });
-
     it("should NOT create an auction when there is a race condition with products", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
+      const payload = createMockedAuctionPayload({ product_id: productId });
 
-      const productResponse = await createProductRequest(app, authCookie);
-      const productId = productResponse.body.data.id;
-
-      const mockedAuctionPayload = createMockedAuctionPayload(productId);
       const response = await request(app.getServer())
         .post("/api/v1/auctions")
-        .set("Cookie", authCookie)
-        .send(mockedAuctionPayload);
+        .set("Cookie", seller)
+        .send(payload);
 
       const response2 = await request(app.getServer())
         .post("/api/v1/auctions")
-        .set("Cookie", authCookie)
-        .send(mockedAuctionPayload);
+        .set("Cookie", seller)
+        .send(payload);
 
       expect(response.status).toBe(201);
       expect(response.body.data.product_id).toBe(productId);
@@ -146,7 +148,7 @@ describe("AuctionsController", () => {
       const auctionResponse = await request(app.getServer())
         .post("/api/v1/auctions")
         .set("Cookie", seller)
-        .send(createMockedAuctionPayload(productId));
+        .send(createMockedAuctionPayload({ product_id: productId }));
       auctionId = auctionResponse.body.data.id;
     });
 
