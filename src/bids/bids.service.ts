@@ -1,6 +1,5 @@
 import { BidsRepository } from "./bids.repository";
-import { AuctionBid, auctionBidSchema, Bid, bidSchema, CreateBidPayload } from "./bids.validation";
-import { User } from "users/users.validation";
+import { CreateBidPayload } from "./bids.validation";
 import { BadRequestError, InternalServerError } from "api/api.errors";
 import { DatabaseService } from "interfaces/database.interface";
 import { PgError } from "database/errors";
@@ -16,12 +15,12 @@ export class BidsService {
     private readonly logger: LoggerService
   ) {}
 
-  public async createBid(user: User, payload: CreateBidPayload) {
+  public async createBid(userId: number, payload: CreateBidPayload) {
     const MAX_RETRIES = 5;
     const RETRY_DELAY_MS = 100;
     const QUERY_STATEMENT_TIMEOUT_MS = 10_000;
 
-    const idempotencyKey = `bid_${user.id}_${payload.auction_id}_${payload.amount_in_cents}`;
+    const idempotencyKey = `bid_${userId}_${payload.auction_id}_${payload.amount_in_cents}`;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       // @dev MUST use the same client instance for all statements within a transaction!
@@ -38,7 +37,7 @@ export class BidsService {
         const auction = await this.bidsRepository.getBiddingAuction(
           client,
           payload.auction_id,
-          user.id
+          userId
         );
         const highestBidInCents = await this.bidsRepository.getHighestBidAmountForAuction(
           client,
@@ -50,16 +49,11 @@ export class BidsService {
           highestBidInCents
         });
 
-        const result = await this.bidsRepository.createBid(
-          client,
-          user.id,
-          payload,
-          idempotencyKey
-        );
+        const newBid = await this.bidsRepository.createBid(client, userId, payload, idempotencyKey);
 
         await client.query("COMMIT");
 
-        return this.toBid(result);
+        return newBid;
       } catch (error) {
         await client.query("ROLLBACK");
 
@@ -104,27 +98,5 @@ export class BidsService {
         `Bid must be at least ${Currency.formatAmount(minimumAcceptableBid)}`
       );
     }
-  }
-
-  public async getAuctionBid(bidId: number) {
-    const result = await this.bidsRepository.getAuctionBid(bidId);
-    return this.toAuctionBid(result);
-  }
-
-  public async getAuctionBids(auctionId: number) {
-    const result = await this.bidsRepository.getAuctionBids(auctionId);
-    return this.toAuctionBids(result);
-  }
-
-  private toBid(data: unknown): Bid {
-    return bidSchema.parse(data);
-  }
-
-  private toAuctionBid(data: unknown): AuctionBid {
-    return auctionBidSchema.parse(data);
-  }
-
-  private toAuctionBids(data: Array<unknown>): Array<AuctionBid> {
-    return data.map(this.toAuctionBid);
   }
 }

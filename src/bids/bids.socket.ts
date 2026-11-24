@@ -3,14 +3,14 @@ import { createBidSchema } from "./bids.validation";
 import { SocketController } from "api/api.controllers";
 import { BidsService } from "./bids.service";
 import { formatResponse } from "api/api.formats";
-import { getErrorMessage, UnauthenticatedError } from "api/api.errors";
-import { UsersRepository } from "users/users.repository";
+import { getErrorMessage } from "api/api.errors";
 import { Auth } from "auth/auth.model";
+import { BidsRepository } from "./bids.repository";
 
 export class BidsSocketController extends SocketController {
   constructor(
     private readonly bidsService: BidsService,
-    private readonly usersRepository: UsersRepository
+    private readonly bidsRepository: BidsRepository
   ) {
     super("bids");
   }
@@ -22,15 +22,10 @@ export class BidsSocketController extends SocketController {
   private handleCreateBid = (socket: Socket) => {
     return async (rawPayload: unknown) => {
       try {
-        const userId = await Auth.extractUserIdFromSocket(socket);
-        const user = await this.usersRepository.findUserById(userId);
-        if (!user) {
-          throw new UnauthenticatedError("User not found!");
-        }
         const payload = createBidSchema.parse(rawPayload);
-        const newBid = await this.bidsService.createBid(user, payload);
-
-        const auctionBid = await this.bidsService.getAuctionBid(newBid.id);
+        const userId = Auth.extractUserIdFromSocket(socket);
+        const newBid = await this.bidsService.createBid(userId, payload);
+        const auctionBid = await this.bidsRepository.getAuctionBid(newBid.id);
 
         //@dev sends event to everyone EXCEPT sender
         socket

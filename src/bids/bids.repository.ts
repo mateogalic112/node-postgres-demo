@@ -1,5 +1,5 @@
 import { DatabaseService } from "interfaces/database.interface";
-import { AuctionBid, Bid, CreateBidPayload } from "./bids.validation";
+import { AuctionBid, auctionBidSchema, Bid, bidSchema, CreateBidPayload } from "./bids.validation";
 import { Auction } from "auctions/auctions.validation";
 import { NotFoundError } from "api/api.errors";
 import { PoolClient } from "pg";
@@ -19,7 +19,7 @@ export class BidsRepository {
            RETURNING *`,
       [payload.auction_id, userId, payload.amount_in_cents, idempotencyKey]
     );
-    return result.rows[0];
+    return bidSchema.parse(result.rows[0]);
   }
 
   public async getBiddingAuction(client: PoolClient, auctionId: number, userId: number) {
@@ -48,7 +48,7 @@ WHERE b.id = $1`,
     if (result.rows.length === 0) {
       throw new NotFoundError("Bid not found");
     }
-    return result.rows[0];
+    return auctionBidSchema.parse(result.rows[0]);
   }
 
   public async getHighestBidAmountForAuction(
@@ -77,6 +77,6 @@ WHERE b.id = $1`,
 	WHERE auction_id = $1 ORDER BY created_at DESC`,
       [auctionId]
     );
-    return result.rows;
+    return result.rows.map((row) => auctionBidSchema.parse(row));
   }
 }

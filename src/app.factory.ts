@@ -46,6 +46,7 @@ export function createApp({
   const usersRepository = new UsersRepository(db);
   const rolesRepository = new RolesRepository(db);
   const auctionsRepository = new AuctionsRepository(db);
+  const bidsRepository = new BidsRepository(db);
   const bidsService = new BidsService(new BidsRepository(db), db, logger);
   const ordersRepository = new OrdersRepository(db);
   const customersService = new CustomersService(new CustomersRepository(db), paymentsService);
@@ -61,13 +62,13 @@ export function createApp({
         embeddingsService
       ),
       new AuctionsHttpController(auctionsRepository, usersRepository, mailService),
-      new BidsHttpController(bidsService),
+      new BidsHttpController(bidsRepository),
       new UsersHttpController(rolesRepository, usersRepository),
       new BotHttpController(productsRepository, embeddingsService, logger),
       new OrdersHttpController(usersRepository, ordersRepository, customersService),
       new PaymentsHttpController(paymentsService, ordersRepository, logger)
     ],
-    [new AuctionsSocketController(), new BidsSocketController(bidsService, usersRepository)],
+    [new AuctionsSocketController(), new BidsSocketController(bidsService, bidsRepository)],
     logger
   );
 }

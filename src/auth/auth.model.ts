@@ -29,7 +29,7 @@ export class Auth {
     return this.extractUserIdFromCookies(cookies);
   }
 
-  public static async extractUserIdFromCookies(cookies: Record<string, string>) {
+  public static extractUserIdFromCookies(cookies: Record<string, string>) {
     const token = cookies[this.AUTH_COOKIE_NAME];
     if (!token) {
       throw new UnauthenticatedError("Token not found");
