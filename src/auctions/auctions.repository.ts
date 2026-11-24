@@ -1,6 +1,7 @@
 import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
 import { Auction, auctionSchema, CreateAuctionPayload } from "./auctions.validation";
+import { BadRequestError, NotFoundError } from "api/api.errors";
 
 export class AuctionsRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -15,7 +16,10 @@ export class AuctionsRepository {
 
   public async getAuctionById(id: number) {
     const result = await this.DB.query<Auction>("SELECT * FROM auctions WHERE id = $1", [id]);
-    return auctionSchema.parse(result.rows[0], { error: () => "Product not found" });
+    if (!result.rows[0]) {
+      throw new NotFoundError("Product not found");
+    }
+    return auctionSchema.parse(result.rows[0]);
   }
 
   public async createAuction(userId: number, payload: CreateAuctionPayload) {
@@ -43,6 +47,9 @@ export class AuctionsRepository {
        RETURNING *`,
       [auctionId, userId]
     );
-    return auctionSchema.parse(result.rows[0], { error: () => "Failed to cancel!" });
+    if (!result.rows[0]) {
+      throw new BadRequestError("Auction can't be cancelled");
+    }
+    return auctionSchema.parse(result.rows[0]);
   }
 }

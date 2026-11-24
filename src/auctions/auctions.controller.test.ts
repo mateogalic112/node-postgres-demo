@@ -134,7 +134,7 @@ describe("AuctionsController", () => {
 
     const FAILED_RESPONSE = {
       status: 400,
-      body: { message: "Failed to cancel!" }
+      body: { message: "Auction can't be cancelled" }
     };
 
     beforeEach(async () => {
