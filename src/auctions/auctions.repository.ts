@@ -17,7 +17,7 @@ export class AuctionsRepository {
   public async getAuctionById(id: number) {
     const result = await this.DB.query<Auction>("SELECT * FROM auctions WHERE id = $1", [id]);
     if (!result.rows[0]) {
-      throw new NotFoundError("Product not found");
+      throw new NotFoundError("Auction not found");
     }
     return auctionSchema.parse(result.rows[0]);
   }

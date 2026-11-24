@@ -1,15 +1,28 @@
 import { isFuture } from "date-fns";
 import { z } from "zod";
 
+const MINIMUM_AUCTION_DURATION_IN_HOURS = 24;
+const MINIMUM_STARTING_PRICE_IN_CENTS = 100;
+
 export const createAuctionSchema = z.object({
   product_id: z.number().int().positive(),
   start_time: z.coerce.date().refine(isFuture, "Auction start time must be in the future"),
-  duration_hours: z.number().int().positive().min(24, "Auction duration must be at least 24 hours"),
+  duration_hours: z
+    .number()
+    .int()
+    .positive()
+    .min(
+      MINIMUM_AUCTION_DURATION_IN_HOURS,
+      `Auction duration must be at least ${MINIMUM_AUCTION_DURATION_IN_HOURS} hours`
+    ),
   starting_price_in_cents: z.coerce
     .number()
     .int()
     .positive()
-    .min(100, "Starting price must be at least 100 cents")
+    .min(
+      MINIMUM_STARTING_PRICE_IN_CENTS,
+      `Starting price must be at least ${MINIMUM_STARTING_PRICE_IN_CENTS} cents`
+    )
 });
 
 export type CreateAuctionPayload = z.infer<typeof createAuctionSchema>;

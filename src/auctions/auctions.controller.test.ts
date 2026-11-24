@@ -24,7 +24,7 @@ describe("AuctionsController", () => {
   });
 
   describe("POST /api/v1/auctions", () => {
-    it("should NOT create an auction when product is not found or deleted", async () => {
+    it("should NOT create an auction when product is not found", async () => {
       const seller = await getAuthCookieAfterRegister(app, "testuser");
       const nonExistentProductId = 12345;
 
