@@ -49,7 +49,7 @@ export const getErrorStatus = (error: unknown): number => {
   if (error instanceof TokenExpiredError) return 401;
   if (error instanceof ZodError) return 400;
   if (error instanceof HttpError) return error.status;
-  if (error instanceof DatabaseError) return 400;
+  if (error instanceof DatabaseError) return PgError.isTimeout(error) ? 409 : 400;
   if (error instanceof MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") return 413;
     return 400;
@@ -60,6 +60,9 @@ export const getErrorStatus = (error: unknown): number => {
 const formatDatabaseErrorMessage = (error: DatabaseError) => {
   if (PgError.isUniqueViolation(error)) {
     return "Resource already exists";
+  }
+  if (PgError.isTimeout(error)) {
+    return "Resource is busy, please try again";
   }
   return error.detail || error.message;
 };

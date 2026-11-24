@@ -28,14 +28,23 @@ export class BidsRepository {
       `SELECT amount_in_cents FROM bids 
        WHERE auction_id = $1 
        ORDER BY amount_in_cents DESC 
-       LIMIT 1
-       FOR UPDATE NOWAIT`,
+       LIMIT 1`,
       [auctionId]
     );
     if (result.rows.length === 0) {
       return 0;
     }
     return result.rows[0].amount_in_cents;
+  }
+
+  public async findBidByIdempotencyKey(client: PoolClient, idempotencyKey: string) {
+    const result = await client.query<Bid>("SELECT * FROM bids WHERE idempotency_key = $1", [
+      idempotencyKey
+    ]);
+    if (!result.rows[0]) {
+      return null;
+    }
+    return bidSchema.parse(result.rows[0]);
   }
 
   public async getAuctionBids(auctionId: number) {

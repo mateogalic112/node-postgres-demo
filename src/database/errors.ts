@@ -17,6 +17,10 @@ export class PgError extends DatabaseError {
     return this.isPgError(error) && (error as { code: string }).code === "40P01";
   }
 
+  static isTimeout(error: unknown): boolean {
+    return this.isPgError(error) && ["55P03", "57014"].includes((error as { code: string }).code);
+  }
+
   static isUniqueViolation(error: unknown): boolean {
     return this.isPgError(error) && (error as { code: string }).code === "23505";
   }

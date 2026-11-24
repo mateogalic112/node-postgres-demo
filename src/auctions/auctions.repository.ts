@@ -2,6 +2,7 @@ import { PaginatedRequestParams } from "api/api.validations";
 import { DatabaseService } from "interfaces/database.interface";
 import { Auction, auctionSchema, CreateAuctionPayload } from "./auctions.validation";
 import { BadRequestError, InternalServerError, NotFoundError } from "api/api.errors";
+import { PoolClient } from "pg";
 
 export class AuctionsRepository {
   constructor(private readonly DB: DatabaseService) {}
@@ -56,12 +57,13 @@ export class AuctionsRepository {
     return auctionSchema.parse(result.rows[0]);
   }
 
-  public async getActiveAuction(auctionId: number, userId: number) {
-    const result = await this.DB.query<Auction>(
+  public async lockActiveAuction(client: PoolClient, auctionId: number, userId: number) {
+    const result = await client.query<Auction>(
       `SELECT * FROM auctions 
        WHERE id = $1 AND creator_id != $2 AND is_cancelled = FALSE 
        AND start_time < NOW() 
-       AND start_time + duration_hours * INTERVAL '1 hour' > NOW()`,
+       AND start_time + duration_hours * INTERVAL '1 hour' > NOW()
+       FOR UPDATE`,
       [auctionId, userId]
     );
     if (result.rows.length === 0) {
