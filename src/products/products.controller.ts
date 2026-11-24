@@ -1,5 +1,5 @@
 import { HttpController } from "api/api.controllers";
-import { createProductSchema, productImageSchema } from "./products.validation";
+import { createProductSchema } from "./products.validation";
 import authMiddleware from "middleware/auth.middleware";
 import asyncMiddleware from "middleware/async.middleware";
 import { idSchema, paginatedRequestSchema } from "api/api.validations";
@@ -32,10 +32,7 @@ export class ProductsHttpController extends HttpController {
     this.router.post(
       `${this.path}`,
       authMiddleware(this.usersRepository),
-      fileMiddleware({
-        limitMB: productImageSchema.maxSizeMB,
-        allowedFormats: productImageSchema.allowedFormats
-      }).single("image"),
+      fileMiddleware(5).single("image"),
       this.createProduct
     );
   }
@@ -61,9 +58,12 @@ export class ProductsHttpController extends HttpController {
     const payload = await new ProductFactory(this.filesService).createPayload(raw);
     const newProduct = await this.productsRepository.createProduct(user.id, payload);
 
-    const embedding = await this.embeddingsService.generateEmbeddings(newProduct.description);
-    await this.productsRepository.attachEmbedding(newProduct.id, embedding);
-
+    try {
+      const embedding = await this.embeddingsService.generateEmbeddings(newProduct.description);
+      await this.productsRepository.attachEmbedding(newProduct.id, embedding);
+    } catch (err) {
+      console.log({ err });
+    }
     await this.mailService.sendEmail({
       to: user.email,
       template: CreateProductTemplate.getTemplate(newProduct)

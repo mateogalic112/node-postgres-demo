@@ -1,8 +1,7 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { env } from "config/env";
-import { LoggerService } from "interfaces/logger.interface";
 import { FilesService, UploadPayload } from "interfaces/files.interface";
-import { getMimeType } from "api/api.validations";
+import { LoggerService } from "interfaces/logger.interface";
 
 export class AWSService implements FilesService {
   private readonly s3Client: S3Client;
@@ -27,7 +26,7 @@ export class AWSService implements FilesService {
           Bucket: env.AWS_S3_BUCKET,
           Key: key,
           Body: file.buffer,
-          ContentType: getMimeType(file.originalname),
+          ContentType: file.mimetype,
           ContentDisposition: "inline"
         })
       );

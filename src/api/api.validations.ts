@@ -1,4 +1,3 @@
-import path from "path";
 import { z } from "zod";
 
 export const paginatedRequestSchema = z.object({
@@ -17,15 +16,3 @@ export const fileSchema = z.object({
   mimetype: z.string(),
   originalname: z.string()
 });
-
-export const EXTENSION_TO_MIME: Record<string, string> = {
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".webp": "image/webp"
-};
-
-export function getMimeType(filename: string): string {
-  const ext = path.extname(filename).toLowerCase();
-  return EXTENSION_TO_MIME[ext] ?? "application/octet-stream";
-}

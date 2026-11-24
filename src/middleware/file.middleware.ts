@@ -1,30 +1,17 @@
 import multer from "multer";
-import { EXTENSION_TO_MIME } from "api/api.validations";
+import { BadRequestError } from "api/api.errors";
 
-interface Args {
-  limitMB: number;
-  allowedFormats: string;
-}
+const SUPPORTED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 // Configure multer for memory storage
-export const fileMiddleware = ({ limitMB, allowedFormats }: Args) => {
-  const allowedExtensions = allowedFormats.split("|");
-  const allowedMimeTypes = allowedExtensions.map((ext) => EXTENSION_TO_MIME[ext]).filter(Boolean);
-
+export const fileMiddleware = (limitMB: number) => {
   return multer({
     storage: multer.memoryStorage(),
     fileFilter: (_req, file, cb) => {
-      if (!allowedFormats) return cb(null, true);
-
-      const hasValidExtension = allowedExtensions.some((ext) =>
-        file.originalname.toLowerCase().endsWith(ext)
-      );
-      const hasValidMimeType = allowedMimeTypes.includes(file.mimetype);
-
-      if (!hasValidExtension || !hasValidMimeType) {
-        return cb(new Error(`Only ${allowedFormats} files are allowed!`));
+      const hasValidMimeType = SUPPORTED_MIME_TYPES.includes(file.mimetype);
+      if (!hasValidMimeType) {
+        return cb(new BadRequestError("Invalid file format"));
       }
-
       cb(null, true);
     },
     limits: {

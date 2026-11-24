@@ -25,11 +25,6 @@ export const productSchema = z.object({
 
 export type Product = z.infer<typeof productSchema>;
 
-export const productImageSchema = {
-  maxSizeMB: 5,
-  allowedFormats: ".jpg|.jpeg|.png|.webp"
-};
-
 export const productEmbeddingSchema = z.object({
   id: z.number().int().positive(),
   product_id: z.number().int().positive(),
