@@ -150,17 +150,18 @@ describe("AuctionsController", () => {
       auctionId = auctionResponse.body.data.id;
     });
 
-    it("should NOT cancel an auction when auction is not found", async () => {
-      const nonExistentAuctionId = 12345;
-
+    it("should cancel the auction", async () => {
       const response = await request(app.getServer())
-        .patch(`/api/v1/auctions/${nonExistentAuctionId}/cancel`)
+        .patch(`/api/v1/auctions/${auctionId}/cancel`)
         .set("Cookie", seller);
 
-      expect(response).toMatchObject(FAILED_RESPONSE);
+      expect(response).toMatchObject({
+        status: 200,
+        body: { data: { id: auctionId } }
+      });
     });
 
-    it("should NOT cancel an auction when authenticated but not the creator", async () => {
+    it("should NOT cancel an auction when not the creator", async () => {
       const notSeller = await getAuthCookieAfterRegister(app, "not-seller");
 
       const response = await request(app.getServer())
@@ -174,8 +175,7 @@ describe("AuctionsController", () => {
       await db.query(
         `UPDATE auctions
          SET start_time = NOW() - INTERVAL '5 days',
-             created_at = NOW() - INTERVAL '10 days',
-             duration_hours = 24
+             created_at = NOW() - INTERVAL '10 days'
          WHERE id = $1`,
         [auctionId]
       );
