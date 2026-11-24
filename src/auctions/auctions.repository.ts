@@ -55,4 +55,18 @@ export class AuctionsRepository {
     }
     return auctionSchema.parse(result.rows[0]);
   }
+
+  public async getActiveAuction(auctionId: number, userId: number) {
+    const result = await this.DB.query<Auction>(
+      `SELECT * FROM auctions 
+       WHERE id = $1 AND creator_id != $2 AND is_cancelled = FALSE 
+       AND start_time < NOW() 
+       AND start_time + duration_hours * INTERVAL '1 hour' > NOW()`,
+      [auctionId, userId]
+    );
+    if (result.rows.length === 0) {
+      throw new NotFoundError("Auction not active");
+    }
+    return auctionSchema.parse(result.rows[0]);
+  }
 }

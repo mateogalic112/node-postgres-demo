@@ -5,12 +5,12 @@ import { BidsService } from "./bids.service";
 import { formatResponse } from "api/api.formats";
 import { getErrorMessage } from "api/api.errors";
 import { Auth } from "auth/auth.model";
-import { BidsRepository } from "./bids.repository";
+import { AuctionsRepository } from "auctions/auctions.repository";
 
 export class BidsSocketController extends SocketController {
   constructor(
     private readonly bidsService: BidsService,
-    private readonly bidsRepository: BidsRepository
+    private readonly auctionsRepository: AuctionsRepository
   ) {
     super("bids");
   }
@@ -24,17 +24,18 @@ export class BidsSocketController extends SocketController {
       try {
         const payload = createBidSchema.parse(rawPayload);
         const userId = Auth.extractUserIdFromSocket(socket);
-        const newBid = await this.bidsService.createBid(userId, payload);
-        const auctionBid = await this.bidsRepository.getAuctionBid(newBid.id);
+        const auction = await this.auctionsRepository.getActiveAuction(payload.auction_id, userId);
+        const newBid = await this.bidsService.createBid(userId, payload, auction);
 
         //@dev sends event to everyone EXCEPT sender
         socket
           .to(`auctions-${newBid.auction_id}`)
-          .emit(`${this.namespace}:bid_created`, formatResponse(auctionBid));
+          .emit(`${this.namespace}:bid_created`, formatResponse(newBid));
 
         //@dev sends event ONLY to sender
-        socket.emit(`${this.namespace}:bid_created`, formatResponse(auctionBid));
+        socket.emit(`${this.namespace}:bid_created`, formatResponse(newBid));
       } catch (error) {
+        //@dev sends event ONLY to sender
         socket.emit(`${this.namespace}:create_bid_failed`, {
           message: getErrorMessage(error)
         });

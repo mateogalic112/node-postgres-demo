@@ -1,7 +1,5 @@
 import { DatabaseService } from "interfaces/database.interface";
-import { AuctionBid, auctionBidSchema, Bid, bidSchema, CreateBidPayload } from "./bids.validation";
-import { Auction } from "auctions/auctions.validation";
-import { NotFoundError } from "api/api.errors";
+import { Bid, bidSchema, CreateBidPayload } from "./bids.validation";
 import { PoolClient } from "pg";
 
 export class BidsRepository {
@@ -20,35 +18,6 @@ export class BidsRepository {
       [payload.auction_id, userId, payload.amount_in_cents, idempotencyKey]
     );
     return bidSchema.parse(result.rows[0]);
-  }
-
-  public async getBiddingAuction(client: PoolClient, auctionId: number, userId: number) {
-    const result = await client.query<Auction>(
-      `SELECT * FROM auctions 
-       WHERE id = $1 AND creator_id != $2 AND is_cancelled = FALSE 
-       AND start_time < NOW() 
-       AND start_time + duration_hours * INTERVAL '1 hour' > NOW()
-       FOR UPDATE NOWAIT`,
-      [auctionId, userId]
-    );
-    if (result.rows.length === 0) {
-      throw new NotFoundError("Auction not active");
-    }
-    return result.rows[0];
-  }
-
-  public async getAuctionBid(bidId: number) {
-    const result = await this.DB.query<AuctionBid>(
-      `SELECT u.username, b.id, b.amount_in_cents, b.created_at 
-	FROM bids b
-	  JOIN users u ON b.user_id = u.id	
-WHERE b.id = $1`,
-      [bidId]
-    );
-    if (result.rows.length === 0) {
-      throw new NotFoundError("Bid not found");
-    }
-    return auctionBidSchema.parse(result.rows[0]);
   }
 
   public async getHighestBidAmountForAuction(
@@ -70,13 +39,12 @@ WHERE b.id = $1`,
   }
 
   public async getAuctionBids(auctionId: number) {
-    const result = await this.DB.query<AuctionBid>(
-      `SELECT u.username, b.id, b.amount_in_cents, b.created_at 
-	FROM bids b 
-	  JOIN users u ON b.user_id = u.id 
+    const result = await this.DB.query<Bid>(
+      `SELECT id, amount_in_cents, created_at 
+	FROM bids 
 	WHERE auction_id = $1 ORDER BY created_at DESC`,
       [auctionId]
     );
-    return result.rows.map((row) => auctionBidSchema.parse(row));
+    return result.rows.map((row) => bidSchema.parse(row));
   }
 }

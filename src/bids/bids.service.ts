@@ -5,17 +5,17 @@ import { DatabaseService } from "interfaces/database.interface";
 import { PgError } from "database/errors";
 import { Currency } from "money/currency";
 import { LoggerService } from "interfaces/logger.interface";
+import { AuctionBid } from "./bids.model";
+import { Auction } from "auctions/auctions.validation";
 
 export class BidsService {
-  private readonly MINIMUM_BID_INCREASE_PERCENTAGE = 10;
-
   constructor(
     private readonly bidsRepository: BidsRepository,
     private readonly DB: DatabaseService,
     private readonly logger: LoggerService
   ) {}
 
-  public async createBid(userId: number, payload: CreateBidPayload) {
+  public async createBid(userId: number, payload: CreateBidPayload, auction: Auction) {
     const MAX_RETRIES = 5;
     const RETRY_DELAY_MS = 100;
     const QUERY_STATEMENT_TIMEOUT_MS = 10_000;
@@ -34,20 +34,18 @@ export class BidsService {
         // @dev SERIALIZABLE isolation for maximum consistency (required for real money)
         await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
-        const auction = await this.bidsRepository.getBiddingAuction(
-          client,
-          payload.auction_id,
-          userId
-        );
+        const auctionBid = new AuctionBid(payload, auction);
+
         const highestBidInCents = await this.bidsRepository.getHighestBidAmountForAuction(
           client,
           auction.id
         );
-        this.assertAuctionMinimumBidIncrease({
-          currentBidInCents: payload.amount_in_cents,
-          startingPriceInCents: auction.starting_price_in_cents,
-          highestBidInCents
-        });
+
+        if (!auctionBid.isBidIncreasedEnough(highestBidInCents)) {
+          throw new BadRequestError(
+            `Bid must be at least ${Currency.formatAmount(auctionBid.minimumIncreaseAmount())}`
+          );
+        }
 
         const newBid = await this.bidsRepository.createBid(client, userId, payload, idempotencyKey);
 
@@ -76,27 +74,5 @@ export class BidsService {
     }
 
     throw new InternalServerError("Unable to place bid due to high system load. Please try again.");
-  }
-
-  private assertAuctionMinimumBidIncrease({
-    currentBidInCents,
-    startingPriceInCents,
-    highestBidInCents
-  }: {
-    currentBidInCents: number;
-    startingPriceInCents: number;
-    highestBidInCents: number;
-  }) {
-    const minimumBidIncreaseAmount = Math.round(
-      startingPriceInCents * (this.MINIMUM_BID_INCREASE_PERCENTAGE / 100)
-    );
-    const minimumAcceptableBid =
-      Math.max(highestBidInCents, startingPriceInCents) + minimumBidIncreaseAmount;
-
-    if (currentBidInCents < minimumAcceptableBid) {
-      throw new BadRequestError(
-        `Bid must be at least ${Currency.formatAmount(minimumAcceptableBid)}`
-      );
-    }
   }
 }

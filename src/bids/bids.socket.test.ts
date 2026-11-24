@@ -7,7 +7,8 @@ import {
 import App from "app";
 import { Server } from "http";
 import { io as clientIo, Socket as ClientSocket } from "socket.io-client";
-import { AuctionBid, CreateBidPayload } from "./bids.validation";
+import { Bid, CreateBidPayload } from "./bids.validation";
+import { AuctionBid } from "./bids.model";
 
 describe("BidsSocketController", () => {
   let app: App;
@@ -88,14 +89,14 @@ describe("BidsSocketController", () => {
     return { auction, seller };
   };
 
-  type CreateBidResult = { type: "created"; data: AuctionBid } | { type: "error"; message: string };
+  type CreateBidResult = { type: "created"; data: Bid } | { type: "error"; message: string };
 
   const placeBid = async (
     socket: ClientSocket,
     payload: CreateBidPayload
   ): Promise<CreateBidResult> => {
     return new Promise((resolve) => {
-      const onCreated = (res: { data: AuctionBid }) => {
+      const onCreated = (res: { data: Bid }) => {
         socket.off("bids:create_bid_failed", onFailed);
         resolve({ type: "created", data: res.data });
       };
@@ -125,7 +126,7 @@ describe("BidsSocketController", () => {
 
       expect(result).toMatchObject({
         type: "created",
-        data: { username: bidder.username, amount_in_cents: BID_IN_CENTS }
+        data: { user_id: bidder.id, amount_in_cents: BID_IN_CENTS }
       });
     });
 
@@ -148,7 +149,7 @@ describe("BidsSocketController", () => {
 
       const response = await broadcast;
       expect(response.data).toMatchObject({
-        username: bidder.username,
+        user_id: bidder.id,
         amount_in_cents: BID_IN_CENTS
       });
     });
