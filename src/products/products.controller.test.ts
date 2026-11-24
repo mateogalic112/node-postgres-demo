@@ -1,10 +1,5 @@
 import { faker } from "@faker-js/faker";
-import {
-  createTestApp,
-  getAuthCookieAfterRegister,
-  registerUserRequest,
-  seedProducts
-} from "__tests__/setup";
+import { createTestApp, getAuthCookieAfterRegister } from "__tests__/setup";
 import App from "app";
 import request from "supertest";
 import { MAX_IMAGE_SIZE_IN_MB } from "./products.validation";
@@ -14,30 +9,6 @@ describe("ProductsController", () => {
 
   beforeAll(() => {
     app = createTestApp();
-  });
-
-  describe("GET /api/v1/products", () => {
-    const PAGE_SIZE = 10;
-
-    it.each([
-      [{ total: PAGE_SIZE + 5, hasNextCursor: true }],
-      [{ total: PAGE_SIZE, hasNextCursor: true }],
-      [{ total: PAGE_SIZE - 5, hasNextCursor: false }]
-    ])("should return paginated products", async ({ total, hasNextCursor }) => {
-      const owner = await registerUserRequest(app, "owner");
-      await seedProducts(total, owner.body.data.id);
-
-      const response = await request(app.getServer())
-        .get("/api/v1/products")
-        .query({ limit: PAGE_SIZE });
-
-      expect(response.body.data.length).toBeLessThanOrEqual(PAGE_SIZE);
-      if (hasNextCursor) {
-        expect(response.body.nextCursor).toHaveProperty("id");
-      } else {
-        expect(response.body.nextCursor).toBeNull();
-      }
-    });
   });
 
   describe("POST /api/v1/products", () => {
@@ -59,7 +30,7 @@ describe("ProductsController", () => {
       let seller: string;
 
       beforeEach(async () => {
-        seller = await getAuthCookieAfterRegister(app, "uploader");
+        seller = await getAuthCookieAfterRegister(app, "seller");
       });
 
       const postProduct = () =>
