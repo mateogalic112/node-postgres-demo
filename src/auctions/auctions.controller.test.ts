@@ -3,6 +3,7 @@ import App from "app";
 import { addDays, subDays } from "date-fns";
 import request from "supertest";
 import { CreateAuctionPayload } from "./auctions.validation";
+import { mailService } from "__tests__/mocks";
 
 type AuctionPayload = {
   product_id: number;
@@ -45,6 +46,9 @@ describe("AuctionsController", () => {
 
       expect(response.status).toBe(201);
       expect(response.body.data.product_id).toBe(productId);
+      expect(mailService.sendEmail.mock.calls).toEqual([
+        [{ to: "creator@example.com", subject: "New auction created", html: expect.any(String) }]
+      ]);
     });
 
     it("should NOT create an auction when product is not found", async () => {
