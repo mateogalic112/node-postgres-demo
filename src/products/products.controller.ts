@@ -6,21 +6,19 @@ import { idSchema, paginatedRequestSchema } from "api/api.validations";
 import { fileMiddleware } from "middleware/file.middleware";
 import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
-import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
 import { UsersRepository } from "users/users.repository";
 import { ProductsRepository } from "./products.repository";
 import { FilesService } from "interfaces/files.interface";
 import { ProductFactory } from "./products.factory";
 import { NotFoundError } from "api/api.errors";
-import { EmbeddingsService } from "interfaces/embeddings.interface";
+import { EventBus } from "events/events.bus";
 
 export class ProductsHttpController extends HttpController {
   constructor(
     private readonly productsRepository: ProductsRepository,
     private readonly usersRepository: UsersRepository,
-    private readonly mailService: MailService,
     private readonly filesService: FilesService,
-    private readonly embeddingsService: EmbeddingsService
+    private readonly eventBus: EventBus
   ) {
     super("/products");
     this.initializeRoutes();
@@ -54,20 +52,11 @@ export class ProductsHttpController extends HttpController {
 
   private createProduct = asyncMiddleware(async (request, response) => {
     const user = userSchema.parse(response.locals.user);
-    const raw = createProductSchema.parse(request);
-    const payload = await new ProductFactory(this.filesService).createPayload(raw);
-    const newProduct = await this.productsRepository.createProduct(user.id, payload);
+    const payload = createProductSchema.parse(request);
+    const product = await new ProductFactory(this.filesService).createProduct(payload);
+    const newProduct = await this.productsRepository.save(user.id, product);
 
-    try {
-      const embedding = await this.embeddingsService.generateEmbeddings(newProduct.description);
-      await this.productsRepository.attachEmbedding(newProduct.id, embedding);
-    } catch (err) {
-      console.log({ err });
-    }
-    await this.mailService.sendEmail({
-      to: user.email,
-      template: CreateProductTemplate.getTemplate(newProduct)
-    });
+    this.eventBus.emit("product.created", { product: newProduct, mailTo: user.email });
     response.status(201).json(formatResponse(newProduct));
   });
 }

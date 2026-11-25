@@ -10,6 +10,7 @@ import { BidsSocketController } from "bids/bids.socket";
 import { BotHttpController } from "bot/bot.controller";
 import { CustomersRepository } from "customers/customers.repository";
 import { CustomersService } from "customers/customers.service";
+import { EventBus } from "events/events.bus";
 import { DatabaseService } from "interfaces/database.interface";
 import { EmbeddingsService } from "interfaces/embeddings.interface";
 import { FilesService } from "interfaces/files.interface";
@@ -20,6 +21,7 @@ import { OrdersHttpController } from "orders/orders.controller";
 import { OrdersRepository } from "orders/orders.repository";
 import { PaymentsHttpController } from "payments/payments.controller";
 import { ProductsHttpController } from "products/products.controller";
+import { ProductsListener } from "products/products.listener";
 import { ProductsRepository } from "products/products.repository";
 import { RolesRepository } from "roles/roles.repository";
 import { UsersHttpController } from "users/users.controller";
@@ -32,6 +34,7 @@ export interface AppDependencies {
   mailService: MailService;
   paymentsService: PaymentsService;
   logger: LoggerService;
+  eventBus: EventBus;
 }
 
 export function createApp({
@@ -40,7 +43,8 @@ export function createApp({
   embeddingsService,
   mailService,
   paymentsService,
-  logger
+  logger,
+  eventBus
 }: AppDependencies) {
   const productsRepository = new ProductsRepository(db);
   const usersRepository = new UsersRepository(db);
@@ -51,16 +55,12 @@ export function createApp({
   const ordersRepository = new OrdersRepository(db);
   const customersService = new CustomersService(new CustomersRepository(db), paymentsService);
 
+  new ProductsListener(productsRepository, embeddingsService, mailService).register(eventBus);
+
   return new App(
     [
       new AuthHttpController(usersRepository),
-      new ProductsHttpController(
-        productsRepository,
-        usersRepository,
-        mailService,
-        filesService,
-        embeddingsService
-      ),
+      new ProductsHttpController(productsRepository, usersRepository, filesService, eventBus),
       new AuctionsHttpController(auctionsRepository, usersRepository, mailService),
       new BidsHttpController(bidsRepository),
       new UsersHttpController(rolesRepository, usersRepository),

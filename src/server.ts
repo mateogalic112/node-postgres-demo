@@ -1,4 +1,5 @@
 import { createApp } from "app.factory";
+import { EventBus } from "events/events.bus";
 import { AWSService } from "services/aws.service";
 import { WinstonService } from "services/winston.service";
 import { OpenAIService } from "services/openai";
@@ -12,6 +13,7 @@ const logger = WinstonService.getInstance();
 const app = createApp({
   db,
   logger,
+  eventBus: new EventBus(logger),
   filesService: new AWSService(logger),
   embeddingsService: new OpenAIService(logger),
   mailService: new ResendService(logger),

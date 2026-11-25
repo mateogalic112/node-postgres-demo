@@ -1,3 +1,4 @@
+import { EventBus } from "events/events.bus";
 import { EmbeddingsService } from "interfaces/embeddings.interface";
 import { FilesService } from "interfaces/files.interface";
 import { LoggerService } from "interfaces/logger.interface";
@@ -31,3 +32,5 @@ export const logger: jest.Mocked<LoggerService> = {
   log: jest.fn(),
   error: jest.fn()
 };
+
+export const eventBus = new EventBus(logger);

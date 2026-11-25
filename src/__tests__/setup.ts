@@ -4,7 +4,14 @@ import { createApp } from "app.factory";
 import { Auction } from "auctions/auctions.validation";
 import { PostgresService } from "services/postgres.service";
 import request from "supertest";
-import { embeddingsService, filesService, logger, mailService, paymentsService } from "./mocks";
+import {
+  embeddingsService,
+  eventBus,
+  filesService,
+  logger,
+  mailService,
+  paymentsService
+} from "./mocks";
 
 export const db = PostgresService.getInstance();
 
@@ -15,7 +22,8 @@ export const createTestApp = () =>
     embeddingsService: embeddingsService,
     mailService: mailService,
     paymentsService: paymentsService,
-    logger
+    logger,
+    eventBus
   });
 
 export const registerUserRequest = async (app: App, username: string) => {

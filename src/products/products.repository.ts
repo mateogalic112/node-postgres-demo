@@ -32,7 +32,7 @@ export class ProductsRepository {
     return result.rows.map((product) => productSchema.parse(product));
   }
 
-  public async createProduct(
+  public async save(
     userId: number,
     payload: CreateProductPayload["body"] & { imageUrl: string | null }
   ) {

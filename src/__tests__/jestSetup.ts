@@ -1,4 +1,5 @@
 import { PostgresService } from "services/postgres.service";
+import { eventBus } from "./mocks";
 
 const TABLES_KEPT_BETWEEN_TESTS = ["_migrations", "roles"];
 
@@ -17,5 +18,8 @@ beforeAll(async () => {
 beforeEach(async () => {
   await db.query(truncateAllSql);
 });
+
+// Event handlers outlive the request; let them finish before truncating or closing the pool.
+afterEach(() => eventBus.settled());
 
 afterAll(() => db.close());
