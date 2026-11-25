@@ -3,7 +3,7 @@ import { createTestApp, createUser } from "__tests__/setup";
 import App from "app";
 import request from "supertest";
 import { MAX_IMAGE_SIZE_IN_MB } from "./products.validation";
-import { mailService } from "__tests__/mocks";
+import { embeddingsService, mailService } from "__tests__/mocks";
 
 describe("ProductsController", () => {
   let app: App;
@@ -25,6 +25,9 @@ describe("ProductsController", () => {
 
       expect(response.status).toBe(201);
       expect(response.body.data.name).toBeDefined();
+      expect(embeddingsService.generateEmbeddings.mock.calls).toEqual([
+        [response.body.data.description]
+      ]);
       expect(mailService.sendEmail.mock.calls).toEqual([
         [{ to: "seller@example.com", subject: "New product created", html: expect.any(String) }]
       ]);
