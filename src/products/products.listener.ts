@@ -1,7 +1,8 @@
 import { AppEvents, EventBus } from "events/events.bus";
 import { EmbeddingsService } from "interfaces/embeddings.interface";
-import { CreateProductTemplate, MailService } from "interfaces/mail.interface";
+import { MailService } from "interfaces/mail.interface";
 import { ProductsRepository } from "./products.repository";
+import { ProductsMailer } from "./products.mailer";
 
 export class ProductsListener {
   constructor(
@@ -23,7 +24,7 @@ export class ProductsListener {
   private notifyOwner = async ({ product, mailTo }: AppEvents["product.created"]) => {
     await this.mailService.sendEmail({
       to: mailTo,
-      template: CreateProductTemplate.getTemplate(product)
+      ...ProductsMailer.createProductTemplate(product)
     });
   };
 }

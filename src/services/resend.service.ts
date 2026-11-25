@@ -1,6 +1,6 @@
 import { env } from "config/env";
 import { Resend } from "resend";
-import { MailService, MailTemplate } from "interfaces/mail.interface";
+import { EmailPayload, MailService } from "interfaces/mail.interface";
 import { LoggerService } from "interfaces/logger.interface";
 
 export class ResendService implements MailService {
@@ -10,30 +10,19 @@ export class ResendService implements MailService {
     this.resend = new Resend(env.RESEND_API_KEY);
   }
 
-  public async sendEmail({
-    to,
-    template
-  }: {
-    to: string;
-    template: MailTemplate;
-  }): Promise<string | null> {
-    if (process.env.NODE_ENV !== "production") return null;
-
+  public async sendEmail(payload: EmailPayload): Promise<string | null> {
     try {
       const { data, error } = await this.resend.emails.send({
         from: env.ADMIN_EMAIL,
-        to,
-        subject: template.subject,
-        html: template.html
+        ...payload
       });
-
       if (error) {
         this.logger.error(error.message);
         return null;
       }
-
-      if (!data?.id) throw new Error("Failed to send email");
-
+      if (!data?.id) {
+        throw new Error("Failed to send email");
+      }
       return data.id;
     } catch (error) {
       this.logger.error(String(error));

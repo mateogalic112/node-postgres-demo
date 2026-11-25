@@ -5,9 +5,10 @@ import { createAuctionSchema } from "./auctions.validation";
 import authMiddleware from "middleware/auth.middleware";
 import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
-import { CreateAuctionTemplate, MailService } from "interfaces/mail.interface";
+import { MailService } from "interfaces/mail.interface";
 import { UsersRepository } from "users/users.repository";
 import { AuctionsRepository } from "./auctions.repository";
+import { AuctionsMailer } from "./auctions.mailer";
 
 export class AuctionsHttpController extends HttpController {
   constructor(
@@ -48,7 +49,7 @@ export class AuctionsHttpController extends HttpController {
     const auction = await this.auctionsRepository.createAuction(user.id, payload);
     await this.mailService.sendEmail({
       to: user.email,
-      template: CreateAuctionTemplate.getTemplate(auction)
+      ...AuctionsMailer.createAuctionTemplate(auction)
     });
     response.status(201).json(formatResponse(auction));
   });
