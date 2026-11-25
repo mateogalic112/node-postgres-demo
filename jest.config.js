@@ -2,6 +2,7 @@
 export default {
   preset: "ts-jest",
   testEnvironment: "node",
+  clearMocks: true,
   testMatch: ["**/*.test.ts"],
   globalSetup: "<rootDir>/src/__tests__/globalSetup.ts",
   globalTeardown: "<rootDir>/src/__tests__/globalTeardown.ts",

@@ -10,10 +10,6 @@ describe("OrdersController", () => {
     app = createTestApp();
   });
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   const createOrderRequest = (authCookie: string, productId: number, quantity = 2) =>
     request(app.getServer())
       .post("/api/v1/orders")
