@@ -1,10 +1,12 @@
 import { EventEmitter } from "node:events";
 import { getErrorMessage } from "api/api.errors";
+import { Auction } from "auctions/auctions.validation";
 import { LoggerService } from "interfaces/logger.interface";
 import { Product } from "products/products.validation";
 
 export interface AppEvents {
   "product.created": { product: Product; mailTo: string };
+  "auction.created": { auction: Auction; mailTo: string };
 }
 
 type EventHandler<T> = (payload: T) => Promise<void>;

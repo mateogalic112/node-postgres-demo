@@ -10,7 +10,7 @@ export class ResendService implements MailService {
     this.resend = new Resend(env.RESEND_API_KEY);
   }
 
-  public async sendEmail(payload: EmailPayload): Promise<string | null> {
+  public async sendEmail(payload: EmailPayload) {
     try {
       const { data, error } = await this.resend.emails.send({
         from: env.ADMIN_EMAIL,

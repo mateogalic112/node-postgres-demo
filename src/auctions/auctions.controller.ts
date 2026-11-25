@@ -5,16 +5,15 @@ import { createAuctionSchema } from "./auctions.validation";
 import authMiddleware from "middleware/auth.middleware";
 import { userSchema } from "users/users.validation";
 import { formatPaginatedResponse, formatResponse } from "api/api.formats";
-import { MailService } from "interfaces/mail.interface";
+import { EventBus } from "events/events.bus";
 import { UsersRepository } from "users/users.repository";
 import { AuctionsRepository } from "./auctions.repository";
-import { AuctionsMailer } from "./auctions.mailer";
 
 export class AuctionsHttpController extends HttpController {
   constructor(
     private readonly auctionsRepository: AuctionsRepository,
     private readonly usersRepository: UsersRepository,
-    private readonly mailService: MailService
+    private readonly eventBus: EventBus
   ) {
     super("/auctions");
     this.initializeRoutes();
@@ -47,10 +46,7 @@ export class AuctionsHttpController extends HttpController {
     const user = userSchema.parse(response.locals.user);
     const payload = createAuctionSchema.parse(request.body);
     const auction = await this.auctionsRepository.createAuction(user.id, payload);
-    await this.mailService.sendEmail({
-      to: user.email,
-      ...AuctionsMailer.createAuctionTemplate(auction)
-    });
+    this.eventBus.emit("auction.created", { auction, mailTo: user.email });
     response.status(201).json(formatResponse(auction));
   });
 

@@ -1,5 +1,6 @@
 import App from "app";
 import { AuctionsHttpController } from "auctions/auctions.controller";
+import { AuctionsListener } from "auctions/auctions.listener";
 import { AuctionsRepository } from "auctions/auctions.repository";
 import { AuctionsSocketController } from "auctions/auctions.socket";
 import { AuthHttpController } from "auth/auth.controller";
@@ -56,12 +57,13 @@ export function createApp({
   const customersService = new CustomersService(new CustomersRepository(db), paymentsService);
 
   new ProductsListener(productsRepository, embeddingsService, mailService).register(eventBus);
+  new AuctionsListener(mailService).register(eventBus);
 
   return new App(
     [
       new AuthHttpController(usersRepository),
       new ProductsHttpController(productsRepository, usersRepository, filesService, eventBus),
-      new AuctionsHttpController(auctionsRepository, usersRepository, mailService),
+      new AuctionsHttpController(auctionsRepository, usersRepository, eventBus),
       new BidsHttpController(bidsRepository),
       new UsersHttpController(rolesRepository, usersRepository),
       new BotHttpController(productsRepository, embeddingsService, logger),
