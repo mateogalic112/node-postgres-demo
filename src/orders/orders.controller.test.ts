@@ -1,10 +1,5 @@
 import { paymentsService } from "__tests__/mocks";
-import {
-  createProductRequest,
-  createTestApp,
-  db,
-  getAuthCookieAfterRegister
-} from "__tests__/setup";
+import { createProduct, createTestApp, db, createUser } from "__tests__/setup";
 import App from "app";
 import request from "supertest";
 
@@ -29,8 +24,8 @@ describe("OrdersController", () => {
     request(app.getServer()).post(`/api/v1/orders/${orderId}/checkout`).set("Cookie", authCookie);
 
   const createOrderForNewUser = async (username: string) => {
-    const authCookie = await getAuthCookieAfterRegister(app, username);
-    const product = (await createProductRequest(app, authCookie)).body.data;
+    const { id, cookie: authCookie } = await createUser(username);
+    const product = await createProduct(id);
     const order = (await createOrderRequest(authCookie, product.id)).body.data;
     return { authCookie, product, order };
   };
@@ -42,8 +37,8 @@ describe("OrdersController", () => {
     });
 
     it("should create an order with its details when authenticated", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
-      const product = (await createProductRequest(app, authCookie)).body.data;
+      const { id, cookie: authCookie } = await createUser("testuser");
+      const product = await createProduct(id);
 
       const response = await createOrderRequest(authCookie, product.id);
 
@@ -60,10 +55,8 @@ describe("OrdersController", () => {
     });
 
     it("should freeze the line item price even if the product price later changes", async () => {
-      const authCookie = await getAuthCookieAfterRegister(app, "testuser");
-      const productResponse = await createProductRequest(app, authCookie);
-      const productId = productResponse.body.data.id;
-      const orderPrice = productResponse.body.data.price_in_cents;
+      const { id, cookie: authCookie } = await createUser("testuser");
+      const { id: productId, price_in_cents: orderPrice } = await createProduct(id);
 
       const response = await createOrderRequest(authCookie, productId);
       expect(response.status).toBe(201);

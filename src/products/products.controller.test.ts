@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { createTestApp, getAuthCookieAfterRegister } from "__tests__/setup";
+import { createTestApp, createUser } from "__tests__/setup";
 import App from "app";
 import request from "supertest";
 import { MAX_IMAGE_SIZE_IN_MB } from "./products.validation";
@@ -13,7 +13,7 @@ describe("ProductsController", () => {
 
   describe("POST /api/v1/products", () => {
     it("should create a product", async () => {
-      const seller = await getAuthCookieAfterRegister(app, "seller");
+      const seller = (await createUser("seller")).cookie;
 
       const response = await request(app.getServer())
         .post("/api/v1/products")
@@ -30,7 +30,7 @@ describe("ProductsController", () => {
       let seller: string;
 
       beforeEach(async () => {
-        seller = await getAuthCookieAfterRegister(app, "seller");
+        seller = (await createUser("seller")).cookie;
       });
 
       const postProduct = () =>

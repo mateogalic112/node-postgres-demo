@@ -1,9 +1,11 @@
 import { faker } from "@faker-js/faker";
-import App from "app";
 import { createApp } from "app.factory";
 import { Auction } from "auctions/auctions.validation";
+import { Auth } from "auth/auth.model";
+import { Product } from "products/products.validation";
 import { PostgresService } from "services/postgres.service";
-import request from "supertest";
+import { RoleName } from "roles/roles.validation";
+import { User } from "users/users.validation";
 import {
   embeddingsService,
   eventBus,
@@ -26,28 +28,23 @@ export const createTestApp = () =>
     eventBus
   });
 
-export const registerUserRequest = async (app: App, username: string) => {
-  return request(app.getServer())
-    .post("/api/v1/auth/register")
-    .send({
-      username,
-      email: `${username}@example.com`,
-      password: "password"
-    });
+export const createUser = async (username: string) => {
+  const result = await db.query<User>(
+    `INSERT INTO users (username, email, password, role_id)
+     VALUES ($1, $2, $3, (SELECT id FROM roles WHERE name = $4)) RETURNING *`,
+    [username, `${username}@example.com`, "not-used-for-login", RoleName.USER]
+  );
+  const user = result.rows[0];
+  const [cookieName, token] = Auth.attachCookieParams(user.id);
+  return { ...user, cookie: `${cookieName}=${token}` };
 };
 
-export const getAuthCookieAfterRegister = async (app: App, username: string) => {
-  const userResponse = await registerUserRequest(app, username);
-  return userResponse.headers["set-cookie"][0];
-};
-
-export const createProductRequest = async (app: App, authCookie: string) => {
-  return request(app.getServer())
-    .post("/api/v1/products")
-    .set("Cookie", authCookie)
-    .field("name", faker.commerce.productName())
-    .field("description", faker.commerce.productDescription())
-    .field("price_in_cents", faker.number.int({ min: 100, max: 100000 }));
+export const createProduct = async (ownerId: number) => {
+  const result = await db.query<Product>(
+    "INSERT INTO products (name, description, owner_id, price_in_cents) VALUES ($1, $2, $3, $4) RETURNING *",
+    [faker.commerce.productName(), faker.commerce.productDescription(), ownerId, 1000]
+  );
+  return result.rows[0];
 };
 
 export const createActiveAuction = async (creatorId: number, productId: number) => {

@@ -1,9 +1,4 @@
-import {
-  createProductRequest,
-  createTestApp,
-  db,
-  getAuthCookieAfterRegister
-} from "__tests__/setup";
+import { createProduct, createTestApp, db, createUser } from "__tests__/setup";
 import App from "app";
 import { addDays, subDays } from "date-fns";
 import request from "supertest";
@@ -35,10 +30,9 @@ describe("AuctionsController", () => {
     let productId: number = 0;
 
     beforeEach(async () => {
-      seller = await getAuthCookieAfterRegister(app, "creator");
-
-      const productResponse = await createProductRequest(app, seller);
-      productId = productResponse.body.data.id;
+      const creator = await createUser("creator");
+      seller = creator.cookie;
+      productId = (await createProduct(creator.id)).id;
     });
 
     it("should create an auction", async () => {
@@ -140,10 +134,9 @@ describe("AuctionsController", () => {
     };
 
     beforeEach(async () => {
-      seller = await getAuthCookieAfterRegister(app, "creator");
-
-      const productResponse = await createProductRequest(app, seller);
-      productId = productResponse.body.data.id;
+      const creator = await createUser("creator");
+      seller = creator.cookie;
+      productId = (await createProduct(creator.id)).id;
 
       const auctionResponse = await request(app.getServer())
         .post("/api/v1/auctions")
@@ -164,7 +157,7 @@ describe("AuctionsController", () => {
     });
 
     it("should NOT cancel an auction when not the creator", async () => {
-      const notSeller = await getAuthCookieAfterRegister(app, "not-seller");
+      const notSeller = (await createUser("not-seller")).cookie;
 
       const response = await request(app.getServer())
         .patch(`/api/v1/auctions/${auctionId}/cancel`)
