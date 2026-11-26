@@ -21,7 +21,6 @@ export class OrdersRepository {
         "INSERT INTO orders (buyer_id) VALUES ($1) RETURNING *",
         [userId]
       );
-
       const order = orderSchema.parse(orderResult.rows[0]);
 
       const valuesPlaceholders = payload.line_items

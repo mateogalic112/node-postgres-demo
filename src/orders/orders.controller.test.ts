@@ -83,6 +83,17 @@ describe("OrdersController", () => {
       expect(orders.rows).toHaveLength(0);
     });
 
+    it("should reject a line item quantity above the maximum", async () => {
+      const { id, cookie: authCookie } = await createUser("testuser");
+      const product = await createProduct(id);
+
+      const response = await createOrderRequest(authCookie, product.id, 3_000_000_000);
+
+      expect(response.status).toBe(400);
+      const orders = await db.query("SELECT id FROM orders");
+      expect(orders.rows).toHaveLength(0);
+    });
+
     it("should reject an order with more than 100 line items", async () => {
       const { id, cookie: authCookie } = await createUser("testuser");
       const product = await createProduct(id);
