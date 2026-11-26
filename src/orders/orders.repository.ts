@@ -17,34 +17,37 @@ export class OrdersRepository {
     try {
       await client.query("BEGIN");
 
+      // Lock referenced products so they can't be deleted before the details insert.
+      const productIds = [...new Set(payload.line_items.map((item) => item.product_id))];
+      const productsResult = await client.query<{ id: number }>(
+        "SELECT id FROM products WHERE id = ANY($1::int[]) FOR KEY SHARE",
+        [productIds]
+      );
+      const foundIds = new Set(productsResult.rows.map((row) => row.id));
+      const missingIds = productIds.filter((id) => !foundIds.has(id));
+      if (missingIds.length > 0) {
+        throw new NotFoundError(`Products not found: ${missingIds.join(", ")}`);
+      }
+
       const orderResult = await client.query<Order>(
         "INSERT INTO orders (buyer_id) VALUES ($1) RETURNING *",
         [userId]
       );
       const order = orderSchema.parse(orderResult.rows[0]);
 
-      const valuesPlaceholders = payload.line_items
-        .map(
-          (_, index) =>
-            `($${index * 3 + 1}::integer, $${index * 3 + 2}::integer, $${index * 3 + 3}::integer)`
-        )
-        .join(", ");
-
-      const valuesParams = payload.line_items.flatMap((item) => [
-        order.id,
-        item.product_id,
-        item.quantity
-      ]);
-
       const orderDetailsResult = await client.query<OrderDetail>(
         `
           INSERT INTO order_details (order_id, product_id, quantity, unit_price_in_cents)
-          SELECT v.order_id, v.product_id, v.quantity, p.price_in_cents
-          FROM (VALUES ${valuesPlaceholders}) AS v(order_id, product_id, quantity)
+          SELECT $1, v.product_id, v.quantity, p.price_in_cents
+          FROM unnest($2::int[], $3::int[]) AS v(product_id, quantity)
           JOIN products p ON p.id = v.product_id
           RETURNING *
         `,
-        valuesParams
+        [
+          order.id,
+          payload.line_items.map((item) => item.product_id),
+          payload.line_items.map((item) => item.quantity)
+        ]
       );
 
       if (orderDetailsResult.rows.length !== payload.line_items.length) {

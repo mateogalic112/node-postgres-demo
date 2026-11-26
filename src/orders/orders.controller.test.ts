@@ -50,6 +50,31 @@ describe("OrdersController", () => {
       expect(paymentsService.pay).not.toHaveBeenCalled();
     });
 
+    it("should create one order detail per line item with matching quantities", async () => {
+      const { id, cookie: authCookie } = await createUser("testuser");
+      const productA = await createProduct(id);
+      const productB = await createProduct(id);
+
+      const response = await request(app.getServer())
+        .post("/api/v1/orders")
+        .set("Cookie", authCookie)
+        .send({
+          line_items: [
+            { product_id: productA.id, quantity: 3 },
+            { product_id: productB.id, quantity: 7 }
+          ]
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.order_details).toHaveLength(2);
+      expect(response.body.data.order_details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ product_id: productA.id, quantity: 3 }),
+          expect.objectContaining({ product_id: productB.id, quantity: 7 })
+        ])
+      );
+    });
+
     it("should freeze the line item price even if the product price later changes", async () => {
       const { id, cookie: authCookie } = await createUser("testuser");
       const { id: productId, price_in_cents: orderPrice } = await createProduct(id);
@@ -79,6 +104,27 @@ describe("OrdersController", () => {
         .send({ line_items: [] });
 
       expect(response.status).toBe(400);
+      const orders = await db.query("SELECT id FROM orders");
+      expect(orders.rows).toHaveLength(0);
+    });
+
+    it("should return 404 naming the missing products and create no order", async () => {
+      const { id, cookie: authCookie } = await createUser("testuser");
+      const product = await createProduct(id);
+
+      const response = await request(app.getServer())
+        .post("/api/v1/orders")
+        .set("Cookie", authCookie)
+        .send({
+          line_items: [
+            { product_id: product.id, quantity: 1 },
+            { product_id: 999998, quantity: 1 },
+            { product_id: 999999, quantity: 1 }
+          ]
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe("Products not found: 999998, 999999");
       const orders = await db.query("SELECT id FROM orders");
       expect(orders.rows).toHaveLength(0);
     });
