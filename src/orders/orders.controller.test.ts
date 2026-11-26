@@ -130,6 +130,25 @@ describe("OrdersController", () => {
       expect(orders.rows).toHaveLength(0);
     });
 
+    it("should reject an order with the same product twice and create no order", async () => {
+      const { id, cookie: authCookie } = await createUser("testuser");
+      const product = await createProduct(id);
+
+      const response = await request(app.getServer())
+        .post("/api/v1/orders")
+        .set("Cookie", authCookie)
+        .send({
+          line_items: [
+            { product_id: product.id, quantity: 1 },
+            { product_id: product.id, quantity: 2 }
+          ]
+        });
+
+      expect(response.status).toBe(400);
+      const orders = await db.query("SELECT id FROM orders");
+      expect(orders.rows).toHaveLength(0);
+    });
+
     it("should reject a line item quantity above the maximum", async () => {
       const { id, cookie: authCookie } = await createUser("testuser");
       const product = await createProduct(id);
