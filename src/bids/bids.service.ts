@@ -14,10 +14,9 @@ export class BidsService {
   ) {}
 
   public async createBid(userId: number, payload: CreateBidPayload) {
-    const idempotencyKey = `bid_${userId}_${payload.auction_id}_${payload.amount_in_cents}`;
+    return this.DB.withTransaction(async (client) => {
+      const idempotencyKey = `bid_${userId}_${payload.auction_id}_${payload.amount_in_cents}`;
 
-    const client = await this.DB.getClient();
-    try {
       await client.query(
         "BEGIN; SET LOCAL lock_timeout = '1s'; SET LOCAL statement_timeout = '2s'"
       );
@@ -47,16 +46,7 @@ export class BidsService {
         );
       }
 
-      const newBid = await this.bidsRepository.createBid(client, userId, payload, idempotencyKey);
-
-      await client.query("COMMIT");
-
-      return newBid;
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally {
-      client.release();
-    }
+      return this.bidsRepository.save(client, userId, payload, idempotencyKey);
+    });
   }
 }

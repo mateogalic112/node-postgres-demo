@@ -6,6 +6,5 @@ export interface DatabaseService {
     values?: QueryConfigValues<I>
   ): Promise<QueryResult<R>>;
 
-  getClient: () => Promise<PoolClient>;
   withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T>;
 }

@@ -10,6 +10,19 @@ export class CustomersService {
     private readonly paymentsService: PaymentsService
   ) {}
 
+  public async getCheckoutUrl(orderId: number, user: User, lineItems: Array<PaymentLineItem>) {
+    const { customer_id } = await this.findOrCreateStripeCustomer(user);
+    const checkoutSession = await this.paymentsService.pay({
+      orderId,
+      customerId: customer_id,
+      lineItems
+    });
+    if (!checkoutSession || checkoutSession.url === null) {
+      throw new InternalServerError("Checkout session couldn't be created!");
+    }
+    return checkoutSession.url;
+  }
+
   private async findOrCreateStripeCustomer(user: User) {
     const customer = await this.customersRepository.findStripeCustomerBy(user.id);
     if (customer) return customer;
@@ -24,18 +37,5 @@ export class CustomersService {
       newCustomer.id
     );
     return customerSchema.parse(createdCustomer);
-  }
-
-  public async getCheckoutUrl(orderId: number, user: User, lineItems: Array<PaymentLineItem>) {
-    const { customer_id } = await this.findOrCreateStripeCustomer(user);
-    const checkoutSession = await this.paymentsService.pay({
-      orderId,
-      customerId: customer_id,
-      lineItems
-    });
-    if (!checkoutSession || checkoutSession.url === null) {
-      throw new InternalServerError("Checkout session couldn't be created!");
-    }
-    return checkoutSession.url;
   }
 }

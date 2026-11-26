@@ -5,7 +5,7 @@ import { PoolClient } from "pg";
 export class BidsRepository {
   constructor(private readonly DB: DatabaseService) {}
 
-  public async createBid(
+  public async save(
     client: PoolClient,
     userId: number,
     payload: CreateBidPayload,
