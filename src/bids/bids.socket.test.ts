@@ -264,4 +264,67 @@ describe("BidsSocketController", () => {
       expect(result).toEqual({ type: "error", message: "Bid must be at least €51.00" });
     });
   });
+
+  describe("Idempotency", () => {
+    const BID_IN_CENTS = 5000;
+
+    const countBids = async (auctionId: number) => {
+      const result = await db.query<{ count: string }>(
+        "SELECT COUNT(*) AS count FROM bids WHERE auction_id = $1",
+        [auctionId]
+      );
+      return Number(result.rows[0].count);
+    };
+
+    it("returns the existing bid when the same bid is retried", async () => {
+      const { auction } = await setupAuction();
+      const bidder = await createUser("bidder");
+      const socket = await connectAndWait(bidder.cookie);
+      const payload = { auction_id: auction.id, amount_in_cents: BID_IN_CENTS };
+
+      const first = await placeBid(socket, payload);
+      const retry = await placeBid(socket, payload);
+
+      expect(first.type).toBe("created");
+      expect(retry.type).toBe("created");
+      if (first.type === "created" && retry.type === "created") {
+        expect(retry.data.id).toBe(first.data.id);
+      }
+      expect(await countBids(auction.id)).toBe(1);
+    });
+
+    it("returns the existing bid on retry even after the auction is no longer active", async () => {
+      const { auction } = await setupAuction();
+      const bidder = await createUser("bidder");
+      const socket = await connectAndWait(bidder.cookie);
+      const payload = { auction_id: auction.id, amount_in_cents: BID_IN_CENTS };
+
+      const first = await placeBid(socket, payload);
+      await db.query("UPDATE auctions SET is_cancelled = TRUE WHERE id = $1", [auction.id]);
+      const retry = await placeBid(socket, payload);
+
+      expect(retry.type).toBe("created");
+      if (first.type === "created" && retry.type === "created") {
+        expect(retry.data.id).toBe(first.data.id);
+      }
+      expect(await countBids(auction.id)).toBe(1);
+    });
+
+    it("creates a single bid when identical bids arrive concurrently", async () => {
+      const { auction } = await setupAuction();
+      const bidder = await createUser("bidder");
+      const socketA = await connectAndWait(bidder.cookie);
+      const socketB = await connectAndWait(bidder.cookie);
+      const payload = { auction_id: auction.id, amount_in_cents: BID_IN_CENTS };
+
+      const [a, b] = await Promise.all([placeBid(socketA, payload), placeBid(socketB, payload)]);
+
+      expect(a.type).toBe("created");
+      expect(b.type).toBe("created");
+      if (a.type === "created" && b.type === "created") {
+        expect(a.data.id).toBe(b.data.id);
+      }
+      expect(await countBids(auction.id)).toBe(1);
+    });
+  });
 });
