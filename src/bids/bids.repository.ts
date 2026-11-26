@@ -47,7 +47,7 @@ export class BidsRepository {
     return bidSchema.parse(result.rows[0]);
   }
 
-  public async getAuctionBids(auctionId: number) {
+  public async getBids(auctionId: number) {
     const result = await this.DB.query<Bid>(
       `SELECT id, amount_in_cents, created_at 
 	FROM bids 

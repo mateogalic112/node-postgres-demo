@@ -16,7 +16,7 @@ export class BidsHttpController extends HttpController {
 
   private getAuctionBids = asyncMiddleware(async (request, response) => {
     const { id: auctionId } = idSchema.parse(request.params);
-    const auctionBids = await this.bidsRepository.getAuctionBids(auctionId);
+    const auctionBids = await this.bidsRepository.getBids(auctionId);
     response.json(formatResponse(auctionBids));
   });
 }

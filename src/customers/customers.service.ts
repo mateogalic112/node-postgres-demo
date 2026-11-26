@@ -25,8 +25,9 @@ export class CustomersService {
 
   private async findOrCreateStripeCustomer(user: User) {
     const customer = await this.customersRepository.findStripeCustomerBy(user.id);
-    if (customer) return customer;
-
+    if (customer) {
+      return customer;
+    }
     const newCustomer = await this.paymentsService.createCustomer(user);
     if (!newCustomer) {
       throw new InternalServerError("Payment service failed to create new customer!");
