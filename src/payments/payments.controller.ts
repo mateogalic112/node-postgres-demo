@@ -1,7 +1,7 @@
 import { HttpController } from "api/api.controllers";
 import asyncMiddleware from "middleware/async.middleware";
 import { BadRequestError } from "api/api.errors";
-import { processOrderSchema } from "./payments.validation";
+import { processOrderSchema, SUPPORTED_EVENTS } from "./payments.validation";
 import { PaymentsService } from "interfaces/payments.interface";
 import { LoggerService } from "interfaces/logger.interface";
 import { OrdersRepository } from "orders/orders.repository";
@@ -27,10 +27,8 @@ export class PaymentsHttpController extends HttpController {
     }
     const rawEvent = this.paymentsService.constructEvent(request.body, sig as string);
     this.logger.log(`[STRIPE] Webhook received: ${rawEvent.type}`);
-    if (
-      rawEvent.type === "checkout.session.completed" ||
-      rawEvent.type === "checkout.session.async_payment_succeeded"
-    ) {
+
+    if (SUPPORTED_EVENTS.includes(rawEvent.type)) {
       const event = processOrderSchema.parse(rawEvent);
       await this.ordersRepository.confirmOrder(event.data.object.metadata.order_id);
     }
