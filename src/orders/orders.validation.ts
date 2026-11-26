@@ -7,12 +7,15 @@ enum OrderStatus {
 }
 
 export const createOrderSchema = z.object({
-  line_items: z.array(
-    z.object({
-      product_id: z.number().int().positive(),
-      quantity: z.number().int().positive()
-    })
-  )
+  line_items: z
+    .array(
+      z.object({
+        product_id: z.number().int().positive(),
+        quantity: z.number().int().positive()
+      })
+    )
+    .min(1)
+    .max(100)
 });
 export type CreateOrderPayload = z.infer<typeof createOrderSchema>;
 

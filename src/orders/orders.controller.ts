@@ -2,7 +2,7 @@ import { HttpController } from "api/api.controllers";
 import asyncMiddleware from "middleware/async.middleware";
 import authMiddleware from "middleware/auth.middleware";
 import { userSchema } from "users/users.validation";
-import { createOrderSchema, orderWithOrderDetailsSchema } from "./orders.validation";
+import { createOrderSchema } from "./orders.validation";
 import { formatResponse } from "api/api.formats";
 import { idSchema } from "api/api.validations";
 import { OrdersRepository } from "./orders.repository";
@@ -31,8 +31,7 @@ export class OrdersHttpController extends HttpController {
   private createOrder = asyncMiddleware(async (request, response) => {
     const user = userSchema.parse(response.locals.user);
     const payload = createOrderSchema.parse(request.body);
-    const rawOrder = await this.ordersRepository.createOrderWithOrderDetails(user, payload);
-    const order = orderWithOrderDetailsSchema.parse(rawOrder);
+    const order = await this.ordersRepository.createOrderWithOrderDetails(user.id, payload);
     response.status(201).json(formatResponse(order));
   });
 

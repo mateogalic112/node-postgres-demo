@@ -1,5 +1,10 @@
-import { User } from "users/users.validation";
-import { CreateOrderPayload, Order, OrderDetail } from "./orders.validation";
+import {
+  CreateOrderPayload,
+  Order,
+  OrderDetail,
+  orderSchema,
+  orderWithOrderDetailsSchema
+} from "./orders.validation";
 import { DatabaseService } from "interfaces/database.interface";
 import { NotFoundError } from "api/api.errors";
 import { PaymentLineItem } from "interfaces/payments.interface";
@@ -7,17 +12,17 @@ import { PaymentLineItem } from "interfaces/payments.interface";
 export class OrdersRepository {
   constructor(private readonly DB: DatabaseService) {}
 
-  public async createOrderWithOrderDetails(user: User, payload: CreateOrderPayload) {
+  public async createOrderWithOrderDetails(userId: number, payload: CreateOrderPayload) {
     const client = await this.DB.getClient();
     try {
       await client.query("BEGIN");
 
       const orderResult = await client.query<Order>(
         "INSERT INTO orders (buyer_id) VALUES ($1) RETURNING *",
-        [user.id]
+        [userId]
       );
 
-      const order = orderResult.rows[0];
+      const order = orderSchema.parse(orderResult.rows[0]);
 
       const valuesPlaceholders = payload.line_items
         .map(
@@ -48,7 +53,11 @@ export class OrdersRepository {
       }
 
       await client.query("COMMIT");
-      return { ...order, order_details: orderDetailsResult.rows };
+
+      return orderWithOrderDetailsSchema.parse({
+        ...order,
+        order_details: orderDetailsResult.rows
+      });
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;

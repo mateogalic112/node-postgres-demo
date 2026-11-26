@@ -69,6 +69,34 @@ describe("OrdersController", () => {
       expect(orderDetails.rows).toHaveLength(1);
       expect(orderDetails.rows[0].unit_price_in_cents).toBe(orderPrice);
     });
+
+    it("should reject an order with no line items", async () => {
+      const { cookie: authCookie } = await createUser("testuser");
+
+      const response = await request(app.getServer())
+        .post("/api/v1/orders")
+        .set("Cookie", authCookie)
+        .send({ line_items: [] });
+
+      expect(response.status).toBe(400);
+      const orders = await db.query("SELECT id FROM orders");
+      expect(orders.rows).toHaveLength(0);
+    });
+
+    it("should reject an order with more than 100 line items", async () => {
+      const { id, cookie: authCookie } = await createUser("testuser");
+      const product = await createProduct(id);
+      const lineItems = Array.from({ length: 101 }, () => ({ product_id: product.id, quantity: 1 }));
+
+      const response = await request(app.getServer())
+        .post("/api/v1/orders")
+        .set("Cookie", authCookie)
+        .send({ line_items: lineItems });
+
+      expect(response.status).toBe(400);
+      const orders = await db.query("SELECT id FROM orders");
+      expect(orders.rows).toHaveLength(0);
+    });
   });
 
   describe("POST /api/v1/orders/:id/checkout", () => {
