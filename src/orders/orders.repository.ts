@@ -15,7 +15,7 @@ export class OrdersRepository {
 
   public createOrderWithOrderDetails(userId: number, payload: CreateOrderPayload) {
     return this.DB.withTransaction(async (client) => {
-      await this.assertValidLineItems(client, payload.line_items);
+      await this.lockProductsOrThrow(client, payload.line_items);
 
       const orderResult = await client.query<Order>(
         "INSERT INTO orders (buyer_id) VALUES ($1) RETURNING *",
@@ -45,7 +45,7 @@ export class OrdersRepository {
     });
   }
 
-  private async assertValidLineItems(
+  private async lockProductsOrThrow(
     client: PoolClient,
     line_items: CreateOrderPayload["line_items"]
   ) {

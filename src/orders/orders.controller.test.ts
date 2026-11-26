@@ -40,6 +40,7 @@ describe("OrdersController", () => {
 
       expect(response.status).toBe(201);
       expect(response.body.data.id).toEqual(expect.any(Number));
+      expect(response.body.data.status).toBe("pending");
       expect(response.body.data.order_details).toEqual([
         expect.objectContaining({
           product_id: product.id,

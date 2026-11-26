@@ -37,10 +37,6 @@ const orderDetailSchema = z.object({
 });
 export type OrderDetail = z.infer<typeof orderDetailSchema>;
 
-export const orderWithOrderDetailsSchema = z.object({
-  id: z.number().int().positive(),
-  buyer_id: z.number().int().positive(),
-  order_details: z.array(orderDetailSchema),
-  created_at: z.date(),
-  updated_at: z.date()
+export const orderWithOrderDetailsSchema = orderSchema.extend({
+  order_details: z.array(orderDetailSchema)
 });
