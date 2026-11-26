@@ -10,13 +10,17 @@ export class AuctionBid {
   ) {}
 
   public isBidIncreasedEnough(highestBidInCents: number) {
-    const minimumAcceptableBid =
-      Math.max(highestBidInCents, this.auction.starting_price_in_cents) +
-      this.minimumIncreaseAmount();
-    return this.payload.amount_in_cents >= minimumAcceptableBid;
+    return this.payload.amount_in_cents >= this.minimumAcceptableBid(highestBidInCents);
   }
 
-  public minimumIncreaseAmount() {
+  public minimumAcceptableBid(highestBidInCents: number) {
+    return (
+      Math.max(highestBidInCents, this.auction.starting_price_in_cents) +
+      this.minimumIncreaseAmount()
+    );
+  }
+
+  private minimumIncreaseAmount() {
     return Math.round(
       this.auction.starting_price_in_cents * (this.MINIMUM_BID_INCREASE_PERCENTAGE / 100)
     );

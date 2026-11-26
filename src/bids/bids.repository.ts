@@ -37,16 +37,6 @@ export class BidsRepository {
     return result.rows[0].amount_in_cents;
   }
 
-  public async findBidByIdempotencyKey(client: PoolClient, idempotencyKey: string) {
-    const result = await client.query<Bid>("SELECT * FROM bids WHERE idempotency_key = $1", [
-      idempotencyKey
-    ]);
-    if (!result.rows[0]) {
-      return null;
-    }
-    return bidSchema.parse(result.rows[0]);
-  }
-
   public async getAuctionBids(auctionId: number) {
     const result = await this.DB.query<Bid>(
       `SELECT id, amount_in_cents, created_at 

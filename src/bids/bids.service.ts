@@ -14,36 +14,28 @@ export class BidsService {
   ) {}
 
   public async createBid(userId: number, payload: CreateBidPayload) {
+    const idempotencyKey = `bid_${userId}_${payload.auction_id}_${payload.amount_in_cents}`;
+
     return this.DB.withTransaction(async (client) => {
-      const idempotencyKey = `bid_${userId}_${payload.auction_id}_${payload.amount_in_cents}`;
+      // @dev Lock/statement timeouts surface as DatabaseError and are mapped to 409 "busy" in api.errors
+      await client.query("SET LOCAL lock_timeout = '1s'; SET LOCAL statement_timeout = '2s'");
 
-      await client.query(
-        "BEGIN; SET LOCAL lock_timeout = '1s'; SET LOCAL statement_timeout = '2s'"
-      );
-
-      // @dev Locking the auction row serializes all bids per auction, so the highest bid read below can't go stale
+      // @dev Locking the auction row serializes all bids per auction, so the reads below can't go stale
       const auction = await this.auctionsRepository.lockActiveAuction(
         client,
         payload.auction_id,
         userId
       );
 
-      const existingBid = await this.bidsRepository.findBidByIdempotencyKey(client, idempotencyKey);
-      if (existingBid) {
-        await client.query("COMMIT");
-        return existingBid;
-      }
-
-      const auctionBid = new AuctionBid(payload, auction);
       const highestBidInCents = await this.bidsRepository.getHighestBidAmountForAuction(
         client,
         auction.id
       );
 
+      const auctionBid = new AuctionBid(payload, auction);
       if (!auctionBid.isBidIncreasedEnough(highestBidInCents)) {
-        throw new BadRequestError(
-          `Bid must be at least ${Currency.formatAmount(auctionBid.minimumIncreaseAmount())}`
-        );
+        const minimumBid = auctionBid.minimumAcceptableBid(highestBidInCents);
+        throw new BadRequestError(`Bid must be at least ${Currency.formatAmount(minimumBid)}`);
       }
 
       return this.bidsRepository.save(client, userId, payload, idempotencyKey);

@@ -1,4 +1,4 @@
-import { createActiveAuction, createProduct, createTestApp, createUser } from "__tests__/setup";
+import { createActiveAuction, createProduct, createTestApp, createUser, db } from "__tests__/setup";
 import App from "app";
 import { Server } from "http";
 import { io as clientIo, Socket as ClientSocket } from "socket.io-client";
@@ -223,6 +223,45 @@ describe("BidsSocketController", () => {
         amount_in_cents: BID_IN_CENTS
       });
       expect(result).toMatchObject({ type: "error", message: expect.any(String) });
+    });
+  });
+
+  describe("Minimum bid rules", () => {
+    // createActiveAuction uses a 1000 cent starting price, so the increment is 100 cents.
+    it("rejects a first bid below starting price + increment with the minimum acceptable bid", async () => {
+      const { auction } = await setupAuction();
+      const bidder = await createUser("bidder");
+      const socket = await connectAndWait(bidder.cookie);
+
+      const result = await placeBid(socket, { auction_id: auction.id, amount_in_cents: 1050 });
+
+      expect(result).toEqual({ type: "error", message: "Bid must be at least €11.00" });
+    });
+
+    it("accepts a first bid exactly at starting price + increment", async () => {
+      const { auction } = await setupAuction();
+      const bidder = await createUser("bidder");
+      const socket = await connectAndWait(bidder.cookie);
+
+      const result = await placeBid(socket, { auction_id: auction.id, amount_in_cents: 1100 });
+
+      expect(result.type).toBe("created");
+    });
+
+    it("reports the minimum relative to the current highest bid", async () => {
+      const { auction } = await setupAuction();
+      const first = await createUser("first_bidder");
+      const second = await createUser("second_bidder");
+      const firstSocket = await connectAndWait(first.cookie);
+      const secondSocket = await connectAndWait(second.cookie);
+
+      await placeBid(firstSocket, { auction_id: auction.id, amount_in_cents: 5000 });
+      const result = await placeBid(secondSocket, {
+        auction_id: auction.id,
+        amount_in_cents: 5050
+      });
+
+      expect(result).toEqual({ type: "error", message: "Bid must be at least €51.00" });
     });
   });
 });
