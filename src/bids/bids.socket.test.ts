@@ -1,83 +1,29 @@
-import { createActiveAuction, createProduct, createTestApp, createUser, db } from "__tests__/setup";
-import { Server } from "http";
-import { io as clientIo, Socket as ClientSocket } from "socket.io-client";
+import { createAuction, createUser, db } from "__tests__/setup";
+import { expectNoEvent, once, useSocketServer } from "__tests__/socket";
+import { Socket } from "socket.io-client";
 import { Bid, CreateBidPayload } from "./bids.validation";
 import { AuctionBid } from "./bids.model";
 
 describe("BidsSocketController", () => {
-  let server: Server;
-  let address: string;
-  const sockets: ClientSocket[] = [];
+  const { connectSocket } = useSocketServer();
 
-  beforeAll((done) => {
-    server = createTestApp().getServer();
-    server.listen(0, () => {
-      const addr = server.address();
-      address = `http://localhost:${(addr as { port: number }).port}`;
-      done();
-    });
-  });
-
-  afterEach(() => {
-    sockets.forEach((s) => s.disconnect());
-    sockets.length = 0;
-  });
-
-  afterAll((done) => {
-    server.close(done);
-  });
-
-  const connectSocket = (cookie: string): ClientSocket => {
-    const socket = clientIo(address, {
-      extraHeaders: { cookie },
-      transports: ["websocket"]
-    });
-    sockets.push(socket);
-    return socket;
-  };
-
-  const once = <T>(socket: ClientSocket, event: string): Promise<T> =>
-    new Promise((resolve) => socket.once(event, resolve));
-
-  const connectAndWait = async (cookie: string): Promise<ClientSocket> => {
-    const socket = connectSocket(cookie);
-    await once(socket, "connect");
-    return socket;
-  };
-
-  const expectNoEvent = (socket: ClientSocket, event: string, windowMs = 200): Promise<void> =>
-    new Promise((resolve, reject) => {
-      const onEvent = () => {
-        clearTimeout(timer);
-        reject(new Error(`Unexpected ${event} event`));
-      };
-      const timer = setTimeout(() => {
-        socket.off(event, onEvent);
-        resolve();
-      }, windowMs);
-      socket.once(event, onEvent);
-    });
-
-  // Wait for the join ack so a broadcast can't reach the room before this socket is in it.
-  const joinAuctionRoom = async (socket: ClientSocket, auctionId: number) => {
+  /** Joins an auction room and waits for the ack, so later broadcasts can't race the join. */
+  const joinAuctionRoom = async (socket: Socket, auctionId: number) => {
     const joined = once(socket, "auctions:auction_joined");
     socket.emit("auctions:join_auction", { auction_id: auctionId });
     await joined;
   };
 
-  const setupAuction = async () => {
-    const seller = await createUser("seller");
-    const product = await createProduct(seller.id);
-    const auction = await createActiveAuction(seller.id, product.id);
-    return { auction, seller };
+  /** Leaves an auction room and waits for the ack. */
+  const leaveAuctionRoom = async (socket: Socket, auctionId: number) => {
+    const left = once(socket, "auctions:auction_left");
+    socket.emit("auctions:leave_auction", { auction_id: auctionId });
+    await left;
   };
 
   type CreateBidResult = { type: "created"; data: Bid } | { type: "error"; message: string };
 
-  const placeBid = async (
-    socket: ClientSocket,
-    payload: CreateBidPayload
-  ): Promise<CreateBidResult> => {
+  const placeBid = async (socket: Socket, payload: CreateBidPayload): Promise<CreateBidResult> => {
     return new Promise((resolve) => {
       const onCreated = (res: { data: Bid }) => {
         socket.off("bids:create_bid_failed", onFailed);
@@ -97,10 +43,10 @@ describe("BidsSocketController", () => {
     const BID_IN_CENTS = 5000;
 
     it("emits bids:bid_created back to the sender on a valid bid", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
 
       const bidder = await createUser("bidder");
-      const socket = await connectAndWait(bidder.cookie);
+      const socket = await connectSocket(bidder.cookie);
 
       const result = await placeBid(socket, {
         auction_id: auction.id,
@@ -114,17 +60,17 @@ describe("BidsSocketController", () => {
     });
 
     it("broadcasts bids:bid_created to other users in the auction room", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
 
       const bidder = await createUser("bidder");
       const watcher = await createUser("watcher");
 
       // Watcher joins and waits for the ack so the broadcast cannot race the join.
-      const watcherSocket = await connectAndWait(watcher.cookie);
+      const watcherSocket = await connectSocket(watcher.cookie);
       await joinAuctionRoom(watcherSocket, auction.id);
       const broadcast = once<{ data: AuctionBid }>(watcherSocket, "bids:bid_created");
 
-      const bidderSocket = await connectAndWait(bidder.cookie);
+      const bidderSocket = await connectSocket(bidder.cookie);
       await placeBid(bidderSocket, {
         auction_id: auction.id,
         amount_in_cents: BID_IN_CENTS
@@ -138,9 +84,9 @@ describe("BidsSocketController", () => {
     });
 
     it("delivers bids:bid_created to the sender exactly once when the sender is in the room", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
       const bidder = await createUser("bidder");
-      const socket = await connectAndWait(bidder.cookie);
+      const socket = await connectSocket(bidder.cookie);
       await joinAuctionRoom(socket, auction.id);
 
       const result = await placeBid(socket, {
@@ -153,15 +99,15 @@ describe("BidsSocketController", () => {
     });
 
     it("does not broadcast to users in a different auction room", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
       const bidder = await createUser("bidder");
       const watcher = await createUser("watcher");
 
-      const watcherSocket = await connectAndWait(watcher.cookie);
+      const watcherSocket = await connectSocket(watcher.cookie);
       await joinAuctionRoom(watcherSocket, auction.id + 1);
       const noBroadcast = expectNoEvent(watcherSocket, "bids:bid_created");
 
-      const bidderSocket = await connectAndWait(bidder.cookie);
+      const bidderSocket = await connectSocket(bidder.cookie);
       const result = await placeBid(bidderSocket, {
         auction_id: auction.id,
         amount_in_cents: BID_IN_CENTS
@@ -172,18 +118,16 @@ describe("BidsSocketController", () => {
     });
 
     it("does not broadcast to a user who left the auction room", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
       const bidder = await createUser("bidder");
       const watcher = await createUser("watcher");
 
-      const watcherSocket = await connectAndWait(watcher.cookie);
+      const watcherSocket = await connectSocket(watcher.cookie);
       await joinAuctionRoom(watcherSocket, auction.id);
-      const left = once(watcherSocket, "auctions:auction_left");
-      watcherSocket.emit("auctions:leave_auction", { auction_id: auction.id });
-      await left;
+      await leaveAuctionRoom(watcherSocket, auction.id);
       const noBroadcast = expectNoEvent(watcherSocket, "bids:bid_created");
 
-      const bidderSocket = await connectAndWait(bidder.cookie);
+      const bidderSocket = await connectSocket(bidder.cookie);
       const result = await placeBid(bidderSocket, {
         auction_id: auction.id,
         amount_in_cents: BID_IN_CENTS
@@ -194,15 +138,15 @@ describe("BidsSocketController", () => {
     });
 
     it("does not broadcast a rejected bid to the auction room", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
       const bidder = await createUser("bidder");
       const watcher = await createUser("watcher");
 
-      const watcherSocket = await connectAndWait(watcher.cookie);
+      const watcherSocket = await connectSocket(watcher.cookie);
       await joinAuctionRoom(watcherSocket, auction.id);
       const noBroadcast = expectNoEvent(watcherSocket, "bids:bid_created");
 
-      const bidderSocket = await connectAndWait(bidder.cookie);
+      const bidderSocket = await connectSocket(bidder.cookie);
       // Any rejection works here; 1 cent is below every plausible minimum-bid rule.
       const result = await placeBid(bidderSocket, {
         auction_id: auction.id,
@@ -214,8 +158,8 @@ describe("BidsSocketController", () => {
     });
 
     it("emits bids:create_bid_failed when the user is not authenticated", async () => {
-      const { auction } = await setupAuction();
-      const socket = await connectAndWait("invalid_cookie=abc");
+      const auction = await createAuction();
+      const socket = await connectSocket("invalid_cookie=abc");
 
       const result = await placeBid(socket, {
         auction_id: auction.id,
@@ -226,7 +170,7 @@ describe("BidsSocketController", () => {
 
     it("emits bids:create_bid_failed when the payload is invalid", async () => {
       const bidder = await createUser("bidder");
-      const socket = await connectAndWait(bidder.cookie);
+      const socket = await connectSocket(bidder.cookie);
 
       const result = await placeBid(socket, { invalid: "payload" } as unknown as CreateBidPayload);
       expect(result).toMatchObject({ type: "error", message: expect.any(String) });
@@ -234,7 +178,7 @@ describe("BidsSocketController", () => {
 
     it("emits bids:create_bid_failed when the auction does not exist", async () => {
       const bidder = await createUser("bidder");
-      const socket = await connectAndWait(bidder.cookie);
+      const socket = await connectSocket(bidder.cookie);
 
       const result = await placeBid(socket, {
         auction_id: 99999,
@@ -247,9 +191,9 @@ describe("BidsSocketController", () => {
   describe("Minimum bid rules", () => {
     // createActiveAuction uses a 1000 cent starting price, so the increment is 100 cents.
     it("rejects a first bid below starting price + increment with the minimum acceptable bid", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
       const bidder = await createUser("bidder");
-      const socket = await connectAndWait(bidder.cookie);
+      const socket = await connectSocket(bidder.cookie);
 
       const result = await placeBid(socket, { auction_id: auction.id, amount_in_cents: 1050 });
 
@@ -257,9 +201,9 @@ describe("BidsSocketController", () => {
     });
 
     it("accepts a first bid exactly at starting price + increment", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
       const bidder = await createUser("bidder");
-      const socket = await connectAndWait(bidder.cookie);
+      const socket = await connectSocket(bidder.cookie);
 
       const result = await placeBid(socket, { auction_id: auction.id, amount_in_cents: 1100 });
 
@@ -267,11 +211,11 @@ describe("BidsSocketController", () => {
     });
 
     it("reports the minimum relative to the current highest bid", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
       const first = await createUser("first_bidder");
       const second = await createUser("second_bidder");
-      const firstSocket = await connectAndWait(first.cookie);
-      const secondSocket = await connectAndWait(second.cookie);
+      const firstSocket = await connectSocket(first.cookie);
+      const secondSocket = await connectSocket(second.cookie);
 
       await placeBid(firstSocket, { auction_id: auction.id, amount_in_cents: 5000 });
       const result = await placeBid(secondSocket, {
@@ -295,9 +239,9 @@ describe("BidsSocketController", () => {
     };
 
     it("returns the existing bid when the same bid is retried", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
       const bidder = await createUser("bidder");
-      const socket = await connectAndWait(bidder.cookie);
+      const socket = await connectSocket(bidder.cookie);
       const payload = { auction_id: auction.id, amount_in_cents: BID_IN_CENTS };
 
       const first = await placeBid(socket, payload);
@@ -312,9 +256,9 @@ describe("BidsSocketController", () => {
     });
 
     it("returns the existing bid on retry even after the auction is no longer active", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
       const bidder = await createUser("bidder");
-      const socket = await connectAndWait(bidder.cookie);
+      const socket = await connectSocket(bidder.cookie);
       const payload = { auction_id: auction.id, amount_in_cents: BID_IN_CENTS };
 
       const first = await placeBid(socket, payload);
@@ -329,10 +273,10 @@ describe("BidsSocketController", () => {
     });
 
     it("creates a single bid when identical bids arrive concurrently", async () => {
-      const { auction } = await setupAuction();
+      const auction = await createAuction();
       const bidder = await createUser("bidder");
-      const socketA = await connectAndWait(bidder.cookie);
-      const socketB = await connectAndWait(bidder.cookie);
+      const socketA = await connectSocket(bidder.cookie);
+      const socketB = await connectSocket(bidder.cookie);
       const payload = { auction_id: auction.id, amount_in_cents: BID_IN_CENTS };
 
       const [a, b] = await Promise.all([placeBid(socketA, payload), placeBid(socketB, payload)]);

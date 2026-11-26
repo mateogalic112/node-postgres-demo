@@ -55,3 +55,10 @@ export const createActiveAuction = async (creatorId: number, productId: number) 
   );
   return result.rows[0];
 };
+
+/** Creates a seller with a product and an active auction for it. */
+export const createAuction = async () => {
+  const seller = await createUser("seller");
+  const product = await createProduct(seller.id);
+  return createActiveAuction(seller.id, product.id);
+};
