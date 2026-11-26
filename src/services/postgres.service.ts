@@ -1,6 +1,6 @@
 import { dbConnectionConfig } from "database/connection";
 import { DatabaseService } from "interfaces/database.interface";
-import { Pool, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow } from "pg";
+import { Pool, PoolClient, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow } from "pg";
 
 export class PostgresService implements DatabaseService {
   private static instance: PostgresService;
@@ -33,6 +33,21 @@ export class PostgresService implements DatabaseService {
 
   public async getClient() {
     return this.pool.connect();
+  }
+
+  public async withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await fn(client);
+      await client.query("COMMIT");
+      return result;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   public async close() {
