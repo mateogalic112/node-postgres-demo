@@ -2,6 +2,7 @@ import { Socket } from "socket.io";
 import { SocketController } from "api/api.controllers";
 import { auctionRoomSchema } from "./auctions.validation";
 import { getErrorMessage } from "api/api.errors";
+import { Auth } from "auth/auth.model";
 
 export class AuctionsSocketController extends SocketController {
   constructor() {
@@ -16,6 +17,7 @@ export class AuctionsSocketController extends SocketController {
   private handleJoinAuction(socket: Socket) {
     return async (payload: unknown) => {
       try {
+        Auth.extractUserIdFromSocket(socket);
         const { auction_id } = auctionRoomSchema.parse(payload);
         await socket.join(`${this.namespace}-${auction_id}`);
         socket.emit(`${this.namespace}:auction_joined`, { auction_id });

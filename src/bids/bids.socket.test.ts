@@ -1,20 +1,16 @@
 import { createActiveAuction, createProduct, createTestApp, createUser, db } from "__tests__/setup";
-import App from "app";
 import { Server } from "http";
 import { io as clientIo, Socket as ClientSocket } from "socket.io-client";
 import { Bid, CreateBidPayload } from "./bids.validation";
 import { AuctionBid } from "./bids.model";
 
 describe("BidsSocketController", () => {
-  let app: App;
   let server: Server;
   let address: string;
   const sockets: ClientSocket[] = [];
 
   beforeAll((done) => {
-    app = createTestApp();
-
-    server = app.getServer();
+    server = createTestApp().getServer();
     server.listen(0, () => {
       const addr = server.address();
       address = `http://localhost:${(addr as { port: number }).port}`;
@@ -163,6 +159,28 @@ describe("BidsSocketController", () => {
 
       const watcherSocket = await connectAndWait(watcher.cookie);
       await joinAuctionRoom(watcherSocket, auction.id + 1);
+      const noBroadcast = expectNoEvent(watcherSocket, "bids:bid_created");
+
+      const bidderSocket = await connectAndWait(bidder.cookie);
+      const result = await placeBid(bidderSocket, {
+        auction_id: auction.id,
+        amount_in_cents: BID_IN_CENTS
+      });
+
+      expect(result.type).toBe("created");
+      await noBroadcast;
+    });
+
+    it("does not broadcast to a user who left the auction room", async () => {
+      const { auction } = await setupAuction();
+      const bidder = await createUser("bidder");
+      const watcher = await createUser("watcher");
+
+      const watcherSocket = await connectAndWait(watcher.cookie);
+      await joinAuctionRoom(watcherSocket, auction.id);
+      const left = once(watcherSocket, "auctions:auction_left");
+      watcherSocket.emit("auctions:leave_auction", { auction_id: auction.id });
+      await left;
       const noBroadcast = expectNoEvent(watcherSocket, "bids:bid_created");
 
       const bidderSocket = await connectAndWait(bidder.cookie);
